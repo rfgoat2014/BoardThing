@@ -15,8 +15,6 @@ exports.update = function (req, res) {
 				err: err,
 				res: res
 			});
-
-			res.send({ status: "failed" });
         }
         else {
         	if (board) {
@@ -83,7 +81,8 @@ exports.update = function (req, res) {
 													model: __filename,
 													action: "update",
 													msg: "Error saving card: " + cards[i]._id,
-													err: err
+													err: err,
+													res: res
 												});
 											}
 										});
@@ -101,10 +100,9 @@ exports.update = function (req, res) {
 									model: __filename,
 									action: "update",
 									msg: "Error saving cluster " + req.params.clusterId,
-									err: err
+									err: err,
+									res: res
 								});
-
-								res.send({ status: "failed" });
 							}
 							else if (cluster) {
 								if (req.body.title) {
@@ -121,10 +119,9 @@ exports.update = function (req, res) {
 											model: __filename,
 											action: "update",
 											msg: "Error saving cluster " + req.params.clusterId,
-											err: err
+											err: err,
+											res: res
 										});
-
-										res.send({ status: "failed" });
 									}
 									else {
 										board.lastModified = new Date();
@@ -139,16 +136,20 @@ exports.update = function (req, res) {
 									model: __filename,
 									action: "update",
 									msg: "Unable to find cluster " + req.params.clusterId,
-									err: err
+									err: err,
+									res: res
 								});
-
-								res.send({ status: "failed" });
 							}
 						});
 					}
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "update",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 	   		}
 	        else {
@@ -158,8 +159,6 @@ exports.update = function (req, res) {
 					msg: "Unable to find board " + req.params.boardId,
 					res: res
 				});
-
-				res.send({ status: "failed" });
 	        }
 	    }
    	});
@@ -193,10 +192,9 @@ exports.expand = function (req, res) {
 								model: __filename,
 								action: "expand",
 								msg: "Error retrieving cluster " + req.params.clusterId,
-								err: err
+								err: err,
+								res: res
 							});
-
-							res.send({ status: "failed" });
 						}
 						else if (cluster) {
 							cluster.collapsed = false;
@@ -209,8 +207,6 @@ exports.expand = function (req, res) {
 										msg: "Unable to save cluster " + req.params.clusterId,
 										err: err
 									});
-
-									res.send({ status: "failed" });
 								}
 								else {
 									board.lastModified = new Date();
@@ -227,13 +223,16 @@ exports.expand = function (req, res) {
 								msg: "Unable to find cluster " + req.params.clusterId,
 								res: res
 							});
-
-							res.send({ status: "failed" });
 				        }
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "expand",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 	        }
 	        else {
@@ -276,10 +275,9 @@ exports.collapse = function (req, res) {
 								model: __filename,
 								action: "collapse",
 								msg: "Error retrieving cluster " + req.params.clusterId,
-								err: err
+								err: err,
+								res: res
 							});
-
-							res.send({ status: "failed" });
 						}
 						else if (cluster) {
 							cluster.collapsed = true;
@@ -290,10 +288,9 @@ exports.collapse = function (req, res) {
 										model: __filename,
 										action: "collapse",
 										msg: "Unable to save cluster " + req.params.clusterId,
-										err: err
+										err: err,
+										res: res
 									});
-
-									res.send({ status: "failed" });
 								}
 								else {
 									board.lastModified = new Date();
@@ -310,13 +307,16 @@ exports.collapse = function (req, res) {
 								msg: "Unable to find cluster " + req.params.clusterId,
 								res: res
 							});
-
-							res.send({ status: "failed" });
 				        }
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "collapse",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 	        }
 	        else {
@@ -420,10 +420,9 @@ exports.startDotVoting = function (req, res) {
 											model: __filename,
 											action: "startDotVoting",
 											msg: "Unable to save cluster " + req.params.clusterId,
-											err: err
+											err: err,
+											res: res
 										});
-
-										res.send({ status: "failed" });
 									}
 									else {
 										board.lastModified = new Date();
@@ -435,12 +434,22 @@ exports.startDotVoting = function (req, res) {
 							});
 						}
 						else {
-							res.send({ status: "failed" });
+							dataError.log({
+								model: __filename,
+								action: "startDotVoting",
+								msg: "Unable to find cluster " + req.params.clusterId,
+								res: res
+							});
 						}
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "startDotVoting",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 	        else {
@@ -527,10 +536,9 @@ exports.stopDotVoting = function (req, res) {
 											model: __filename,
 											action: "stopDotVoting",
 											msg: "Unable to save cluster " + req.params.clusterId,
-											err: err
+											err: err,
+											res: res
 										});
-
-										res.send({ status: "failed" });
 									}
 									else {
 										board.lastModified = new Date();
@@ -542,12 +550,22 @@ exports.stopDotVoting = function (req, res) {
 							});
 						}
 						else {
-							res.send({ status: "failed" });
+							dataError.log({
+								model: __filename,
+								action: "stopDotVoting",
+								msg: "Unable to find cluster " + req.params.clusterId,
+								res: res
+							});
 						}
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "stopDotVoting",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 	   		}
 	        else {
@@ -660,7 +678,12 @@ exports.delete = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "delete",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 	        else {
@@ -782,8 +805,7 @@ exports.attachCard = function (req, res) {
 											model: __filename,
 											action: "attachCard",
 											msg: "Error saving card",
-											err: err,
-											res: res
+											err: err
 										});
 									}
 								});
@@ -794,7 +816,12 @@ exports.attachCard = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "attachCard",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -868,8 +895,7 @@ exports.detachCard = function (req, res) {
 											model: __filename,
 											action: "detachCard",
 											msg: "Error saving card",
-											err: err,
-											res: res
+											err: err
 										});
 									}
 								});
@@ -883,7 +909,12 @@ exports.detachCard = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "detachCard",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -951,8 +982,7 @@ exports.attachClusterToMain = function (req, res) {
 											model: __filename,
 											action: "attachClusterToMain",
 											msg: "Error saving card",
-											err: err,
-											res: res
+											err: err
 										});
 									}
 								});
@@ -966,7 +996,12 @@ exports.attachClusterToMain = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "attachClusterToMain",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -1084,8 +1119,7 @@ exports.attachCluster = function (req, res) {
 											model: __filename,
 											action: "attachCluster",
 											msg: "Error saving card",
-											err: err,
-											res: res
+											err: err
 										});
 									}
 								});
@@ -1099,7 +1133,12 @@ exports.attachCluster = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "attachCluster",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else { 
@@ -1159,8 +1198,7 @@ exports.detachCluster = function (req, res) {
 											model: __filename,
 											action: "detachCluster",
 											msg: "Error saving card",
-											err: err,
-											res: res
+											err: err
 										});
 									}
 								});
@@ -1174,7 +1212,12 @@ exports.detachCluster = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "detachCluster",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -1225,8 +1268,7 @@ exports.sort = function (req, res) {
 														model: __filename,
 														action: "sort",
 														msg: "Error saving card",
-														err: err,
-														res: res
+														err: err
 													});
 												}
 											});
@@ -1247,7 +1289,12 @@ exports.sort = function (req, res) {
 					}
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "sort",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 	        }
 			else {
@@ -1307,13 +1354,22 @@ exports.updatePosition = function (req, res) {
 								}
 							});
 						}
-						else {
-							res.send({ message: "failed" });
+							dataError.log({
+								model: __filename,
+								action: "updatePosition",
+								msg: "Unable to find cluster " + req.params.clusterId,
+								res: res
+							});
 						}
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "updatePosition",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {

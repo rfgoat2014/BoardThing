@@ -89,7 +89,12 @@ exports.get = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "get",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -238,7 +243,12 @@ exports.insert = function (req, res) {
 					});
 				}
 	  			else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "insert",
+						msg: "Invalid board authentication",
+						res: res
+					});
 	  			}
 			}
 			else {
@@ -246,6 +256,7 @@ exports.insert = function (req, res) {
 					model: __filename,
 					action: "insert",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -349,11 +360,13 @@ exports.insertImage = function (req, res) {
 										}
 									});
 								}
-								else dataError.log({
-									model: __filename,
-									action: "insertImage",
-									res: res
-								});
+								else {
+									dataError.log({
+										model: __filename,
+										action: "insertImage",
+										res: res
+									});
+								}
 							});
 
 		  					fileReq.end(finalData);
@@ -375,6 +388,7 @@ exports.insertImage = function (req, res) {
 					model: __filename,
 					action: "insertImage",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -469,10 +483,9 @@ exports.downloadImage = function (req, res) {
 											dataError.log({
 												model: __filename,
 												action: "downloadImage",
+												msg: "failed" ,
 												res: res
 											});
-
-											res.send({ message: "failed" });
 										}
 									});
 
@@ -493,7 +506,8 @@ exports.downloadImage = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "downloadImage",
-					msg: "Error finding board " + req.params.boardId,
+					msg: "Error finding board " + req.params.boardId,,
+					res: res
 				});
 			}
 		}
@@ -511,10 +525,9 @@ exports.duplicate = function (req, res) {
 				model: __filename,
 				action: "duplicate",
 				msg: "Error getting board: " + req.params.boardId,
-				err: err
+				err: err,
+				res: res
 			});
-
-  			res.send({ status: "failed" });
         }
 		else {
 			if (board) {
@@ -647,14 +660,20 @@ exports.duplicate = function (req, res) {
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "duplicate",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
 				dataError.log({
 					model: __filename,
-					action: "update",
+					action: "duplicate",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -672,10 +691,9 @@ exports.update = function (req, res) {
 				model: __filename,
 				action: "update",
 				msg: "Error getting board: " + req.params.boardId,
-				err: err
+				err: err,
+				res: res
 			});
-
-  			res.send({ status: "failed" });
         }
 		else {
 			if (board) {
@@ -712,7 +730,12 @@ exports.update = function (req, res) {
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "update",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -720,6 +743,7 @@ exports.update = function (req, res) {
 					model: __filename,
 					action: "update",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -737,10 +761,9 @@ exports.addVote = function (req, res) {
 				model: __filename,
 				action: "addVote",
 				msg: "Error getting board: " + req.params.boardId,
-				err: err
+				err: err,
+				res: res
 			});
-
-  			res.send({ status: "failed" });
         }
 		else {
 			if (board) {
@@ -764,10 +787,9 @@ exports.addVote = function (req, res) {
 										model: __filename,
 										action: "addVote",
 										msg: "Error saving card: " + req.params.cardId,
-										err: err
+										err: err,
+										res: res
 									});
-
-						  			res.send({ status: "failed" });
 								}
 								else {
 									board.lastModified = new Date();
@@ -782,14 +804,18 @@ exports.addVote = function (req, res) {
 								model: __filename,
 								action: "addVote",
 								msg: "Error finding card: " + req.params.cardId,
+								res: res
 							});
-
-				  			res.send({ status: "failed" });
 				  		}
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "addVote",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -797,9 +823,8 @@ exports.addVote = function (req, res) {
 					model: __filename,
 					action: "addVote",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
-
-			  	res.send({ status: "failed" });
 			}
 		}
 	});
@@ -812,8 +837,13 @@ exports.removeVotes = function (req, res) {
 	.findById(req.params.boardId)
 	.exec(function(err, board) {
         if (err) {
-        	console.log("boardCard: removeVotes: Error getting board: " + err.toString());
-  			res.send({ status: "success" }); // TODO: is this right?
+			dataError.log({
+				model: __filename,
+				action: "removeVotes",
+				msg: "Error getting board: " + req.params.boardId,
+				err: err,
+				res: res
+			});
         }
 		else {
 			if (board) {
@@ -832,10 +862,9 @@ exports.removeVotes = function (req, res) {
 										model: __filename,
 										action: "removeVotes",
 										msg: "Error saving card: " + req.params.cardId,
-										err: err
+										err: err,
+										res: res
 									});
-
-						  			res.send({ status: "failed" });
 								}
 								else {
 									board.lastModified = new Date();
@@ -850,14 +879,18 @@ exports.removeVotes = function (req, res) {
 								model: __filename,
 								action: "removeVotes",
 								msg: "Error finding card: " + req.params.cardId,
+								res: res
 							});
-
-						  	res.send({ status: "failed" });
 						}
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "removeVotes",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -865,9 +898,8 @@ exports.removeVotes = function (req, res) {
 					model: __filename,
 					action: "removeVotes",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
-
-			  	res.send({ status: "failed" });
 			}
 		}
 	});
@@ -879,13 +911,15 @@ exports.updateImage = function (req, res) {
 	Board
 	.findById(req.params.boardId)
 	.exec(function(err, board) {
-		if (err) dataError.log({
-			model: __filename,
-			action: "updateImage",
-			msg: "Error retrieving board",
-			err: err,
-			res: res
-		});
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "updateImage",
+				msg: "Error retrieving board",
+				err: err,
+				res: res
+			});
+		}
 		else {
 			if (board) {
         		if ((!board.isPrivate)||
@@ -910,7 +944,8 @@ exports.updateImage = function (req, res) {
 										model: __filename,
 										action: "updateImage",
 										msg: "Error saving card: " + req.params.cardId,
-										err: err
+										err: err,
+										res: res
 									});
 
 						  			res.send({ status: "failed" });
@@ -928,14 +963,18 @@ exports.updateImage = function (req, res) {
 								model: __filename,
 								action: "updateImage",
 								msg: "Error finding card: " + req.params.cardId,
+								res: res
 							});
-
-						  	res.send({ status: "failed" });
 						}
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "removeVotes",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -943,9 +982,8 @@ exports.updateImage = function (req, res) {
 					model: __filename,
 					action: "updateImage",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
-
-			  	res.send({ status: "failed" });
 			}
 		}
 	});
@@ -961,7 +999,13 @@ exports.delete = function (req, res) {
 	.findById(req.params.boardId)
 	.exec(function(err, board) {
         if (err) {
-        	console.log("boardCard: delete: Error getting board: " + err.toString());
+			dataError.log({
+				model: __filename,
+				action: "delete",
+				msg: "Error retrieving board " + req.params.boardId,
+				err: err,
+				res: res
+			});
         }
 		else {
 			if (board) {
@@ -974,7 +1018,12 @@ exports.delete = function (req, res) {
 						if (card.type.trim().toLowerCase() != "text") {
 							amazonClient.deleteFile(req.params.boardId + "/" +  card.content, function(err, res){
 								if (err) {
-									console.log("boardCard: delete: Error deleting image: " + err.toString()); // TODO: can this be dataError
+									dataError.log({
+										model: __filename,
+										action: "updateZIndex",
+										msg: "delete: Error deleting image " + card.content,
+										err: err
+									});
 								}
 							});
 						}
@@ -1001,18 +1050,30 @@ exports.delete = function (req, res) {
 
 						card.save(function(err, savedIdea) {
 							if (err) {
-								console.log("boardCard: delete: Error saving card: " + err.toString());
+								dataError.log({
+									model: __filename,
+									action: "delete",
+									msg: "Error saving card on " + req.params.boardId,
+									err: err,
+									res: res
+								});
 							}
+							else {
+								board.lastModified = new Date();
+								board.save();
 
-							board.lastModified = new Date();
-							board.save();
-
-				  			res.send({ status: "success" }); 
+					  			res.send({ status: "success" }); 
+				  			}
 				  		});
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "delete",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -1020,6 +1081,7 @@ exports.delete = function (req, res) {
 					model: __filename,
 					action: "delete",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -1057,10 +1119,9 @@ exports.lock = function (req, res) {
 									model: __filename,
 									action: "lock",
 									msg: "Error saving card: " + req.params.cardId,
-									err: err
+									err: err,
+									res: res
 								});
-
-					  			res.send({ status: "failed" });
 							}
 							else {
 								board.lastModified = new Date();
@@ -1072,7 +1133,12 @@ exports.lock = function (req, res) {
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "lock",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -1080,6 +1146,7 @@ exports.lock = function (req, res) {
 					model: __filename,
 					action: "lock",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -1115,10 +1182,9 @@ exports.unlock = function (req, res) {
 									model: __filename,
 									action: "unlock",
 									msg: "Error saving card: " + req.params.cardId,
-									err: err
+									err: err,
+									res: res
 								});
-
-					  			res.send({ status: "failed" });
 							}
 							else {
 								board.lastModified = new Date();
@@ -1130,7 +1196,12 @@ exports.unlock = function (req, res) {
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "lock",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -1138,6 +1209,7 @@ exports.unlock = function (req, res) {
 					model: __filename,
 					action: "unlock",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -1177,10 +1249,9 @@ exports.updateDimensions = function (req, res) {
 										model: __filename,
 										action: "updateDimensions",
 										msg: "Error saving card: " + req.params.cardId,
-										err: err
+										err: err,
+										res: res
 									});
-
-						  			res.send({ status: "failed" });
 								}
 								else {
 									board.lastModified = new Date();
@@ -1191,12 +1262,22 @@ exports.updateDimensions = function (req, res) {
 					  		});
 						}
 						else {
-							res.send({ status: "failed" });
+							dataError.log({
+								model: __filename,
+								action: "updateDimensions",
+								msg: "Unable to find card " + req.params.cardId,
+								res: res
+							});
 						}
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "updateDimensions",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -1204,6 +1285,7 @@ exports.updateDimensions = function (req, res) {
 					model: __filename,
 					action: "updateDimensions",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -1243,7 +1325,8 @@ exports.updatePosition = function (req, res) {
 										model: __filename,
 										action: "updatePosition",
 										msg: "Error saving card: " + req.params.cardId,
-										err: err
+										err: err,
+										res: res
 									});
 
 						  			res.send({ status: "failed" });
@@ -1257,12 +1340,22 @@ exports.updatePosition = function (req, res) {
 					  		});
 				  		}
 				  		else {
-				  			res.send({ status: "failed" });
+							dataError.log({
+								model: __filename,
+								action: "updatePosition",
+								msg: "Unable to find card: " + req.params.cardId,
+								res: res
+							});
 				  		}
 					});
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "updateDimensions",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
@@ -1270,6 +1363,7 @@ exports.updatePosition = function (req, res) {
 					model: __filename,
 					action: "updatePosition",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}
@@ -1317,7 +1411,8 @@ exports.updateZIndex = function (req, res) {
 													model: __filename,
 													action: "updateZIndex",
 													msg: "Error saving card",
-													err: err
+													err: err,
+													res: res
 												});
 											} 
 								  		});
@@ -1337,14 +1432,20 @@ exports.updateZIndex = function (req, res) {
 					}
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "updateZIndex",
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
 				dataError.log({
 					model: __filename,
-					action: "updatePosition",
+					action: "updateZIndex",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}

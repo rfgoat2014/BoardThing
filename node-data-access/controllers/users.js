@@ -129,7 +129,9 @@ exports.get = function (req, res) {
 				email: user.email,
 				joined: user.joined
 			};
+
 			user.password = null;
+
         	res.send({ status: "success", user: returnUser });
         }
 	});
@@ -147,20 +149,22 @@ exports.sendUserPassword = function(req,res) {
 				err: err,
 				res: res
 			});
+		}
+		else if (user) {
+			var resetEmailContent = "A password reset has been requested for your BoardThing account.\n\r\n\rIf you did not make this request, you can safely ignore this email. A password reset request can be made by anyone, and it does not indicate that your account is in any danger of being accessed by someone else.\n\r\n\rIf you do actually want to reset your password, visit this link:\n\r\n\rhttp://www.boardthing.com/resetPassword/" + user._id + "\n\r\n\rThanks for using the site!";
 
-			res.send({ status: "failed" }); 
+			email.sendUserMsg(user.username, user.email, "Password reset for BoardThing", resetEmailContent);
+
+			res.send({ status: "success" });  
 		}
 		else {
-			if (user != null) {
-				var resetEmailContent = "A password reset has been requested for your BoardThing account.\n\r\n\rIf you did not make this request, you can safely ignore this email. A password reset request can be made by anyone, and it does not indicate that your account is in any danger of being accessed by someone else.\n\r\n\rIf you do actually want to reset your password, visit this link:\n\r\n\rhttp://www.boardthing.com/resetPassword/" + user._id + "\n\r\n\rThanks for using the site!";
-
-				email.sendUserMsg(user.username, user.email, "Password reset for BoardThing", resetEmailContent);
-
-				res.send({ status: "success" });  
-			}
-			else {
-				res.send({ status: "failed" }); 
-			}
+			dataError.log({
+				model: __filename,
+				action: "sendUserPassword",
+				msg: "Error retrieving user",
+				err: err,
+				res: res
+			}); 
 		}
 	});
 }
@@ -294,7 +298,8 @@ exports.update = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "update",
-						msg: "Unable to find profile"
+						msg: "Unable to find profile for " + req.user._id,
+						res: res
 					});	
 
 					res.send({ status: "failed", message: "Unable to update your profile" });
@@ -356,20 +361,16 @@ exports.updateSharedBoards = function (req, res) {
 			Board
 			.findById(req.params.boardId)
 			.exec(function(err, board) {
-				if (err) dataError.log({
-					model: __filename,
-					action: "updateSharedBoards",
-					msg: "Error retrieving user",
-					err: err,
-					res: res
-				});
-				else if (!board) dataError.log({
-					model: __filename,
-					action: "updateSharedBoards",
-					msg: "Could not find board",
-					res: res
-				});
-				else {
+				if (err) {
+					dataError.log({
+						model: __filename,
+						action: "updateSharedBoards",
+						msg: "Error retrieving user",
+						err: err,
+						res: res
+					});
+				}
+				else if (board) {
 					if (board.owner.toString() != req.user._id.toString()) {
 						var boardSaved = false;
 
@@ -391,6 +392,14 @@ exports.updateSharedBoards = function (req, res) {
 				   		res.send({ status: "success" });
 				   	}
 		        }
+				else {
+					dataError.log({
+						model: __filename,
+						action: "updateSharedBoards",
+						msg: "Could not find board",
+						res: res
+					});
+				}
 	        });	
         }
 	});
@@ -400,13 +409,15 @@ exports.getDisplayCardAddHint = function (req, res) {
 	User
 	.findById(req.user._id)
 	.exec(function(err, user) {
-		if (err) dataError.log({
-			model: __filename,
-			action: "getDisplayCardAddHint",
-			msg: "Error retrieving user",
-			err: err,
-			res: res
-		});
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "getDisplayCardAddHint",
+				msg: "Error retrieving user",
+				err: err,
+				res: res
+			});
+		}
 		else {
 			var displayCardAddHint = user.displayCardAddHint
 
@@ -423,16 +434,20 @@ exports.disableDisplayCardAddHint = function (req, res) {
 	User
 	.findById(req.user._id)
 	.exec(function(err, user) {
-		if (err) dataError.log({
-			model: __filename,
-			action: "disableDisplayCardAddHint",
-			msg: "Error retrieving user",
-			err: err,
-			res: res
-		});
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "disableDisplayCardAddHint",
+				msg: "Error retrieving user",
+				err: err,
+				res: res
+			});
+		}
 		else {
 			user.displayCardAddHint = false;
 			user.save();
+
+        	res.send({ status: "success" });
         }
 	});
 } 

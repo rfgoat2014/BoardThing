@@ -11,6 +11,5 @@
 		if (obj.err) output += (" : " + obj.err.toString());
 		
 		if (output != "") console.log(output);		
-		if (obj.res) obj.res.send({ status: "failed", message: obj.msg });
-		
+		if (obj.res) obj.res.send({ status: "failed", message: obj.msg }); 26
 	}	

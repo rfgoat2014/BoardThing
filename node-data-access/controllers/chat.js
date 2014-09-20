@@ -6,13 +6,15 @@ exports.get = function (req, res) {
 	Board
 	.findById(req.params.boardId)
 	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "getChat",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "getChat",
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
         else {
 	        if (board) {
 	        	if ((!board.isPrivate) ||
@@ -21,7 +23,12 @@ exports.get = function (req, res) {
 	  				res.send({ status: "success", chat: board.chat });
 	  			}
 	  			else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "getChat",
+						msg: "Invalid board authentication",
+						res: res
+					});
 	  			}
 			}
 			else {
@@ -60,18 +67,27 @@ exports.insert = function (req, res) {
 					board.chat.push(chatItem);
 
 					board.save(function(err, savedChatItem) {
-						if (err) dataError.log({
-							model: __filename,
-							action: "insert",
-							msg: "Error saving board with added chat",
-							err: err,
-							res: res
-						});
-						else res.send({ message: "success", chat: chatItem });
+						if (err) {
+							dataError.log({
+								model: __filename,
+								action: "insert",
+								msg: "Error saving board with added chat",
+								err: err,
+								res: res
+							});
+						}
+						else {
+							res.send({ message: "success", chat: chatItem });
+						}
 					});
 	  			}
 	  			else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "insert",
+						msg: "Invalid board authentication",
+						res: res
+					});
 	  			}
 			}
 			else {
@@ -79,6 +95,7 @@ exports.insert = function (req, res) {
 					model: __filename,
 					action: "insert",
 					msg: "Error finding board " + req.params.boardId,
+					res: res
 				});
 			}
 		}

@@ -49,13 +49,15 @@ exports.getAll = function (req, res) {
 			.findById(req.user._id)
 			.select("sharedBoards")
 			.exec(function(err, user) {
-				if (err) dataError.log({
-					model: __filename,
-					action: "getAll",
-					msg: "Error retrieving user",
-					err: err,
-					res: res
-				});
+				if (err) {
+					dataError.log({
+						model: __filename,
+						action: "getAll",
+						msg: "Error retrieving user",
+						err: err,
+						res: res
+					});
+				}
 				else {
 					if (user) {
 						var sharedBoardIds = [];
@@ -190,6 +192,7 @@ exports.get = function (req, res) {
 									model: __filename,
 									action: "get",
 									msg: "Unable to find user",
+									res: res
 								});
 							}
 				        }
@@ -232,7 +235,12 @@ exports.getBackground = function (req, res) {
   					res.send({ status: "success", background: board.background });
         		}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "getBackground",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -446,13 +454,15 @@ exports.authenticateBoard = function (req, res) {
 	Board
 	.findById(req.params.id)
 	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "authenticateBoard",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "authenticateBoard",
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
         else {
 	        if (board != null) {
 	        	if (board.password.trim() == req.body.password.trim()) {
@@ -478,13 +488,15 @@ exports.update = function (req, res) {
 	Board
 	.findById(req.params.id)
 	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "update",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "update",
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
         else {
 	        if ((board != null) && (board.owner.toString() == req.user._id.toString())) {
 	        	board.title = req.body.title;
@@ -519,13 +531,15 @@ exports.updatePassword = function (req, res) {
 	Board
 	.findById(req.params.id)
 	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "updatePassword",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "updatePassword",
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
         else {
 	        if ((board != null) && (board.owner.toString() == req.user._id.toString())) {
 	        	var canPasswordProtectBoard = false;
@@ -559,11 +573,13 @@ exports.updatePassword = function (req, res) {
 								model: __filename,
 								action: "updatePassword",
 								msg: "Error saving board",
-								err: err
+								err: err,
+								res: res
 							});
 						}	
-
-			  			res.send({ status: "success", board: board });
+						else {
+				  			res.send({ status: "success", board: board });
+				  		}
 					});
 				}
 			}
@@ -585,13 +601,15 @@ exports.updateBackground = function (req, res) {
 	Board
 	.findById(req.params.id)
 	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "updateBackground",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "updateBackground",
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
         else {
 	        if (board) {
 	        	if ((!board.isPrivate) ||
@@ -600,14 +618,18 @@ exports.updateBackground = function (req, res) {
 		        	board.background = req.body.background;
 		        	board.lastModified = new Date();			        
 			        board.save(function (err, board) {
-						if (err) dataError.log({
-							model: __filename,
-							action: "updateBackground",
-							msg: "Error saving board",
-							err: err
-						});
-							
-			  			res.send({ status: "success" });
+						if (err) {
+							dataError.log({
+								model: __filename,
+								action: "updateBackground",
+								msg: "Error saving board",
+								err: err,
+								res: res
+							});
+						}
+						else {
+			  				res.send({ status: "success" });
+						}
 					});
 			    }
 			    else {
@@ -654,30 +676,39 @@ exports.delete = function (req, res) {
 				});
 
 		        board.remove();
+
 		        board.save(function (err, savedBoard) {
-					if (err) dataError.log({
-						model: __filename,
-						action: "delete",
-						msg: "Error saving board",
-						res: res,
-						err: err
-					});
+					if (err) {
+						dataError.log({
+							model: __filename,
+							action: "delete",
+							msg: "Error saving board",
+							err: err,
+							res: res
+						});
+					}
+					else {
+						res.send({ status: "success" });
+					}
 				});
 		    }
 	       	else if (board) {
 				User
 				.findById(req.user._id)
 				.exec(function(err, user) {
-					if (err) dataError.log({
-						model: __filename,
-						action: "delete",
-						msg: "Error retrieving user",
-						res: res,
-						err: err
-					});
+					if (err) {
+						dataError.log({
+							model: __filename,
+							action: "delete",
+							msg: "Error retrieving user",
+							res: res,
+							err: err
+						});
+					}
 					else {
 						if (user) {
 							var boardDeleted = false;
+							
 							for (var j = 0; j < user.sharedBoards.length; j++) {
 								if (user.sharedBoards[j]._id.toString() == board._id.toString()) {
 									user.sharedBoards.splice(j,1);
@@ -685,21 +716,24 @@ exports.delete = function (req, res) {
 									boardDeleted = true;
 								}
 							};
+
 							if (boardDeleted) user.save();
+	
+							res.send({ status: "success" });
 				        }
-				        else dataError.log({
-							model: __filename,
-							action: "delete",
-							msg: "Unable to find user",
-							res: res
-						});
+				        else {
+				        	dataError.log({
+								model: __filename,
+								action: "delete",
+								msg: "Unable to find user",
+								res: res
+							});
+				        }
 			        }
 				});  		
 	       	}
 	 	});
 	}
-	
-	res.send({ status: "success" });
 }
 
 exports.open = function (req, res) {
@@ -711,8 +745,8 @@ exports.open = function (req, res) {
 				model: __filename,
 				action: "open",
 				msg: "Error retrieving board",
-				res: res,
-				err: err
+				err: err,
+				res: res
 			});
 		}
 		else {
@@ -842,7 +876,12 @@ exports.export = function (req, res) {
 					});
 				}
         		else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "getImage",
+						msg: "Invalid board authentication",
+						res: res
+					});
         		}
 			}
 			else {
@@ -850,6 +889,7 @@ exports.export = function (req, res) {
 					model: __filename,
 					action: "getImage",
 					msg: "Error finding board " + req.params.id,
+					res: res
 				});
 			}
 		}
