@@ -1354,6 +1354,7 @@ exports.updatePosition = function (req, res) {
 								}
 							});
 						}
+						else {
 							dataError.log({
 								model: __filename,
 								action: "updatePosition",
