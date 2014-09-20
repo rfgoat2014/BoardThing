@@ -93,9 +93,13 @@
 
 	mongoose.connect(config.mongoAddress, { server: { auto_reconnect: true } });
 
+// Add global until functions
+
 	global.dataError = require(config.customModulesFolder + "data-error.js");
 	global.mimeTypes = require(config.customModulesFolder + "mime-extensions.js");
 	global.security = require(config.customModulesFolder + "security-helpers.js");
+
+// Set up the data access controllers
 
 	var users = require(config.controllerPath + "users");
 	var boards = require(config.controllerPath + "boards");
@@ -104,10 +108,11 @@
 	var hints = require(config.controllerPath + "hints");
 	var chat = require(config.controllerPath + "chat");
 
-// Configure the emailing to mailgun and put it in global so it can be called anywhere
+// Configure the Amazon client access key
 
 	global.authenticateAmazonS3 = function() {
 		var knox = require("knox");
+
 		return knox.createClient({ key: config.amazonKey, secret: config.amazonSecret, bucket: config.amazonBucket });
 	}
 
@@ -134,9 +139,7 @@
 		return cookies;
 	}
 	
-// Passport stuff	
-
-	global.userRoles = [ "premium", "facilitator", "companyAdmininistrator", "superUser" ];
+// Passport authenitcation	
 	
 	passport.serializeUser(function(user, done) {
 		done(null, user._id);
@@ -286,6 +289,8 @@
 		});
 	});
 	
+	// Generic functionality to check if someone is authenticated. Needs cleaning up
+
 	function checkAuthenticated(req, res, callback) {
 		if (req.isAuthenticated()) {
 			var canPasswordProtectBoard = false;
@@ -503,8 +508,11 @@
 		}
 	});
 
-// Post Up actions
+// Board actions
 	
+
+// Actions for doing a general ger on the board. Retrieves the board layout.
+
 	app.get("/board", function(req,res) { 
 		hints.getBoardHint(function(hint) {
 			res.render("board", { hint: hint });
@@ -516,6 +524,8 @@
 			res.render("board", { hint: hint });
 		});
 	});
+
+// Updates a baords password
 
 	app.put("/boards/updatePassword/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
@@ -559,6 +569,8 @@
 		}
 	});
 
+// Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
+
 	app.get("/boards/background/:id", boards.getBackground);
 	app.put("/boards/background/:id", boards.updateBackground);
 
@@ -583,6 +595,8 @@
 		}
 	});
 
+// Get all the boards for th currently authenticated user
+
 	app.get("/boards", function(req,res) {
 		if (!req.isAuthenticated()) {
 			checkAuthenticated(req, res, function(user) {
@@ -603,6 +617,8 @@
 			boards.getAll(req,res);
 		}
 	});
+
+// Add a new bord
 
 	app.post("/boards", function(req,res) {
 		if (!req.isAuthenticated()) {
@@ -625,7 +641,11 @@
 		}
 	});
 	
+// Get a requested board
+
 	app.get("/boards/:id", boards.get);
+
+// Called when a user does a "Save As"
 
 	app.post("/boards/:boardId", function(req,res) {
 		if (!req.isAuthenticated()) {
@@ -692,6 +712,8 @@
 
 	app.post("/boards/authenticate/:id", boards.authenticateBoard);
 	
+	// Actions for manipulating cards and clusters on a board
+
 	app.get("/boards/cards/:boardId", boardCards.get);
 	app.post("/boards/cards/text/:boardId", boardCards.insert);
 	app.put("/boards/cards/text/:boardId/:cardId", boardCards.update);
@@ -735,6 +757,8 @@
 	app.post("/boards/clusters/castVote/:boardId/:cardId", boardCards.addVote);
 	app.delete("/boards/clusters/clearVotes/:boardId/:cardId", boardCards.removeVotes);
 
+	// Catch any occuring client errors
+
 	app.post("/clientError", function(req,res) {
 		var dayPadded = ("00" + (new Date()).getDate());
 		var monthPadded = ("00" + (new Date()).getMonth());
@@ -746,26 +770,6 @@
 		console.log("LineNo: " + req.body.line);
 		console.log("Client: " + req.body.client + " " + req.body.version);	
 		console.log("*********************************************************************************");
-	});
-	
-	app.post("/sendFeedback", function(req,res) {
-		var cookies = parseCookies(req);;
-
-		users.getBySessionId(cookies[config.cookieID], function(err, authenticatedUser) {
-			var commentEmail = req.body.email;
-			var commentContent = req.body.comment;
-
-			if (authenticatedUser != null) {
-				if ((commentEmail == null) || (commentEmail.trim().length == 0)) commentEmail = authenticatedUser.email;	
-				email.sendTeamMsg(commentEmail, "Comment received from " + authenticatedUser.username, commentContent);	        
-			}
-			else {
-				if ((commentEmail == null) || (commentEmail.trim().length == 0)) commentEmail = config.emailFromAddress;	
-				email.sendTeamMsg(commentEmail, "Comment received from an unauthenticated user", commentContent);
-			}
-
-			res.send({ status: "success" });
-		});
 	});
 
 // Actions for sockets without redis
