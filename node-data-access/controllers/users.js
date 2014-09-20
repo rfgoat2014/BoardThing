@@ -3,22 +3,25 @@ var Board = require(config.boardModel);
 var Card = require(config.cardModel);
 var Example = require(config.exampleModel);
 
+// ===== Action to retrive a selected user by their email address. Not web facing
 exports.getByEmail = function (email, callback) {
 	User
 	.find({ email: new RegExp(email, "i") })
 	.exec(function(err, users) {
-		var userFound = false;
-
 		if (err) {
 			callback(err, null);
 		}
 		else {
-			for (var i in users) {
+			var userFound = false;
+
+			for (var i=0, usersLength = users.length; i<usersLength; i+=1) {
 				var user = users[i];
 
+				// check if the users email exactly matches the one provided. the irreguar characters sometimes provide false positives
 				if ((user) && (user.email) && (email) && (user.email.trim().toLowerCase() == email.trim().toLowerCase()) && (user.active)) {
 					userFound = true;
 
+					// return the found user
 					var returnUser = {
 						_id: user._id,
 						sessionId: user.sessionId,
@@ -34,19 +37,21 @@ exports.getByEmail = function (email, callback) {
 		        }
 		    }
 		    
-		    if (!userFound) {
-		    	callback(null, null);
-		    }
+		    if (!userFound) callback(null, null);
         }
 	});
 }
 
+// ===== Action to retrive a selected user by their ID. Not web facing
 exports.getById = function (id, callback) {
 	User
 	.findById(id)
 	.exec(function(err, user) {
-		if (err) callback(err, null);
+		if (err) {
+			callback(err, null);
+		}
 		else {
+			// check that this user exists and their account is active
 			if ((user) && (user.active)) {
 				var returnUser = {
 					_id: user._id,
@@ -67,12 +72,16 @@ exports.getById = function (id, callback) {
 	});
 }
 
+// ===== Action to retrive a selected user by their session ID. Not web facing
 exports.getBySessionId = function (id, callback) {
 	User
 	.findOne({ sessionId: id })
 	.exec(function(err, user) {
-		if (err) callback(err, null);
+		if (err) {
+			callback(err, null);
+		}
 		else {
+			// check that this user exists and their account is active
 			if ((user) && (user.active)) {
 				var returnUser = {
 					_id: user._id,
@@ -83,6 +92,7 @@ exports.getBySessionId = function (id, callback) {
 				    roles: user.roles,
 				    joined: user.joined
 				};
+
 	        	callback(null, returnUser);
 	        }
 	        else {
@@ -92,6 +102,7 @@ exports.getBySessionId = function (id, callback) {
 	});
 }
 
+// ===== Action to save a session ID against a selected user. Not web facing
 exports.saveSessionId = function (id, sessionId) {
 	User
 	.findById(id)
@@ -111,17 +122,20 @@ exports.saveSessionId = function (id, sessionId) {
 	});
 }
 
+// ====== Get the details of the currently authenticated user
 exports.get = function (req, res) {
 	User
 	.findById(req.user._id)
 	.exec(function(err, user) {
-		if (err) dataError.log({
-			model: __filename,
-			action: "get",
-			msg: "Error retrieving user",
-			err: err,
-			res: res
-		});
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "get",
+				msg: "Error retrieving user",
+				err: err,
+				res: res
+			});
+		}
 		else {
 			var returnUser = {
 				_id: user._id,
@@ -130,13 +144,12 @@ exports.get = function (req, res) {
 				joined: user.joined
 			};
 
-			user.password = null;
-
         	res.send({ status: "success", user: returnUser });
         }
 	});
 } 
 
+// ===== Send a password reminder out to a user who has requested it
 exports.sendUserPassword = function(req,res) {
 	User
 	.findOne({ email: new RegExp("^" + req.body.email + "$", "i") })
@@ -151,8 +164,10 @@ exports.sendUserPassword = function(req,res) {
 			});
 		}
 		else if (user) {
+			// Build the content for the password reset e-mail
 			var resetEmailContent = "A password reset has been requested for your BoardThing account.\n\r\n\rIf you did not make this request, you can safely ignore this email. A password reset request can be made by anyone, and it does not indicate that your account is in any danger of being accessed by someone else.\n\r\n\rIf you do actually want to reset your password, visit this link:\n\r\n\rhttp://www.boardthing.com/resetPassword/" + user._id + "\n\r\n\rThanks for using the site!";
 
+			// Send the password reminder to the selected user
 			email.sendUserMsg(user.username, user.email, "Password reset for BoardThing", resetEmailContent);
 
 			res.send({ status: "success" });  
@@ -169,7 +184,9 @@ exports.sendUserPassword = function(req,res) {
 	});
 }
 
+// ===== Action to create a new user
 exports.insert = function (req, res) {
+	// build the new user details
 	var user = new User({ 
 	    username: req.body.username,
 	    email: req.body.email,
@@ -177,18 +194,20 @@ exports.insert = function (req, res) {
 	    active: false
 	});
 
+	// attempt to find any other users with the same email. user emails must be unique
 	User
 	.find({ email: new RegExp(req.body.email, "i") })
 	.exec(function(err, existingUsers) {
 		var userExists = false;
 
-		for (var i in existingUsers) {
+		for (var i=0, existingUsersLength=existingUsers.length; i<existingUsersLength; i+=1) {
 			if ((existingUsers[i]) && (existingUsers[i].email) && (req.body.email) && (existingUsers[i].email.trim().toLowerCase() == req.body.email.trim().toLowerCase())) {
 				userExists = true;
 	        	break;
 	        }
 	    }
 
+	    // if the no user exists with the same email address the allow the user to be created
 		if (!userExists) {
 			user.save(function (err, savedUser) {
 				if (err) {
@@ -201,6 +220,7 @@ exports.insert = function (req, res) {
 					});
 				}
 				else {
+					// create a welcome board for a newly created user
 					var welcomeBoard = new Board(Example.getWelcomeBoard(savedUser._id));
 					
 					welcomeBoard.save(function (err, newWelcomeBoard) {
@@ -214,13 +234,16 @@ exports.insert = function (req, res) {
 							});
 						}
 						else {
+							// get the cards required for a welcome board
 							var welcomeBoardCards = Example.getWelcomeBoardCards(newWelcomeBoard._id);
 
-							for (var i=0; i<welcomeBoardCards.length; i++) {
+							// create and save the welcome board cards
+							for (var i=0, welcomeBoardCardsLength=welcomeBoardCards.length; i<welcomeBoardCardsLength; i++) {
 								var card = new Card(welcomeBoardCards[i]);
 								card.save();
 							}
 
+							// we need to create the images for the welcome board in the amazon bucket
     						var fs = require('fs');
     						var mime = require('mime');
 
@@ -228,7 +251,7 @@ exports.insert = function (req, res) {
 
     						var files = fs.readdirSync("./views/img/example-board");
 
-    						for (var i in files) {
+    						for (var i=0, filesLength=files.length; i<files.length; i++) {
     							var fileContent = fs.readFileSync("./views/img/example-board/" + files[i]);
 
     							var fileReq = amazonClient.put(newWelcomeBoard._id + "/" + files[i], {
@@ -241,7 +264,9 @@ exports.insert = function (req, res) {
 						}
 					});
 
+					// send a message to the BoardThing administrators to let them know that a new user has joined
 			        email.sendTeamMsg(config.emailFromAddress, "New user request", "A new user has requested access to BoardThing\n\r\n\r" + config.adminUrl);
+		        	
 		        	res.send({ status: "success", user: savedUser });
 		        }
 			});
@@ -252,13 +277,16 @@ exports.insert = function (req, res) {
 	})
 }
 
+// ===== Actions to update a users details
 exports.update = function (req, res) {
+	// get all the users currently existing with the email address specified for a users profile
 	User
 	.find({ email: new RegExp(req.body.email, "i") })
 	.exec(function(err, existingUsers) {
 		var userExists = false;
 
-		for (var i in existingUsers) {
+		for (var i=0, existingUsersLength=existingUsers.length; i<existingUsers.length; i+=1) {
+			// if a user exists with the specified email address then check that it's the user doing the update. Email addresses must be unique
 			if ((existingUsers[i]) && 
 				(existingUsers[i]._id.toString() != req.user._id.toString()) && 
 				(existingUsers[i].email.trim().toLowerCase() == req.body.email.trim().toLowerCase())) {
@@ -267,17 +295,18 @@ exports.update = function (req, res) {
 	        }
 	    }
 
+	    // check that we can proceed with the update
 		if (!userExists) {
 			User
 			.findById(req.user._id)
 			.exec(function(err, existingUser) {
 				if (existingUser) {
+					// update the username, email and password if specified of the currently authenticated user
+
 				    existingUser.username = req.body.username;
 				    existingUser.email = req.body.email;
 
-				    if (req.body.password) {
-						existingUser.password = security.hashPassword(req.body.password);
-				    }
+				    if (req.body.password)  existingUser.password = security.hashPassword(req.body.password);
 
 				    existingUser.save(function (err, savedUser) {
 						if (err) {
@@ -312,13 +341,16 @@ exports.update = function (req, res) {
 	});
 }
 
+// ===== Action to update the password of a selected user
 exports.resetPassword = function (req, res) {
 	User
 	.findById(req.params.id)
 	.exec(function(err, user) {
 		if (user) {
+			// hash the password provided by the user for storage in the database
 			user.password = security.hashPassword(req.body.password);
 
+			// check if the user has stated during the password reset that they want to receive further communication from Boardthing
 			if ((req.body.acceptCommunication != null) && (req.body.acceptCommunication != ""))  user.acceptCommunication = req.body.acceptCommunication;
 			
 			user.save(function (err, savedUser) {
@@ -346,6 +378,7 @@ exports.resetPassword = function (req, res) {
 	});
 }
 
+// === Action to update an authenticated users shared boards
 exports.updateSharedBoards = function (req, res) {
 	User
 	.findById(req.user._id)
@@ -371,16 +404,19 @@ exports.updateSharedBoards = function (req, res) {
 					});
 				}
 				else if (board) {
+					// check that the current user is not the owner of the board (you don't have your own board in your shared boards list)
 					if (board.owner.toString() != req.user._id.toString()) {
 						var boardSaved = false;
 
-						for (var i=0; i<user.sharedBoards.length; i++) {
+						// search the current users shared boards and make sure that they don't already have the board in their shared boards
+						for (var i=0, userSharedBoardsLength=user.sharedBoards.length; i<userSharedBoardsLength; i++) {
 							if ((user.sharedBoards[i]) && (user.sharedBoards[i]._id.toString() == req.params.boardId.toString())) {
 								boardSaved = true;
 								break;
 							}
 						}
 
+						// if they don't have selected board in their shared board list then add and update
 						if (!boardSaved) {
 							user.sharedBoards.push(req.params.boardId);
 							user.save();
@@ -405,6 +441,7 @@ exports.updateSharedBoards = function (req, res) {
 	});
 } 
 
+// ===== Get whether or not to display hints to a user when they first arrive at a board
 exports.getDisplayCardAddHint = function (req, res) {
 	User
 	.findById(req.user._id)
@@ -421,6 +458,7 @@ exports.getDisplayCardAddHint = function (req, res) {
 		else {
 			var displayCardAddHint = user.displayCardAddHint
 
+			// If we dont have this set then we assume that we should be displaying the hints
 			if (displayCardAddHint == null) {
 				displayCardAddHint = true;
 			}
@@ -430,6 +468,7 @@ exports.getDisplayCardAddHint = function (req, res) {
 	});
 } 
 
+// ===== Perminantly stop the current user from receiving hints when they access a board
 exports.disableDisplayCardAddHint = function (req, res) {
 	User
 	.findById(req.user._id)
@@ -444,6 +483,8 @@ exports.disableDisplayCardAddHint = function (req, res) {
 			});
 		}
 		else {
+			// Set the display hints to false and save
+
 			user.displayCardAddHint = false;
 			user.save();
 
