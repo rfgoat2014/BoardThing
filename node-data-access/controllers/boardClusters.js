@@ -196,7 +196,7 @@ exports.expand = function (req, res) {
 			});
         }
         else if (board != null) {
-			// Check if this board is private and if so check this user has accesss
+			// Check if this board is private and if so check this user has access
     		if ((!board.isPrivate)||
     			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
     			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {

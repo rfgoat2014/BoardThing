@@ -547,27 +547,6 @@
 			boards.updatePassword(req,res);
 		}
 	});
-	
-	app.get("/boards/open/:title", function(req,res) {
-		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.open(req,res);
-				}
-				else {
-					dataError.log({
-						model: "boards",
-						action: "open",
-						msg: "Unauthorized access",
-						res: res
-					});
-				}
-			});
-		}
-		else {
-			boards.open(req,res);
-		}
-	});
 
 // Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
 
