@@ -26,14 +26,14 @@ exports.get = function (req, res) {
     			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
     			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
 				// Start building the cards and clusters to be returned to the board
-				var returnCards = [];
-				var childCards = []
+				var returnCards = [],
+					childCards = [];
 
 				// Retrieve alll the cards associated to the board
 				Card
 				.find({ board: req.params.boardId })
 				.exec(function(err, cards) {
-					for (var i = 0; i < cards.length; i++) {
+					for (var i = 0, cardLength = cards.length; i < cardLength; i += 1) {
 						// Sanity check that there is a card specified in the position
 						if (cards[i]) {
 							var returnCard = null
@@ -89,7 +89,7 @@ exports.get = function (req, res) {
 					}
 
 					// for cards that are part of a cluster start recursively building up the structure
-					for (var i = 0; i < returnCards.length; i++) {
+					for (var i = 0, returnCardsLength = returnCards.length; i < returnCardsLength; i += 1) {
 						attachChildCards(returnCards[i],childCards);
 					}
 
@@ -118,8 +118,8 @@ exports.get = function (req, res) {
 
 // ===== A recursive method which builds up the cluster structure
 function attachChildCards(currentNode,childNodes) {
-	for (var i=0; i<currentNode.children.length; i++) {
-		for (var j=0; j<childNodes.length; j++) {
+	for (var i=0, currentNodeChildLength = currentNode.children.length; i<currentNodeChildLength; i += 1) {
+		for (var j=0, childNodesLength = childNodes.length; j<childNodesLength; j++) {
 			if (currentNode.children[i] == childNodes[j].id) {
 				currentNode.cards.push(childNodes[j]);
 				attachChildCards(currentNode.cards[(currentNode.cards.length-1)], childNodes);
@@ -130,10 +130,8 @@ function attachChildCards(currentNode,childNodes) {
 
 // ===== Retrieve a cards image from it's amazon bucket
 exports.getImage = function (req, res) {
-	var http = require('http');
-
-    // Retrieve the amazon client object
-	var amazonClient = authenticateAmazonS3();
+	var http = require('http'),
+		amazonClient = authenticateAmazonS3();
 
 	Card
 	.findById(req.params.cardId)
@@ -151,9 +149,8 @@ exports.getImage = function (req, res) {
 		}
 		else {
 			if (card) {
-				var imageType = card.type;
-
-				var data = '';
+				var imageType = card.type,
+					data = '';
 
 				// Retrieve the image data from the amazon bucket
 				amazonClient.getFile(req.params.boardId + "/" + card.content, function(err, s3res) {  
@@ -207,10 +204,7 @@ exports.insert = function (req, res) {
         			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
         			// Set the color for the new card, white is default if one is not specified
 					var cardColor = "#FFFFFF";
-
-					if ((req.body.color) && (req.body.color.trim().length > 0)) {
-						cardColor = req.body.color;
-					}			
+					if ((req.body.color) && (req.body.color.trim().length > 0)) cardColor = req.body.color;		
 
 					// Creating a new card object
 					var card = new Card({
@@ -282,9 +276,8 @@ exports.insert = function (req, res) {
 // ===== Actions to insert a new image card uploaded from a users computer to the database and amazon bucket
 exports.insertImage = function (req, res) {
     var fs = require('fs'),
-    	Busboy = require('busboy');
-
-	var cookies = parseCookies(req);;
+    	Busboy = require('busboy'),
+    	cookies = parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)
@@ -315,12 +308,10 @@ exports.insertImage = function (req, res) {
 						});
 
 						file.on('end', function() {
-							var filenameParts = filename.split(".");
-					    	var newFilename = createGUID() + "." + filenameParts[filenameParts.length-1];
-
-					    	var finalData = Buffer.concat(fileData);
-
-							var amazonClient = authenticateAmazonS3();
+							var filenameParts = filename.split("."),
+								newFilename = createGUID() + "." + filenameParts[filenameParts.length-1],
+					    		finalData = Buffer.concat(fileData),
+					    		amazonClient = authenticateAmazonS3();
 
 							var fileReq = amazonClient.put(req.params.boardId + "/" + newFilename, {
 								'Content-Length': finalData.length,
@@ -417,13 +408,11 @@ exports.insertImage = function (req, res) {
 	});
 }
 
-// Actions to insert a new image card downloaded from a specified URL to the database and amazon bucket
+// ===== Actions to insert a new image card downloaded from a specified URL to the database and amazon bucket
 exports.downloadImage = function (req, res) {
-	var request = require('request').defaults({ encoding: null });
-
-	var amazonClient = authenticateAmazonS3();
-
-	var cookies = parseCookies(req);;
+	var request = require('request').defaults({ encoding: null }),
+		amazonClient = authenticateAmazonS3(),
+		cookies = parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -451,10 +440,8 @@ exports.downloadImage = function (req, res) {
 						request.get(imageLocation, function (error, response, body) {
 							// Check if the selected image could be retrieved
 						    if ((!error) && (response.statusCode == 200) && (response.headers["content-type"].toString().toLowerCase().indexOf("image") == 0)) {
-						    	var data = new Buffer(body);
-
-						    	// Create the image for insertion into Amazon database
-						    	var newFilename = createGUID() + "." + mimeTypes.getFileExtension(response.headers["content-type"]);
+						    	var data = new Buffer(body),
+						    		newFilename = createGUID() + "." + mimeTypes.getFileExtension(response.headers["content-type"]);
 
 								var fileReq = amazonClient.put(req.params.boardId + "/" + newFilename, {
 									'Content-Length': response.headers["content-length"],
@@ -740,9 +727,7 @@ exports.update = function (req, res) {
 					// Update the cards details, being a text card this could either be the content or color
 					card.content = req.body.content;
 					
-					if ((req.body.color) && (req.body.color.trim().length > 0)) {
-						card.color = req.body.color;
-					}
+					if ((req.body.color) && (req.body.color.trim().length > 0)) card.color = req.body.color;
 
 					// save the updates
 					card.save(function(err, savedIdea) {
@@ -815,10 +800,7 @@ exports.updateImage = function (req, res) {
 						// the actual image can't be updated, just the card color and associated text
 
 						var cardColor = "#FFFFFF";
-
-						if ((req.body.color) && (req.body.color.trim().length > 0)) {
-							cardColor = req.body.color;
-						}			
+						if ((req.body.color) && (req.body.color.trim().length > 0)) cardColor = req.body.color;
 
 						card.color = cardColor;
 						card.title = req.body.title;
@@ -1005,12 +987,8 @@ exports.addVote = function (req, res) {
 				.exec(function(err, card) {
 					if (card) {
 						// add a vote to the selected card
-						if (card.votesReceived) {
-							card.votesReceived++;
-						}
-						else {
-							card.votesReceived = 1;
-						}
+						if (card.votesReceived) card.votesReceived++;
+						else card.votesReceived = 1;
 
 						// save the card
 						card.save(function(err, savedIdea) {
@@ -1464,9 +1442,10 @@ exports.updateZIndex = function (req, res) {
 					.find({ _id: { $in: cardIds } })
 					.exec(function(err, cards) {
 						// sort the cards based on the positions specified by the end user
-						for (var i=0; i<cards.length; i++) {
-							for (var j=0; j<req.body.cards.length; j++) {
+						for (var i=0, cardLength=cards.length; i<cardLength; i++) {
+							for (var j=0, userCardsLength=req.body.cards.length; j<userCardsLength; j++) {
 								if ((cards[i]) && (cards[i]._id.toString() == req.body.cards[j].cardId)) {
+									// set the set position for the card as specified by the user
 									cards[i].zPos = req.body.cards[j].zPos;
 
 									cards[i].save(function(err, savedIdea) {
