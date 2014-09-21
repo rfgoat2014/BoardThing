@@ -6,8 +6,8 @@ var mongoose = require('mongoose')
 // Priority 0 - Randomly show
 
 var HintSchema = new Schema({
-    content: { type: String },
-    priority: { type: Number }
+    content: { type: String }, // content of the hint, the message
+    priority: { type: Number } // see above
 });
 
 module.exports = mongoose.model("Hint", HintSchema);

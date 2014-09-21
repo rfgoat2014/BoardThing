@@ -3,18 +3,17 @@ var mongoose = require('mongoose')
    ,ObjectId = Schema.ObjectId;
 
 var UserSchema = new Schema({
-    id: ObjectId,
-    sessionId: {type: String, default: ''},
-    active: {type: Boolean, default: false },
-    username: {type: String, default: ''},
-    email: {type: String, default: ''},
-    password: {type: String, default: ''},
-    joined: { type: Date, default: Date.now },
-    sharedBoards: [{id: { type: ObjectId, ref: 'Board' } }],
-    note: {type: String, default: ''},
-    displayCardAddHint: {type: Boolean, default: true },
-    acceptCommunication: {type: Boolean, default: false },
-    roles: [{ type: String } ]
+    id: ObjectId, // the id of the user
+    sessionId: {type: String, default: ''}, // the session id that is assigned to the user
+    active: {type: Boolean, default: false }, // whether this user is active or not
+    username: {type: String, default: ''}, // the username of the user, generally firstname lastname
+    email: {type: String, default: ''}, // the email of the user. this must be unique for each user
+    password: {type: String, default: ''}, // the password of the user. This is sorted hashed
+    joined: { type: Date, default: Date.now }, // the date the user joined BoardThing
+    sharedBoards: [{id: { type: ObjectId, ref: 'Board' } }], // the list of shared boards associated to this user
+    note: {type: String, default: ''}, // the "how did you hear about us" field filled in when a user joins BoardThing
+    displayCardAddHint: {type: Boolean, default: true }, // whether hints should be showed to this user when they first open a board
+    acceptCommunication: {type: Boolean, default: false }, // whether this user selected to accept communication when signing up
 });
 
 module.exports = mongoose.model("User", UserSchema);

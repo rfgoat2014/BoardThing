@@ -1,3 +1,6 @@
+// ************************* This module is used to create the Welcome board. Kind of a brute force way to make it *************************
+
+// ===== Create the new welcome board for a selected user
 module.exports.getWelcomeBoard = function(userId) {
 	var welcomeBoard = {
 		"chat" : [],
@@ -10,6 +13,7 @@ module.exports.getWelcomeBoard = function(userId) {
 	return welcomeBoard;
 }
 
+// create the boards that will be attached to the welcome board
 module.exports.getWelcomeBoardCards = function(boardId) {
 	var ObjectID = require('mongodb').ObjectID;
 	
