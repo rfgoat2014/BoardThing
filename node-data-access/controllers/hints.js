@@ -1,7 +1,7 @@
 var Hint = require(config.hintModel);
 
 // ===== Actions for getting all the board hints, these are what are displayed while a board is loading
-exports.getBoardHint = function (callback) {
+exports.getWorkspaceHint = function (callback) {
 	Hint.find(function(err, hints) {
 		if (err) {
 			dataError.log({

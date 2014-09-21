@@ -1,5 +1,5 @@
-var Board = require(config.boardModel);
-var Card = require(config.cardModel);
+var Board = require(config.boardModel),
+	Card = require(config.cardModel);
 
 // ===== Actions for updating a cluster (this also covers creating a cluster as clusters are just a relationship between 2 cards)
 exports.update = function (req, res) {

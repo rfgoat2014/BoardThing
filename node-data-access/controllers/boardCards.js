@@ -1,5 +1,5 @@
-var Board = require(config.boardModel);
-var Card = require(config.cardModel);
+var Board = require(config.boardModel),
+	Card = require(config.cardModel);
 
 // ===== Method to retrieve all the cards on a board
 exports.get = function (req, res) {

@@ -1,7 +1,7 @@
-var User = require(config.userModel);
-var Board = require(config.boardModel);
-var Card = require(config.cardModel);
-var Example = require(config.exampleModel);
+var User = require(config.userModel),
+	Board = require(config.boardModel),
+	Card = require(config.cardModel),
+	Example = require(config.exampleModel);
 
 // ===== Action to retrive a selected user by their email address. Not web facing
 exports.getByEmail = function (email, callback) {

@@ -57,9 +57,9 @@
 	
 	var socket = io.attach(http);
 
-	process.on("uncaughtException", function(err) {
+	/*process.on("uncaughtException", function(err) {
 		console.log("************************** UNCAUGHT EXCEPTION: " + err);
-	});
+	})*/;
 
 // Connect to the mongo database
 
@@ -102,6 +102,7 @@
 // Set up the data access controllers
 
 	var users = require(config.controllerPath + "users");
+	var workspaces = require(config.controllerPath + "workspaces");
 	var boards = require(config.controllerPath + "boards");
 	var boardCards = require(config.controllerPath + "boardCards");
 	var boardClusters = require(config.controllerPath + "boardClusters");
@@ -513,78 +514,29 @@
 
 // Actions for doing a general ger on the board. Retrieves the board layout.
 
-	app.get("/board", function(req,res) { 
-		hints.getBoardHint(function(hint) {
-			res.render("board", { hint: hint });
+	app.get("/workspace", function(req,res) { 
+		hints.getWorkspaceHint(function(hint) {
+			res.render("index", { hint: hint });
 		});
 	});
 	
-	app.get("/board/:id", function(req,res) {
-		hints.getBoardHint(function(hint) {
-			res.render("board", { hint: hint });
+	app.get("/workspace/:id", function(req,res) {
+		hints.getWorkspaceHint(function(hint) {
+			res.render("index", { hint: hint });
 		});
-	});
-
-// Updates a baords password
-
-	app.put("/boards/updatePassword/:id", function(req,res) {
-		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.updatePassword(req,res);
-				}
-				else {
-					dataError.log({
-						model: "boards",
-						action: "updatePassword",
-						msg: "Unauthorized access",
-						res: res
-					});
-				}
-			});
-		}
-		else {
-			boards.updatePassword(req,res);
-		}
-	});
-
-// Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
-
-	app.get("/boards/background/:id", boards.getBackground);
-	app.put("/boards/background/:id", boards.updateBackground);
-
-	app.get("/boards/export/:id/:format", function(req,res) {
-		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.export(req,res);
-				}
-				else {
-					dataError.log({
-						model: "boards",
-						action: "export",
-						msg: "Unauthorized access",
-						res: res
-					});
-				}
-			});
-		}
-		else {
-			boards.export(req,res);
-		}
 	});
 
 // Get all the boards for th currently authenticated user
 
-	app.get("/boards", function(req,res) {
+	app.get("/workspaces", function(req,res) {
 		if (!req.isAuthenticated()) {
 			checkAuthenticated(req, res, function(user) {
 				if (user) {
-					boards.getAll(req,res);
+					workspaces.getAll(req,res);
 				}
 				else {
 					dataError.log({
-						model: "boards",
+						model: "workspaces",
 						action: "getAll",
 						msg: "Unauthorized access",
 						res: res
@@ -593,38 +545,15 @@
 			});
 		}
 		else {
-			boards.getAll(req,res);
-		}
-	});
-
-// Add a new bord
-
-	app.post("/boards", function(req,res) {
-		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.insert(req,res);
-				}
-				else {
-					dataError.log({
-						model: "boards",
-						action: "insert",
-						msg: "Unauthorized access",
-						res: res
-					});
-				}
-			});
-		}
-		else {
-			boards.insert(req,res);
+			workspaces.getAll(req,res);
 		}
 	});
 	
-// Get a requested board
+// Get a requested workspace
 
-	app.get("/boards/:id", boards.get);
+	app.get("/workspaces/:id", workspaces.get);
 
-// Called when a user does a "Save As"
+/* // Called when a user does a "Save As"
 
 	app.post("/boards/:boardId", function(req,res) {
 		if (!req.isAuthenticated()) {
@@ -644,6 +573,80 @@
 		}
 		else {
 			boards.saveAs(req,res);
+		}
+	}); */
+
+	// Updates a workspace password
+
+	app.put("/workspaces/updatePassword/:id", function(req,res) {
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) {
+					workspaces.updatePassword(req,res);
+				}
+				else {
+					dataError.log({
+						model: "workspaces",
+						action: "updatePassword",
+						msg: "Unauthorized access",
+						res: res
+					});
+				}
+			});
+		}
+		else {
+			workspaces.updatePassword(req,res);
+		}
+	});
+
+	app.post("/workspaces/authenticate/:id", workspaces.authenticateWorkspace);
+
+// Actions for manipulating boards
+
+	// Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
+
+	app.get("/boards/background/:id", boards.getBackground);
+	app.put("/boards/background/:id", boards.updateBackground);
+
+	/* app.get("/boards/export/:id/:format", function(req,res) {
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) {
+					boards.export(req,res);
+				}
+				else {
+					dataError.log({
+						model: "boards",
+						action: "export",
+						msg: "Unauthorized access",
+						res: res
+					});
+				}
+			});
+		}
+		else {
+			boards.export(req,res);
+		}
+	}); */
+
+	app.post("/boards", function(req,res) {
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) {
+					boards.insert(req,res);
+				}
+				else {
+					dataError.log({
+						model: "boards",
+						action: "insert",
+						msg: "Unauthorized access",
+						res: res
+					});
+				}
+			});
+		}
+		else {
+			boards.insert(req,res);
 		}
 	});
 
@@ -688,10 +691,8 @@
 			boards.delete(req,res);
 		}
 	});
-
-	app.post("/boards/authenticate/:id", boards.authenticateBoard);
 	
-	// Actions for manipulating cards and clusters on a board
+// Actions for manipulating cards and clusters on a board
 
 	app.get("/boards/cards/:boardId", boardCards.get);
 	app.post("/boards/cards/text/:boardId", boardCards.insert);
