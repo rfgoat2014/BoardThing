@@ -4,6 +4,8 @@ var User = require(config.userModel),
 
 // ===== action to retrieve all the workspaces for the currently logged in user
 exports.getAll = function (req, res) {
+	var moment = require("moment");
+
 	// find all the workspaces owned by the logged in user
 	Workspace
 	.find({ owner: req.user._id })
@@ -34,6 +36,7 @@ exports.getAll = function (req, res) {
 				    isPrivate: isPrivate,
     				password: workspaces[i].password,
 				    created: workspaces[i].created,
+				    createdAt: moment(workspaces[i].created).fromNow(),
 				    owner: {
 				    	id: workspaces[i].owner._id,
 				    	username: workspaces[i].owner.username
@@ -87,8 +90,7 @@ exports.getAll = function (req, res) {
 								    title: sharedWorkspaces[i].title,
 				    				isPrivate: isPrivate,
 				    				password: "",
-								    created: sharedWorkspaces[i].created,
-			    					lastModified: lastModified,
+								    created: moment(sharedWorkspaces[i].created).fromNow(),
 						    		isOwner: false,
 			    					sharedStatus: "Shared"
 								})
@@ -141,7 +143,8 @@ exports.get = function (req, res) {
 			    title: workspace.title,
 			    boards: [],
 			    isPrivate: workspace.isPrivate,
-			    created: workspace.created
+			    created: workspace.created,
+		    	createdAt: moment(workspace.created).fromNow()
 			};
 
 			// only include the workspace password if this is the workspace ower requesting it
@@ -238,6 +241,48 @@ exports.get = function (req, res) {
 			});
 		}
     });
+};
+
+// ===== Actions to create a new board
+exports.insert = function (req, res) {
+	var moment = require("moment");
+
+	// create and save the new board
+
+	var workspace = new Workspace({ 
+	    owner: req.user._id,
+		title: req.body.title,
+		boards: [],
+		chat: [],
+    	isPrivate: false,
+    	password: "",
+	    created: new Date()
+	});
+
+	workspace.save(function (err, newWorkspace) {
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "insert",
+				msg: "Error saving workspace",
+				err: err,
+				res: res
+			});
+		}
+		else {
+			// return the new baord back to client
+
+			var returnWorkspace = {
+				id: newWorkspace._id, 
+			    owner: newWorkspace.owner,
+				title: newWorkspace.title,
+			    created: newWorkspace.created,
+			    createdAt: moment(newWorkspace.created).fromNow()
+			};
+			
+			res.send({ status: "success", workspace: returnWorkspace });
+		}
+	});
 };
 
 // ===== Action for private workspaces to authenticate a provided password to see if they are allowed access

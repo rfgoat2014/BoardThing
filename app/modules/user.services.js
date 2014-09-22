@@ -19,5 +19,5 @@ function() {
 		});
 	};
 
-	return Services
+	return Services;
 });

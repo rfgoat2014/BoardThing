@@ -4,7 +4,11 @@ function() {
 
 	// ---------- Models
 
-	User.Model = Backbone.Model.extend();
+	User.Model = Backbone.Model.extend({
+		url: function() {
+    		return this.get("id") ? "/users/" + this.get("id") : "/users";
+		}
+	});
 
-	return User
+	return User;
 });

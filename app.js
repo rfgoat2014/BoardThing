@@ -59,7 +59,7 @@
 
 	/*process.on("uncaughtException", function(err) {
 		console.log("************************** UNCAUGHT EXCEPTION: " + err);
-	})*/;
+	});*/
 
 // Connect to the mongo database
 
@@ -381,7 +381,15 @@
 	});
 	
 	app.get("/main", function(req,res) { 
-		res.render("index", { title: 'BoardThing' }); 
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) res.render("index", { title: 'BoardThing' });
+				else res.redirect("/login");
+			});
+		}
+		else {
+			res.render("index", { title: 'BoardThing' }); 
+		}
 	});
 
 	app.get("/reset/:id", function(req,res) { 
@@ -526,7 +534,7 @@
 		});
 	});
 
-// Get all the boards for th currently authenticated user
+// Get all the boards for the currently authenticated user
 
 	app.get("/workspaces", function(req,res) {
 		if (!req.isAuthenticated()) {
@@ -546,6 +554,29 @@
 		}
 		else {
 			workspaces.getAll(req,res);
+		}
+	});
+
+// Get all the boards for the currently authenticated user
+
+	app.post("/workspaces", function(req,res) {
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) {
+					workspaces.insert(req,res);
+				}
+				else {
+					dataError.log({
+						model: "workspaces",
+						action: "insert",
+						msg: "Unauthorized access",
+						res: res
+					});
+				}
+			});
+		}
+		else {
+			workspaces.insert(req,res);
 		}
 	});
 	
