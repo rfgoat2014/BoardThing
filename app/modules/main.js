@@ -6,7 +6,9 @@ define([
 function(Workspace, Workspace_Services) {
 	var Main = {};
 
-	// ---------- Views
+	//////////////////////// Views
+
+	// ===== View that appears to users when they first log in. Allows board management.
 
 	Main.Index = Backbone.View.extend({
     	el: "<div>",
@@ -15,7 +17,7 @@ function(Workspace, Workspace_Services) {
 		initialize: function() {
 			this.on("cancelAddWorkspace", this.cancelAddWorkspace);
 			this.on("workspaceAdded", this.workspaceAdded);
-			this.on("openWorkspace", this.openWorkspace);
+			this.on("viewWorkspace", this.viewWorkspace);
 
 			this.render();
       	},
@@ -50,6 +52,8 @@ function(Workspace, Workspace_Services) {
 			});
 		},
 
+		// ----- Sort and render workspaces
+
 		renderWorkspaces: function() {
 			this.$("#workspace-list-body").empty();
 
@@ -61,6 +65,12 @@ function(Workspace, Workspace_Services) {
 				this.$("#workspace-list-body").append(this._workspaces[i].el);
 			}
 		},
+
+		viewWorkspace: function(workspaceId) {
+  			Backbone.history.navigate("workspace/" + workspaceId, true);
+		},
+
+		// ------ Actions to create a new workspace
 
 		createWorkspace: function() {
 			this._addWorkspace = new Workspace.Add({ parent: this });
@@ -78,6 +88,8 @@ function(Workspace, Workspace_Services) {
 			this._workspaces.push(new Workspace.ListItem({ model: new Workspace.Model(workspace), parent: this }));
 
 			this.renderWorkspaces();
+
+			this.viewWorkspace(workspace.id);
 		},
 
 		cancelAddWorkspace: function() {

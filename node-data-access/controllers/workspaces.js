@@ -178,12 +178,12 @@ exports.get = function (req, res) {
 						    lastModified: lastModified
 						};
 
-						returnWorkspace.push(returnBoard);
+						returnWorkspace.boards.push(returnBoard);
 					}
 
-					// check if the request is from an authenticated user and if so if it's not the board owner. we want to add this board to the users shared boards
-					if ((req.isAuthenticated()) && (board.owner.toString() != req.user._id.toString())) {
-						// retrieve the user that is reqesting access to the board
+					// check if the request is from an authenticated user and if so if it's not workspace board owner. we want to add this workspace to the users shared workspaces
+					if ((req.isAuthenticated()) && (workspace.owner.toString() != req.user._id.toString())) {
+						// retrieve the user that is reqesting access to the workspace
 						User
 						.findById(req.user._id)
 						.exec(function(err, user) {
@@ -194,7 +194,7 @@ exports.get = function (req, res) {
 								err: err
 							});
 							else if (user) {
-								// check that if this is a private board. private boards aren't added to a users list of shared boards
+								// check that if this is a private workspace. private workspace aren't added to a users list of shared workspace
 								if (!workspace.isPrivate) {
 									var workspaceSaved = false;
 
@@ -206,7 +206,7 @@ exports.get = function (req, res) {
 										}
 									}
 
-									// if they currently don't have the board in their list of shared board then add its
+									// if they currently don't have the workspace in their list of shared workspace then add it
 									if (!workspaceSaved) {
 										user.sharedWorkspaces.push(req.params.id);
 										user.save();
@@ -270,17 +270,37 @@ exports.insert = function (req, res) {
 			});
 		}
 		else {
-			// return the new baord back to client
+			var board = new Board({ 
+				workspace: newWorkspace._id,
+				title: req.body.title,
+			    created: new Date(),
+		    	lastModified: new Date()
+			});
 
-			var returnWorkspace = {
-				id: newWorkspace._id, 
-			    owner: newWorkspace.owner,
-				title: newWorkspace.title,
-			    created: newWorkspace.created,
-			    createdAt: moment(newWorkspace.created).fromNow()
-			};
-			
-			res.send({ status: "success", workspace: returnWorkspace });
+			board.save(function (err, newBoard) {
+				if (err) {
+					dataError.log({
+						model: __filename,
+						action: "insert",
+						msg: "Error saving board",
+						err: err,
+						res: res
+					});
+				}
+				else {
+					// return the new workspace back to client
+
+					var returnWorkspace = {
+						id: newWorkspace._id, 
+					    owner: newWorkspace.owner,
+						title: newWorkspace.title,
+					    created: newWorkspace.created,
+					    createdAt: moment(newWorkspace.created).fromNow()
+					};
+					
+					res.send({ status: "success", workspace: returnWorkspace });
+				}
+			});
 		}
 	});
 };

@@ -392,6 +392,10 @@
 		}
 	});
 
+	app.get("/workspace/:id", function(req,res) { 
+		res.render("index", { title: 'BoardThing' }); 
+	});
+
 	app.get("/reset/:id", function(req,res) { 
 		res.render("index", { title: 'BoardThing' }); 
 	});

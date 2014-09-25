@@ -15,5 +15,28 @@ function() {
 		});
 	};
 
+	Workspace.Get = function(id, callback) {
+		$.ajax({
+			type: "GET",
+			url: "/workspaces/" + id,
+			success: function(response) {
+				if (callback) callback(response);
+			}
+		});
+	};
+
+	Workspace.Insert = function(title, callback) {
+		$.ajax({
+			type: "POST",
+			url: "/workspaces",
+			data:  {
+				title: title
+			},
+			success: function(response) {
+				if (callback) callback(response);
+			}
+		});
+	};
+
 	return Workspace;
 });

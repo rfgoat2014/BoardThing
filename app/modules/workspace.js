@@ -1,18 +1,31 @@
-define([],
+define([
+	"modules/workspace.services"
+],
 
-function() {
+function(Workspace_Services) {
 	var Workspace = {};
 
-	// ---------- Models
+	//////////////////////// Views
 
-	Workspace.Model = Backbone.Model.extend({
-		url: function() {
-    		return this.get("id") ? "/workspaces/" + this.get("id") : "/workspaces";
+	// ===== View for an access
+
+	Workspace.Index = Backbone.View.extend({
+		el: "<div>",
+
+		initialize: function(options) {
+			this.render();
+		},
+
+		render: function(){
+			var that = this;
+
+			$.get("/app/templates/workspace/index.html", function(contents) {
+				that.$el.html(_.template(contents, that.model.toJSON()));
+			}, "text");
 		}
 	});
 
-
-	// ---------- Views
+	// ===== View to create a new workspace
 
 	Workspace.Add = Backbone.View.extend({
     	el: "<div>",
@@ -56,20 +69,10 @@ function() {
 			var title = this.$("#title").val();
 
 			if ((title) && (title.trim().length > 0)) {
-				var newWorkspace = new Workspace.Model({
-				    title: title.trim()
-				});
-
-				newWorkspace.save({}, {
-					success: function(response) {
-						if (response.get("status") == "success") {
-							that.parent.trigger("workspaceAdded", response.get("workspace"));
-						}
-						else {
-							that.$("#create-error-message").html(response.get("message"));
-						}
-					}
-				});
+				Workspace_Services.Insert(title.trim(), function(response) {
+					if (response.status == "success") that.parent.trigger("workspaceAdded", response.workspace);
+					else that.$("#create-error-message").html(response.message);
+				})
 			}
 			else {
 				this.$("#create-error-message").html("Workspaces require a title");
@@ -82,27 +85,48 @@ function() {
 		}
 	});
 
+	// ===== View of workspace on main page
+
 	Workspace.ListItem = Backbone.View.extend({
     	el: "<tr>",
 
-		initialize: function() {
+		initialize: function(options) {
 			this.render();
+
+			this.parent = options.parent;
       	},
 
 		render: function(){
 			var that = this;
 
-			$.get("/app/templates/Workspace/listItem.html", function(contents) {
+			$.get("/app/templates/workspace/listItem.html", function(contents) {
 				that.$el.html(_.template(contents, that.model.toJSON()));
 
 				that.afterRender();
+
+				that.bindEvents();
 			}, "text");
 		},
 
 		afterRender: function() {
 			if (!this.model.get("isOwner")) this.$("#workspace-share_" + this.model.get("id"));
+		},
+
+		bindEvents: function() {
+			var that = this;
+
+			this.$el.click(function(e) {
+				e.stopPropagation();
+				e.preventDefault();
+
+				that.parent.trigger("viewWorkspace", that.model.get("id"));
+			});
 		}
 	});
+
+	//////////////////////// Models
+
+	Workspace.Model = Backbone.Model.extend();
 
 	return Workspace;
 });

@@ -19,5 +19,15 @@ function() {
 		});
 	};
 
+	Services.CheckAuthenticated = function(callback) {
+		$.ajax({
+			type: "GET",
+			url: "/checkAuthenticated",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+		});
+	};
+
 	return Services;
 });

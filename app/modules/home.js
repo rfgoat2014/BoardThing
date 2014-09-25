@@ -6,7 +6,9 @@ define([
 function(User, User_Services) {
 	var Home = {};
 
-	// ---------- Views
+	//////////////////////// Views
+
+	// ===== View when you first come to BoardThing
 
 	Home.Splash = Backbone.View.extend({
     	el: "<div>",
@@ -38,6 +40,8 @@ function(User, User_Services) {
 			Backbone.history.navigate("login", true);
 		}
 	});
+
+	// ===== View allowing user login to BoardThing
 
 	Home.Login = Backbone.View.extend({
     	el: "<div>",
@@ -107,6 +111,8 @@ function(User, User_Services) {
 			}
 		}
 	});
+
+	// ===== View allowing user sign up to BoardThing
 
 	Home.SignUp = Backbone.View.extend({
     	el: "<div>",

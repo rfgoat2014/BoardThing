@@ -49,7 +49,6 @@ exports.insert = function (req, res) {
 
 	var board = new Board({ 
 		workspace: req.params.id,
-	    owner: req.user._id,
 		title: req.body.title,
 	    created: new Date(),
     	lastModified: new Date()

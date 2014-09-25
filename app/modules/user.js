@@ -2,7 +2,7 @@ define([],
 function() {
 	var User = {};
 
-	// ---------- Models
+	//////////////////////// Models
 
 	User.Model = Backbone.Model.extend({
 		url: function() {
