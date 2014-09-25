@@ -273,6 +273,7 @@ exports.insert = function (req, res) {
 			var board = new Board({ 
 				workspace: newWorkspace._id,
 				title: req.body.title,
+				position: "1.1",
 			    created: new Date(),
 		    	lastModified: new Date()
 			});

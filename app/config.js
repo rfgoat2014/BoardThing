@@ -8,6 +8,7 @@ require.config({
 		"jqueryUI": "/libs/jquery-ui.min",
     	"cookies": "/libs/jquery.cookie",
 		"backbone": "/libs/backbone",
+		"raphael": "/libs/raphael-min",
 	},
 	shim: {
 		"jqueryUI": {

@@ -1,13 +1,14 @@
 define([
+	"modules/boardMap",
 	"modules/workspace.services"
 ],
 
-function(Workspace_Services) {
+function(BoardMap, Workspace_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
 
-	// ===== View for an access
+	// ===== View for viewing a workdspace
 
 	Workspace.Index = Backbone.View.extend({
 		el: "<div>",
@@ -16,12 +17,24 @@ function(Workspace_Services) {
 			this.render();
 		},
 
-		render: function(){
+      	events: {
+      		"click #view-board-map": "viewBoardMap"
+      	},
+
+		render: function() {
 			var that = this;
 
 			$.get("/app/templates/workspace/index.html", function(contents) {
 				that.$el.html(_.template(contents, that.model.toJSON()));
 			}, "text");
+		},
+
+		viewBoardMap: function() {
+			this._boardMap = new BoardMap.Index({ model: this.model});
+
+			console.log(this._boardMap.el)
+			this.$("#overlay").html(this._boardMap.el);
+			this.$("#overlay").show();
 		}
 	});
 
