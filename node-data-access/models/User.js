@@ -5,7 +5,6 @@ var mongoose = require('mongoose')
 var UserSchema = new Schema({
     id: ObjectId, // the id of the user
     sessionId: {type: String, default: ''}, // the session id that is assigned to the user
-    active: {type: Boolean, default: false }, // whether this user is active or not
     username: {type: String, default: ''}, // the username of the user, generally firstname lastname
     email: {type: String, default: ''}, // the email of the user. this must be unique for each user
     password: {type: String, default: ''}, // the password of the user. This is sorted hashed

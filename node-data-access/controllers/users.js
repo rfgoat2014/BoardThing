@@ -18,7 +18,7 @@ exports.getByEmail = function (email, callback) {
 				var user = users[i];
 
 				// check if the users email exactly matches the one provided. the irreguar characters sometimes provide false positives
-				if ((user) && (user.email) && (email) && (user.email.trim().toLowerCase() == email.trim().toLowerCase()) && (user.active)) {
+				if ((user) && (user.email) && (email) && (user.email.trim().toLowerCase() == email.trim().toLowerCase())) {
 					userFound = true;
 
 					// return the found user
@@ -51,8 +51,8 @@ exports.getById = function (id, callback) {
 			callback(err, null);
 		}
 		else {
-			// check that this user exists and their account is active
-			if ((user) && (user.active)) {
+			// check that this user exists
+			if (user) {
 				var returnUser = {
 					_id: user._id,
 					sessionId: user.sessionId,
@@ -81,8 +81,8 @@ exports.getBySessionId = function (id, callback) {
 			callback(err, null);
 		}
 		else {
-			// check that this user exists and their account is active
-			if ((user) && (user.active)) {
+			// check that this user exists
+			if (user) {
 				var returnUser = {
 					_id: user._id,
 					sessionId: user.sessionId,
@@ -188,10 +188,10 @@ exports.sendUserPassword = function(req,res) {
 exports.insert = function (req, res) {
 	// build the new user details
 	var user = new User({ 
-	    username: req.body.username,
-	    email: req.body.email,
-	    note: req.body.note,
-	    active: false
+	    username: req.body.username.trim(),
+	    email: req.body.email.trim(),
+	    password: security.hashPassword(req.body.password),
+	    note: req.body.note
 	});
 
 	// attempt to find any other users with the same email. user emails must be unique
@@ -220,53 +220,6 @@ exports.insert = function (req, res) {
 					});
 				}
 				else {
-					// create a welcome board for a newly created user
-					var welcomeBoard = new Board(Example.getWelcomeBoard(savedUser._id));
-					
-					welcomeBoard.save(function (err, newWelcomeBoard) {
-						if (err) {
-							dataError.log({
-								model: __filename,
-								action: "insert",
-								msg: "Error saving welcome board",
-								err: err,
-								res: res
-							});
-						}
-						else {
-							// get the cards required for a welcome board
-							var welcomeBoardCards = Example.getWelcomeBoardCards(newWelcomeBoard._id);
-
-							// create and save the welcome board cards
-							for (var i=0, welcomeBoardCardsLength=welcomeBoardCards.length; i<welcomeBoardCardsLength; i++) {
-								var card = new Card(welcomeBoardCards[i]);
-								card.save();
-							}
-
-							// we need to create the images for the welcome board in the amazon bucket
-    						var fs = require('fs');
-    						var mime = require('mime');
-
-							var amazonClient = authenticateAmazonS3();
-
-    						var files = fs.readdirSync("./views/img/example-board");
-
-    						for (var i=0, filesLength=files.length; i<files.length; i++) {
-    							var fileContent = fs.readFileSync("./views/img/example-board/" + files[i]);
-
-    							var fileReq = amazonClient.put(newWelcomeBoard._id + "/" + files[i], {
-									'Content-Length': fileContent.length,
-									'Content-Type': mime.lookup(files[i])
-								});
-
-								fileReq.end(fileContent);
-							}
-						}
-					});
-
-					// send a message to the BoardThing administrators to let them know that a new user has joined
-			        email.sendTeamMsg(config.emailFromAddress, "New user request", "A new user has requested access to BoardThing\n\r\n\r" + config.adminUrl);
-		        	
 		        	res.send({ status: "success", user: savedUser });
 		        }
 			});

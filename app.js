@@ -253,6 +253,8 @@
 // Actions for user authentication
 
 	app.post("/auth", function(req, res, next) {
+		if (req.isAuthenticated()) req.logout();
+
 		passport.authenticate("local", function(err, user, info) {
 			if (err) {
 				return res.send({ status: "failed", message: err.message});

@@ -166,31 +166,23 @@ function(User, User_Services) {
 					var emailFilter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 		
 					if (emailFilter.test(email)) {
-						var newUser = new User.Model({
-						    username: username.trim(),
-						    email: email.trim(),
-						    password: password
-						});
-
-						newUser.save({}, {
-							success: function(response) {
-								if (response.get("status").trim().toLowerCase() == "success") {
-									User_Services.Athenticate(email, password, function(loginResponse) {
-										if (loginResponse.status == "success") {
-											Backbone.history.navigate("/main", true);
-										}
-										else {
-											that.$("#password").val("");
-											that.$("#password-confirm").val("");
-											that.$("#login-error-message").html(loginResponse.message);
-										}
-									});
-								}
-								else {
-									that.$("#password").val("");
-									that.$("#password-confirm").val("");
-									that.$("#signup-error-message").html(response.message);
-								}
+						User_Services.Insert(username, email, password, function(response) {
+							if (response.status.trim().toLowerCase() == "success") {
+								User_Services.Athenticate(email, password, function(loginResponse) {
+									if (loginResponse.status == "success") {
+										Backbone.history.navigate("/main", true);
+									}
+									else {
+										that.$("#password").val("");
+										that.$("#password-confirm").val("");
+										that.$("#login-error-message").html(loginResponse.message);
+									}
+								});
+							}
+							else {
+								that.$("#password").val("");
+								that.$("#password-confirm").val("");
+								that.$("#signup-error-message").html(response.message);
 							}
 						});
 					}
