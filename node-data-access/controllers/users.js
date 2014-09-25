@@ -186,6 +186,8 @@ exports.sendUserPassword = function(req,res) {
 
 // ===== Action to create a new user
 exports.insert = function (req, res) {
+	if (req.isAuthenticated()) req.logout();
+
 	// build the new user details
 	var user = new User({ 
 	    username: req.body.username.trim(),
