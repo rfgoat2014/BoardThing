@@ -117,130 +117,176 @@ exports.getAll = function (req, res) {
 	});
 }
 
-// ===== Action to retreive all the details of a selected workspace
+/* ===== Action to retreive all the details of a selected workspace 
+   ok, this is a little complex. workspaces can either be retrieved by general workspace id or jump or jump directly
+   to a specific board. So, first we check if it's a board id and if that doesn't link to anything we assume it's a workspace
+   id. Finally we process the workspace once we have checked for both options
+*/
 exports.get = function (req, res) {
-	var moment = require("moment");
-
-	Workspace
+	// check if this is a link to a board
+	Board
 	.findById(req.params.id)
+	.select("_id workspace")
+	.exec(function(err, board) {
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "getAll",
+				msg: "Error retrieving boards",
+				err: err,
+				res: res
+			});
+		}
+		else if (board) {
+			// this was a link to a board so retrieve it's parent workspace
+			getWorkspace(res, req, board.workspace, req.params.id, buildReturnWorkspace);
+		}
+		else {
+			// this wasn't a link to a board so attempt to get the workspace
+			getWorkspace(res, req, req.params.id, null, buildReturnWorkspace);	
+		}
+	});
+};
+
+// ===== Retrieve a workspace based on a given id and pass the results on to a provided callback
+var getWorkspace = function(res, req, workspaceId, startingBoardId, callback) {
+	Workspace
+	.findById(workspaceId)
 	.select("_id owner title isPrivate password created")
 	.exec(function(err, workspace) {
 		if (err) {
 			dataError.log({
 				model: __filename,
 				action: "get",
-				msg: "Error retrieving workspace for id: " + req.params.id,
-				err: err,
-				res: res
+				msg: "Error retrieving workspace for id: " + workspaceId,
+				err: err
 			});
+
+			return callback(res, req, null);
 		}
 		else if (workspace) {
-			// put together the details of the wordspace requested
-			var returnWorkspace = {
-				id: workspace._id,
-			    owner: workspace.owner,
-			    isOwner: ((req.isAuthenticated()) && (req.user._id.toString() == workspace.owner.toString())),
-			    title: workspace.title,
-			    boards: [],
-			    isPrivate: workspace.isPrivate,
-			    created: workspace.created,
-		    	createdAt: moment(workspace.created).fromNow()
-			};
+			// a workspace must load with a starting board. Set that board if we know it at this points
+			workspace.startBoardId = startingBoardId;
 
-			// only include the workspace password if this is the workspace ower requesting it
-			if (returnWorkspace.isOwner) returnWorkspace.password = workspace.password;
+			callback(res, req, workspace);	
+        }
+        else {
+			callback(res, req, null);
+        }
+	});
+};
 
-			// find all the boards belonging to selected workspace
-			Board
-			.find({ workspace: workspace._id })
-			.select("_id title created lastModified")
-			.exec(function(err, boards) {
-				if (err) {
-					dataError.log({
-						model: __filename,
-						action: "getAll",
-						msg: "Error retrieving boards",
-						err: err,
-						res: res
-					});
+var buildReturnWorkspace = function(res, req, workspace) {
+	var moment = require("moment");
+
+	if (workspace) {
+		// put together the details of the wordspace requested
+		var returnWorkspace = {
+			id: workspace._id,
+		    startBoardId: workspace.startBoardId,
+		    owner: workspace.owner,
+		    isOwner: ((req.isAuthenticated()) && (req.user._id.toString() == workspace.owner.toString())),
+		    title: workspace.title,
+		    boards: [],
+		    isPrivate: workspace.isPrivate,
+		    created: workspace.created,
+	    	createdAt: moment(workspace.created).fromNow()
+		};
+
+		// only include the workspace password if this is the workspace ower requesting it
+		if (returnWorkspace.isOwner) returnWorkspace.password = workspace.password;
+
+		Board
+		.find({ workspace: workspace._id })
+		.select("_id title created lastModified")
+		.exec(function(err, boards) {
+			if (err) {
+				dataError.log({
+					model: __filename,
+					action: "getAll",
+					msg: "Error retrieving boards",
+					err: err,
+					res: res
+				});
+			}
+			else if (boards) {
+				// add the boards owned by the currently logged in user to the list of boards to return
+				for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
+					var lastModified = "";
+
+					if (boards[i].lastModified) lastModified = moment(boards[i].lastModified).fromNow();
+
+					var returnBoard = {
+						id: boards[i]._id,
+					    title: boards[i].title,
+					    created: boards[i].created,
+					    lastModified: lastModified
+					};
+
+					returnWorkspace.boards.push(returnBoard);
+
+					if ((!returnWorkspace.startBoardId) && (boards[i].position == "1.1")) returnWorkspace.startBoardId = boards[i]._id;
 				}
-				else {
-					// add the boards owned by the currently logged in user to the list of boards to return
-					for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-						var lastModified = "";
+			}
 
-						if (boards[i].lastModified) lastModified = moment(boards[i].lastModified).fromNow();
+			// check if the request is from an authenticated user and if so if it's not workspace board owner. we want to add this workspace to the users shared workspaces
+			if ((req.isAuthenticated()) && (workspace.owner.toString() != req.user._id.toString())) {
+				// retrieve the user that is reqesting access to the workspace
+				User
+				.findById(req.user._id)
+				.exec(function(err, user) {
+					if (err) dataError.log({
+						model: __filename,
+						action: "get",
+						msg: "Error retrieving user",
+						err: err
+					});
+					else if (user) {
+						// check that if this is a private workspace. private workspace aren't added to a users list of shared workspace
+						if (!workspace.isPrivate) {
+							var workspaceSaved = false;
 
-						var returnBoard = {
-							id: boards[i]._id,
-						    title: boards[i].title,
-						    created: boards[i].created,
-						    lastModified: lastModified
-						};
-
-						returnWorkspace.boards.push(returnBoard);
-					}
-
-					// check if the request is from an authenticated user and if so if it's not workspace board owner. we want to add this workspace to the users shared workspaces
-					if ((req.isAuthenticated()) && (workspace.owner.toString() != req.user._id.toString())) {
-						// retrieve the user that is reqesting access to the workspace
-						User
-						.findById(req.user._id)
-						.exec(function(err, user) {
-							if (err) dataError.log({
-								model: __filename,
-								action: "get",
-								msg: "Error retrieving user",
-								err: err
-							});
-							else if (user) {
-								// check that if this is a private workspace. private workspace aren't added to a users list of shared workspace
-								if (!workspace.isPrivate) {
-									var workspaceSaved = false;
-
-									// check if this user already has the selected board in their list of shared boards
-									for (var i=0, userSharedBoardsLength = user.sharedWorkspaces.length; i<userSharedBoardsLength; i+=1) {
-										if ((user.sharedWorkspaces[i]) && (user.sharedWorkspaces[i]._id.toString() == req.params.id.toString())) {
-											workspaceSaved = true;
-											break;
-										}
-									}
-
-									// if they currently don't have the workspace in their list of shared workspace then add it
-									if (!workspaceSaved) {
-										user.sharedWorkspaces.push(req.params.id);
-										user.save();
-									}
+							// check if this user already has the selected board in their list of shared boards
+							for (var i=0, userSharedBoardsLength = user.sharedWorkspaces.length; i<userSharedBoardsLength; i+=1) {
+								if ((user.sharedWorkspaces[i]) && (user.sharedWorkspaces[i]._id.toString() == req.params.id.toString())) {
+									workspaceSaved = true;
+									break;
 								}
-
-			       				res.send({ status: "success", workspace: returnWorkspace });
-					        }
-					        else {
-					        	dataError.log({
-									model: __filename,
-									action: "get",
-									msg: "Unable to find user"
-								});
-
-			       				res.send({ status: "success", workspace: returnWorkspace });
 							}
+
+							// if they currently don't have the workspace in their list of shared workspace then add it
+							if (!workspaceSaved) {
+								user.sharedWorkspaces.push(req.params.id);
+								user.save();
+							}
+						}
+
+	       				res.send({ status: "success", workspace: returnWorkspace });
+			        }
+			        else {
+			        	dataError.log({
+							model: __filename,
+							action: "get",
+							msg: "Unable to find user"
 						});
+
+	       				res.send({ status: "success", workspace: returnWorkspace });
 					}
-					else {
-			       		res.send({ status: "success", workspace: returnWorkspace });
-					}
-		        }
-			});
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "get",
-				msg: "Unable to find board " + req.params.id,
-				res: res
-			});
-		}
-    });
+				});
+			}
+			else {
+	       		res.send({ status: "success", workspace: returnWorkspace });
+			}
+		});
+	}
+	else {
+		dataError.log({
+			model: __filename,
+			action: "get",
+			msg: "Unable to retrieve workspace",
+			res: res
+		});
+	}
 };
 
 // ===== Actions to create a new board
