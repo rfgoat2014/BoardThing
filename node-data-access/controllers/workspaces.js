@@ -198,7 +198,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 
 		Board
 		.find({ workspace: workspace._id })
-		.select("_id title created lastModified")
+		.select("_id title position created lastModified")
 		.exec(function(err, boards) {
 			if (err) {
 				dataError.log({
@@ -219,6 +219,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 					var returnBoard = {
 						id: boards[i]._id,
 					    title: boards[i].title,
+					    position: boards[i].position,
 					    created: boards[i].created,
 					    lastModified: lastModified
 					};

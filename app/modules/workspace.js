@@ -32,7 +32,6 @@ function(BoardMap, Workspace_Services) {
 		viewBoardMap: function() {
 			this._boardMap = new BoardMap.Index({ model: this.model});
 
-			console.log(this._boardMap.el)
 			this.$("#overlay").html(this._boardMap.el);
 			this.$("#overlay").show();
 		}
