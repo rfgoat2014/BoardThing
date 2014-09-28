@@ -176,6 +176,14 @@ function() {
 			}
 		}
 
+		this.bringToFront = function() {
+			that._paper.set(that._svgShape, that._svgText).toFront();
+		}
+
+		this.sendToBack = function() {
+			that._paper.set(that._svgShape, that._svgText).toBack();
+		}
+
 		this.getIsDragging = function() {
 			return that._isDragging;
 		}
@@ -218,6 +226,9 @@ function() {
 				that._svgShape = that._paper.rect(rectStartX, rectStartY, that._width, that._height).attr({ fill: "#ffffff" });	
 				that._svgText = that._paper.text(txtStartX, txtStartY, that._name);
 
+				that._svgText.toBack();
+				that._svgShape.toBack();
+
 				that._paper.set(that._svgShape, that._svgText).drag(that.move, that.start, that.up);
 				that._paper.set(that._svgShape, that._svgText).mouseover(that.mouseOver);
 				that._paper.set(that._svgShape, that._svgText).mouseout(that.mouseOut);
@@ -227,8 +238,11 @@ function() {
 		// ----- Handler for the start of a drag action for this board object
 		this.start = function() {
 			that._isDragging = true;
-			
+
         	that.clearAddButtons();
+			
+			that._svgShape.toFront();
+			that._svgText.toFront();
 		};
 
 		// ----- Handler for moving a board around the board map
