@@ -438,6 +438,36 @@ exports.updatePassword = function (req, res) {
 	});
 };
 
+// ===== Actions to update the password of a workspace, which will set it as private or public
+exports.updateBoardPositions = function (req, res) {
+	Board
+	.find({ workspace: req.params.id })
+	.select("_id position")
+	.exec(function(err, boards) {
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "getAll",
+				msg: "Error retrieving boards",
+				err: err,
+				res: res
+			});
+		}
+		else if (boards) {
+			var boardPositions = req.body.boardPositions;
+
+			for (var i=0, boardsLength=boards.length; i<boards.length; i+=1) {
+				for (var j=0, boardPositionsLength=boardPositions.length; j<boardPositions.length; j+=1) {
+					if (boards[i]._id.toString() == boardPositions[j].boardId.toString()) {
+						boards[i].position = boardPositions[j].position;
+						boards[i].save();
+						break;
+					}
+				}
+			}
+		}
+	});
+};
 
 // Lets not worry about the save as and export until we're further down the line
 /* // ===== The action to save a selected board as a new board with a different name

@@ -38,5 +38,18 @@ function() {
 		});
 	};
 
+	Workspace.UpdateBoardPositions = function(id, boardPositions, callback) {
+		$.ajax({
+			type: "PUT",
+			url: "/workspaces/boardPositions/" + id,
+			data: {
+				boardPositions: boardPositions
+			},
+			success: function(response) {
+				if (callback) callback(response);
+			}
+		});
+	};
+
 	return Workspace;
 });

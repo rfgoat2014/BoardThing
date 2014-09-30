@@ -1,8 +1,9 @@
 define([
-	"raphael"
+	"raphael",
+	"modules/workspace.services"
 ],
 
-function() {
+function(raphael, Workspace_Services) {
 	var BoardMap = {};
 
 	//////////////////////// Views
@@ -110,11 +111,20 @@ function() {
         		this._boards[sourceBoardIndex].setPosition(newSourceBoardPosition);
         		this._boards[targetBoardIndex].setPosition(newTargetBoardPosition);
         		this._boards[targetBoardIndex].draw();
-
         	}
 		},
 
 		storeBoardPositions: function() {
+            var boardPositions = [];
+
+            for (var i=0, boardsLength = this._boards.length; i<boardsLength; i+=1) {
+            	boardPositions.push({
+            		boardId: this._boards[i].getId(),
+            		position: this._boards[i].getPosition()
+            	});
+            }
+
+            Workspace_Services.UpdateBoardPositions(this.model.get("id"), boardPositions);
 		}
 	});
 
@@ -144,6 +154,10 @@ function() {
 		this._isDragging = false;
 
 		this._addBoardButtons = [];
+
+		this.getId = function() {
+			return this._id;
+		}
 
 		// ----- Gets the position of the board. This takes the form xGridReference/yGridReference
 		this.getPosition = function() {
@@ -201,6 +215,15 @@ function() {
 
 			return false;
 		};
+
+		this.getBounds = function() {
+			return {
+				startX: ((that._xPos-1)*that._width),
+				endX: (((that._xPos-1)*that._width)+that._width),
+				startY: ((that._yPos-1)*that._height),
+				endY: (((that._yPos-1)*that._height)+that._height)
+			};
+		}
 
 		this.draw = function() {
 			if (!that._isDragging) {
@@ -290,6 +313,8 @@ function() {
         // ----- Handler for when the mouse hovers over the board object
         this.mouseOver = function(e) {
         	if (!that._parent.isBoardDragging()) {
+				that.clearAddButtons();
+
 				// check which spots n/s/e/w relative to the current board are available for new baords to be added
 				var availableAddBoardPositions = that._parent.getAvailableAddSpots(that._id, that._xPos, that._yPos);
 
@@ -308,7 +333,9 @@ function() {
 
         // Handler for when the mouse leaves the board object
         this.mouseOut = function(e) {
-        	that.clearAddButtons();
+        	var boardBounds = that.getBounds();
+
+        	if ((e.offsetX < boardBounds.startX) || (e.offsetX > boardBounds.endX) || (e.offsetY < boardBounds.startY) || (e.offsetY > boardBounds.endY)) that.clearAddButtons();
         }
 
         this.clearAddButtons = function() {
@@ -317,6 +344,7 @@ function() {
 				if (that._addBoardButtons[i]) {
 					that._addBoardButtons[i].undraw();
 					that._addBoardButtons[i] = null;
+
 				}
 			}
 
@@ -324,7 +352,7 @@ function() {
         }
 	}
 
-	//
+	// ===== Generates the add board buttons on the board map
 
 	BoardMap.BoardAdd = function(parent, paper, placement, parentPosition, parentWidth, parentHeight) {
 		var that = this;
@@ -343,39 +371,43 @@ function() {
 		this._parentHeight = parentHeight;
 
 		this._imageLocation = "/img/addBoard.png"
-		this._width = 9;
-		this._height = 9;
+		this._width = 15;
+		this._height = 15;
 
 		this._svgShape = null;
+		this._isOver = false;
 
 		this.draw = function() {
-			if (!that._svgShape) {
-				var rectStartX = (that._parentXPos-1)*that._parentWidth,
-					rectStartY = (that._parentYPos-1)*that._parentHeight;
+			var rectStartX = (that._parentXPos-1)*that._parentWidth,
+				rectStartY = (that._parentYPos-1)*that._parentHeight;
 
-				switch(this._placement) {
-					case "north":
-					that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+(that._parentWidth/2))-(that._width/2)), (rectStartY-(that._height/2)), that._width, that._height);
-					break;
-					case "south":
-					that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+(that._parentWidth/2))-(that._width/2)), ((rectStartY+that._parentHeight)-(that._height/2)), that._width, that._height);
-					break;
-					case "east":
-					that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+that._parentWidth)-(that._width/2)), ((rectStartY+(that._parentHeight/2))-(that._height/2)), that._width, that._height);
-					break;
-					case "west":
-					that._svgShape = that._paper.image(that._imageLocation, (rectStartX-(that._width/2)), ((rectStartY+(that._parentHeight/2))-(that._height/2)), that._width, that._height);
-					break;
-				}
+			switch(this._placement) {
+				case "north":
+				that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+(that._parentWidth/2))-(that._width/2)), (rectStartY-(that._height/2)), that._width, that._height);
+				break;
+				case "south":
+				that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+(that._parentWidth/2))-(that._width/2)), ((rectStartY+that._parentHeight)-(that._height/2)), that._width, that._height);
+				break;
+				case "east":
+				that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+that._parentWidth)-(that._width/2)), ((rectStartY+(that._parentHeight/2))-(that._height/2)), that._width, that._height);
+				break;
+				case "west":
+				that._svgShape = that._paper.image(that._imageLocation, (rectStartX-(that._width/2)), ((rectStartY+(that._parentHeight/2))-(that._height/2)), that._width, that._height);
+				break;
 			}
-			else {
-				that.show();
-			}
+
+			that._svgShape.toFront();
+
+			that._paper.set(that._svgShape).mouseout(that.mouseOut);
 		}
 
 		this.undraw = function() {
 			if (that._svgShape) that._svgShape.remove();
 		}
+
+        this.mouseOut = function(e) {
+       		that._parent.clearAddButtons();
+        }
 	}
 
 	return BoardMap;

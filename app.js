@@ -638,6 +638,27 @@
 
 	app.post("/workspaces/authenticate/:id", workspaces.authenticateWorkspace);
 
+	app.put("/workspaces/boardPositions/:id", function(req,res) {
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) {
+					workspaces.updateBoardPositions(req,res);
+				}
+				else {
+					dataError.log({
+						model: "boards",
+						action: "update",
+						msg: "Unauthorized access",
+						res: res
+					});
+				}
+			});
+		}
+		else {
+			workspaces.updateBoardPositions(req,res);
+		}
+	});
+
 // Actions for manipulating boards
 
 	// Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
