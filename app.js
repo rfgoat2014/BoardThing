@@ -659,6 +659,27 @@
 		}
 	});
 
+	app.post("/workspaces/boards/:id", function(req,res) {
+		if (!req.isAuthenticated()) {
+			checkAuthenticated(req, res, function(user) {
+				if (user) {
+					boards.insert(req,res);
+				}
+				else {
+					dataError.log({
+						model: "boards",
+						action: "insert",
+						msg: "Unauthorized access",
+						res: res
+					});
+				}
+			});
+		}
+		else {
+			boards.insert(req,res);
+		}
+	});
+
 // Actions for manipulating boards
 
 	// Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
@@ -686,27 +707,6 @@
 			boards.export(req,res);
 		}
 	}); */
-
-	app.post("/boards", function(req,res) {
-		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.insert(req,res);
-				}
-				else {
-					dataError.log({
-						model: "boards",
-						action: "insert",
-						msg: "Unauthorized access",
-						res: res
-					});
-				}
-			});
-		}
-		else {
-			boards.insert(req,res);
-		}
-	});
 
 	app.put("/boards/:id", function(req,res) {
 		if (!req.isAuthenticated()) {

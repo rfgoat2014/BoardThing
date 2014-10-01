@@ -45,39 +45,46 @@ exports.getBackground = function (req, res) {
 
 // ===== Actions to create a new board
 exports.insert = function (req, res) {
-	// create and save the new board
+	Board
+	.find({ workspace: req.params.id })
+	.select("_id")
+	.exec(function(err, boards) {
+		// create and save the new board
 
-	var board = new Board({ 
-		workspace: req.params.id,
-		title: req.body.title,
-	    created: new Date(),
-    	lastModified: new Date()
-	});
+		var board = new Board({ 
+			workspace: req.params.id,
+			title: req.body.title,
+		    created: new Date(),
+		    position: (boards.length+1),
+	    	lastModified: new Date()
+		});
 
-	board.save(function (err, newBoard) {
-		if (err) {
-			dataError.log({
-				model: __filename,
-				action: "insert",
-				msg: "Error saving board",
-				err: err,
-				res: res
-			});
-		}
-		else {
-			// return the new baord back to client
+		board.save(function (err, newBoard) {
+			if (err) {
+				dataError.log({
+					model: __filename,
+					action: "insert",
+					msg: "Error saving board",
+					err: err,
+					res: res
+				});
+			}
+			else {
+				// return the new baord back to client
 
-			var returnBoard = new Board({
-				id: newBoard._id, 
-			    workspace: newBoard.workspace,
-			    owner: newBoard.owner,
-				title: newBoard.title,
-			    created: newBoard.created,
-			    lastModified: newBoard.lastModified
-			});
-			
-			res.send({ status: "success", board: returnBoard });
-		}
+				var returnBoard = new Board({
+					id: newBoard._id, 
+				    workspace: newBoard.workspace,
+				    owner: newBoard.owner,
+					title: newBoard.title,
+					position: newBoard.position,
+				    created: newBoard.created,
+				    lastModified: newBoard.lastModified
+				});
+				
+				res.send({ status: "success", board: returnBoard });
+			}
+		});
 	});
 };
 
