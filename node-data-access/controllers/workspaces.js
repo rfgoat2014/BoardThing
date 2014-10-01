@@ -199,6 +199,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 		Board
 		.find({ workspace: workspace._id })
 		.select("_id title position created lastModified")
+		.sort({ position: 'asc' })
 		.exec(function(err, boards) {
 			if (err) {
 				dataError.log({
@@ -226,7 +227,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 
 					returnWorkspace.boards.push(returnBoard);
 
-					if ((!returnWorkspace.startBoardId) && (boards[i].position == "1.1")) returnWorkspace.startBoardId = boards[i]._id;
+					if ((!returnWorkspace.startBoardId) && (boards[i].position == 1)) returnWorkspace.startBoardId = boards[i]._id;
 				}
 			}
 
@@ -320,7 +321,7 @@ exports.insert = function (req, res) {
 			var board = new Board({ 
 				workspace: newWorkspace._id,
 				title: req.body.title,
-				position: "1.1",
+				position: 1,
 			    created: new Date(),
 		    	lastModified: new Date()
 			});
