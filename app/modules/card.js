@@ -1,10 +1,125 @@
 define([
+	"modules/card.services",
+	"modules/workspace.services",
 	"raphael",
-	"modules/workspace.services"
+	"spectrum"
 ],
 
-function(raphael, Workspace_Services) {
+function(Card_Services, Workspace_Services) {
 	var Card = {};
+
+	Card.Add = Backbone.View.extend({
+    	el: "<div>",
+
+		initialize: function(options) {
+    		this.el.id = "card-create-container";
+			
+    		this._isMobile = options.isMobile;
+    		this._parent = options.parent;
+
+			if (this._isMobile) this.el.className = "card-input-container mobile";
+    		else this.el.className = "card-input-container desktop";
+		},
+
+		render: function() {
+			var that = this;
+
+			$.get("/app/templates/card/add.html", function(contents) {
+				that.$el.html(_.template(contents));
+
+				that.unbind();
+				that.bind();
+			}, "text");
+		},
+
+		unbind: function() {
+	    	this.$("#card-color-select").spectrum("destroy");
+
+			this.$el.unbind("click");
+			this.$("#cancel-card").unbind("click");
+			this.$("#post-card").unbind("click");
+			this.$("#card-text").unbind("click");
+			this.$("#add-image-btn").unbind("click");
+		},
+
+		bind: function() {
+			var that = this;
+
+	    	this.$("#card-color-select").spectrum({
+			    color: this._parent.getSelectedColor(),
+			    showInput: true,
+			    className: "card-color-spectrum",
+			    showInitial: true,
+			    showPaletteOnly: true,
+			    showPalette:true,
+			    maxPaletteSize: 10,
+			    preferredFormat: "hex",
+			    localStorageKey: "spectrum.boardthing.card",
+			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"]
+			});
+			
+  			$(this.el).click(function(e) {
+				e.stopPropagation();
+  			});
+
+			this.$("#cancel-card").click(function(event) {
+				event.stopPropagation();
+				
+				that.options.board.hideAddCard();
+			});
+
+			this.$("#post-card").click(function(event) {
+				event.stopPropagation();
+				
+				that.saveCard();
+			});
+
+			this.$("#card-text").keypress(function(event) {
+				that.checkCardInput(event);
+			});
+
+			this.$("#add-image-btn").click(function() {
+				that.options.board.addImage();
+			});
+		},
+
+	 	checkCardInput: function(event) {
+	        if ((event) && (!event.shiftKey) && (event.keyCode == 13)) {
+	        	event.preventDefault();
+
+	        	this.saveCard();
+	        }
+	 	},
+
+		saveCard: function() {
+			var that = this;
+
+			if (this.$("#card-text").val().trim().length > 0) {
+				var newCard = {
+					content: this.$("#card-text").val(),
+					color: this.$("#card-color-select").spectrum("get").toString()
+				};
+
+				Card_Services.Insert(this._parent.getSelectedBoardId(), newCard, function(response) {
+					console.log(response)
+				});
+			}
+
+			this._parent.hideAddCard();
+		},
+
+		focusCardText: function() {
+			this.$("#card-text").focus();
+		},
+
+		clearCardText: function() {
+			this.$("#card-text").val("");
+		},
+
+		setSelectedColor: function(color) {
+			this.$("#card-color-select").spectrum("set", color);
+		}
+	});
 
 	// We're going to repurpose this for drawing cards
 	/* // ===== Obect responsible for drawing and manipulating the SVG object on the canvas

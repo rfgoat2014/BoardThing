@@ -9,6 +9,7 @@ require.config({
     	"cookies": "/libs/jquery.cookie",
 		"backbone": "/libs/backbone",
 		"raphael": "/libs/raphael-min",
+    	"spectrum": "/libs/spectrum"
 	},
 	shim: {
 		"jqueryUI": {
@@ -18,6 +19,10 @@ require.config({
 	    "cookie": {
 	        deps: ["jquery"],
 	        exports: "cookies"
+	    },
+	    'spectrum': {
+	        deps: ['jquery'],
+	        exports: 'spectrum'
 	    }
 	}
 });
