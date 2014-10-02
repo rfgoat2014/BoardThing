@@ -1,9 +1,11 @@
 define([
+	"raphael",
 	"modules/boardMap",
+	"modules/card.services",
 	"modules/workspace.services"
 ],
 
-function(BoardMap, Workspace_Services) {
+function(raphael, BoardMap, Card_Services, Workspace_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
@@ -12,6 +14,8 @@ function(BoardMap, Workspace_Services) {
 
 	Workspace.Index = Backbone.View.extend({
 		el: "<div>",
+		_paper: null,
+		_selectedBoard: null,
 
 		initialize: function(options) {
 			this.render();
@@ -25,8 +29,73 @@ function(BoardMap, Workspace_Services) {
 			var that = this;
 
 			$.get("/app/templates/workspace/index.html", function(contents) {
-				that.$el.html(_.template(contents, that.model.toJSON()));
+				var boards = that.model.get("boards");
+
+				for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
+					if ((that.model.get("startBoardId")) && (that.model.get("startBoardId").toString() == boards[i].id.toString())) that._selectedBoard = boards[i];
+					else if ((!that.model.get("startBoardId")) && (boards[i].position == 1)) that._selectedBoard = boards[i];
+				
+					if (that._selectedBoard) break;
+				}
+
+				if ((!that._selectedBoard) && (boards.length > 0)) that._selectedBoard = boards[0];
+				else if (!that._selectedBoard) that._selectedBoard = { id: "", title: "", cards: [] };
+
+				that.$el.html(_.template(contents, that._selectedBoard));
+			
+				that.afterRender();
 			}, "text");
+		},
+
+		afterRender: function() {
+			var that =this;
+
+			this.setupBoard();
+
+			var boards = this.model.get("boards");
+
+			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
+				Card_Services.Get(boards[i].id, function(response) {
+					if (response.status == "success") {
+						for (var j=0, boardsLength=boards.length; j<boardsLength; j+=1) {
+							if (response.board.id.toString() == boards[j].id.toString()) {
+								boards[j].cards = response.board.cards;
+								break;
+							}
+						}
+
+						if (response.board.id.toString() == that._selectedBoard.id.toString()) {
+							that._selectedBoard.cards = response.board.cards;
+						
+							that.drawBoard();
+						}
+					}
+				});
+			}
+		},
+
+		setupBoard: function() {
+			if (this._paper) {
+				this._paper.remove();
+				this._paper = null;
+			}
+			
+			this.$("#board").empty();
+
+			this.$("#board").width(this._selectedBoard.width);
+			this.$("#board").height(this._selectedBoard.height);
+
+			var overflowWidth = this._selectedBoard.width - $(window).width(),
+				overflowHeight = this._selectedBoard.height - $(window).height();
+
+			if (overflowWidth > 0) this.$("#board-container").scrollLeft(overflowWidth/2);
+			if (overflowHeight > 0) this.$("#board-container").scrollTop(overflowHeight/2);
+
+			this._paper = Raphael(document.getElementById("board"), this._selectedBoard.width, this._selectedBoard.height);
+		},
+
+		drawBoard: function() {
+			console.log("Drawing Cards");
 		},
 
 		viewBoardMap: function() {

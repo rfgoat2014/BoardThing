@@ -93,7 +93,12 @@ exports.get = function (req, res) {
 						attachChildCards(returnCards[i],childCards);
 					}
 
-					res.send({ status: "success", cards: returnCards });
+					var board = {
+						id: req.params.boardId,
+						cards: returnCards
+					};
+
+					res.send({ status: "success", board: board });
 				});
 			}
     		else {

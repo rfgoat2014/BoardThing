@@ -4,7 +4,7 @@ define([
 
 function() {
 	var Board = {};
-
+	
 	Board.Insert = function(id, title, callback) {
 		$.ajax({
 			type: "POST",

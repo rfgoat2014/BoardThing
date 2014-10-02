@@ -43,8 +43,6 @@ function(jquery, jqueryUI, Board, Board_Services, Workspace_Services) {
             	this._boards.push(new BoardMap.Board({ model: new Board.Model(boards[i]), parent: this }));
             }
 
-            this._addBoardMap = new BoardMap.AddBoard({ parent: this });
-
             this.drawBoardMap();
 		},
 
@@ -83,10 +81,14 @@ function(jquery, jqueryUI, Board, Board_Services, Workspace_Services) {
 		drawBoardMap: function(unbind) {
 			this.$("#board-map-container").empty();
 
+			this._boards.sort(function (a, b) { return a.getBoardPosition() > b.getBoardPosition() ? 1 : a.getBoardPosition() < b.getBoardPosition() ? -1 : 0; });
+
             for (var i=0, boardsLength = this._boards.length; i<boardsLength; i+=1) {
             	this.$("#board-map-container").append(this._boards[i].el);
             }	
 
+            if (this._addBoardMap) this._addBoardMap.destroy();
+            this._addBoardMap = new BoardMap.AddBoard({ parent: this });
             this.$("#board-map-container").append(this._addBoardMap.el);
 
 			this.bind(unbind);
@@ -160,21 +162,30 @@ function(jquery, jqueryUI, Board, Board_Services, Workspace_Services) {
 			this.render()
 		},
 
-      	events: {
-      		"click #add-board": "addBoard"
-      	},
-
 		render: function() {
 			var that = this;
 
 			$.get("/app/templates/boardMap/addBoard.html", function(contents) {
 				that.$el.html(_.template(contents));
+
+				that.bind();
 			}, "text");
 		},
 
-		addBoard: function() {
-			this._parent.trigger("addBoard");
-		}
+		bind: function() {
+			var that = this;
+
+			this.$("#add-board").unbind("click");
+
+			this.$("#add-board").click(function(e) {
+				that._parent.trigger("addBoard");
+			});
+		},
+
+		destroy: function() {
+			$(this.el).detach();
+			this.remove();
+		},
 	});
 
 	return BoardMap;

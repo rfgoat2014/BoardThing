@@ -752,8 +752,8 @@
 	
 // Actions for manipulating cards and clusters on a board
 
-	app.get("/boards/cards/:boardId", boardCards.get);
-	app.post("/boards/cards/text/:boardId", boardCards.insert);
+	app.get("/workspace/boards/cards/:boardId", boardCards.get);
+	app.post("/workspace/boards/cards/text/:boardId", boardCards.insert);
 	app.put("/boards/cards/text/:boardId/:cardId", boardCards.update);
 	app.delete("/boards/cards/text/:boardId/:cardId", boardCards.delete);
 
