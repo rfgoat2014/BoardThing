@@ -769,7 +769,7 @@
 	app.put("/boards/cards/unlock/:boardId/:cardId", boardCards.unlock);
 
 	app.put("/boards/cards/resize/:boardId/:cardId", boardCards.updateDimensions);
-	app.put("/boards/cards/position/:boardId/:cardId", boardCards.updatePosition);
+	app.put("/workspace/boards/cards/position/:boardId/:cardId", boardCards.updatePosition);
 	app.put("/boards/cards/zindex/:boardId", boardCards.updateZIndex);
 	
 	app.get("/boards/chat/:boardId", chat.get);

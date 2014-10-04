@@ -13,7 +13,7 @@ function(Card_Services, Workspace_Services) {
 
 		initialize: function(options) {
     		this.el.id = "card-create-container";
-			
+
     		this._isMobile = options.isMobile;
     		this._parent = options.parent;
 
@@ -77,10 +77,6 @@ function(Card_Services, Workspace_Services) {
 			this.$("#card-text").keypress(function(event) {
 				that.checkCardInput(event);
 			});
-
-			this.$("#add-image-btn").click(function() {
-				that.options.board.addImage();
-			});
 		},
 
 	 	checkCardInput: function(event) {
@@ -101,7 +97,7 @@ function(Card_Services, Workspace_Services) {
 				};
 
 				Card_Services.Insert(this._parent.getSelectedBoardId(), newCard, function(response) {
-					console.log(response)
+					if (response.status == "success") that._parent.trigger("cardAdded", response.card);
 				});
 			}
 
@@ -121,67 +117,29 @@ function(Card_Services, Workspace_Services) {
 		}
 	});
 
-	// We're going to repurpose this for drawing cards
-	/* // ===== Obect responsible for drawing and manipulating the SVG object on the canvas
-
-	BoardMap.Board = function(parent, paper, id, name, position) {
+	// ===== Obect responsible for drawing and manipulating the SVG object on the canvass
+	Card.Text = function(parent, paper, model) {
 		var that = this;
 
 		this._paper = paper;
 		that._parent = parent;
 
-		this._id = id;
-		this._name = name;
-		this._position = position;
+		this._model = model;
 
-		if (position.split(".").length == 2) {
-			this._xPos = parseInt(position.split(".")[0]);
-			this._yPos = parseInt(position.split(".")[1]);
-		}
+		this._shapeAttributes = {
+			padding: 10,
+			fontSize: 14, 
+			fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif"
+		},
 
-		this._width = 200;
-		this._height = 100;
-
-		this._svgShape = null;
 		this._svgText = null;
+		this._svgShape = null;
+		this._svgDropShadow = null;
 
 		this._isDragging = false;
 
-		this._addBoardButtons = [];
-
-		this.getId = function() {
-			return this._id;
-		}
-
-		// ----- Gets the position of the board. This takes the form xGridReference/yGridReference
-		this.getPosition = function() {
-			if ((that._isDragging) && (that._newPosition)) return that._newPosition;
-			else return that._position;
-		}
-
-		this.getXPos = function() {
-			return this._xPos;
-		}
-
-		this.getYPos = function() {
-			return this._yPos;
-		}
-
-		// ----- Sets the position of of the board on the board map. This is not a literal x/y point position but a grid reference e.g. 1.2
-		this.setPosition = function(position) {
-			if (that._isDragging) {
-				that._newPosition = position;
-			}
-			else {
-				that._position = position;
-
-				var posLocation = position.split(".");
-
-				if (posLocation.length == 2) {
-					that._xPos = parseInt(posLocation[0]);
-					that._yPos = parseInt(posLocation[1]);
-				}
-			}
+		this.getType = function() {
+			return "text";
 		}
 
 		this.bringToFront = function() {
@@ -217,9 +175,27 @@ function(Card_Services, Workspace_Services) {
 				startY: ((that._yPos-1)*that._height),
 				endY: (((that._yPos-1)*that._height)+that._height)
 			};
-		}
+		};
 
 		this.draw = function() {
+			var wrapText = function(text) {
+				var svgText = that._paper.text(100, 100).attr('text-anchor', 'start');
+				svgText.attr({ "font-size": that._shapeAttributes.fontSize, "font-family": that._shapeAttributes.fontFamily });
+
+				var words = text.split(" ");
+
+				var tempText = "";
+
+				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {
+					svgText.attr("text", tempText + " " + words[i]);
+
+					if (svgText.getBBox().width > maxWidth) tempText += "\n" + words[i];
+					else tempText += " " + words[i];
+				}
+
+				return tempText;
+			}
+
 			if (!that._isDragging) {
 				// clear the current SVG shape  representing the board on the board map
 				if (that._svgShape) {
@@ -233,19 +209,55 @@ function(Card_Services, Workspace_Services) {
 					that._svgText = null;
 				}
 
-				// determine the original x/y positions of the board
-				var rectStartX = (that._xPos-1)*that._width,
-					rectStartY = (that._yPos-1)*that._height,
-					txtStartX = rectStartX+(that._width/2),
-					txtStartY = rectStartY+(that._height/2);
+				that._svgText = that._paper.text((that._model.xPos+that._shapeAttributes.padding), (that._model.yPos+that._shapeAttributes.padding));
+				that._svgText.attr({ 
+					"text-anchor": "start",
+					"font-size": that._shapeAttributes.fontSize, 
+					"font-family": that._shapeAttributes.fontFamily 
+				});
+
+				var words = that._model.content.split(" "),
+					maxWidth = that._model.width+(that._shapeAttributes.padding*2),
+					tempText = "";
+
+				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {
+					that._svgText.attr("text", tempText + " " + words[i]);
+
+					if (that._svgText.getBBox().width > maxWidth) tempText += "\n" + words[i];
+					else tempText += " " + words[i];
+				}
+
+				that._svgText.attr({
+					y: ((that._model.yPos+that._shapeAttributes.padding)+(that._svgText.getBBox().height/2))
+				});
+
+				var width = that._svgText.getBBox().width+(that._shapeAttributes.padding*2);
+				if (width < 180) width = 180;
+
+				that._svgShape = that._paper.rect(that._model.xPos, that._model.yPos, width, that._svgText.getBBox().height+(that._shapeAttributes.padding*2));
+				that._svgShape.attr({ 
+					stroke: "none",
+					fill: "#ffffff" 
+				});	
+
+				that._svgDropShadow = that._paper.rect(that._model.xPos, that._model.yPos, width, that._svgText.getBBox().height+(that._shapeAttributes.padding*2));
+				that._svgDropShadow.attr({ 
+					stroke: "none"
+				});	
+
+				that._svgDropShadowGlow = that._svgDropShadow.glow({
+					offsetx: 0.5,
+					offsety: 0.5,
+					opacity: 0.6, 
+					color: "#bbbbbb", 
+					width: 3
+				});
+
+				that._svgDropShadow.toBack();
+				that._svgShape.toFront();
+				that._svgText.toFront();
 
 				// draw the board and it's title on the board map
-				that._svgShape = that._paper.rect(rectStartX, rectStartY, that._width, that._height).attr({ fill: "#ffffff" });	
-				that._svgText = that._paper.text(txtStartX, txtStartY, that._name);
-
-				that._svgText.toBack();
-				that._svgShape.toBack();
-
 				that._paper.set(that._svgShape, that._svgText).drag(that.move, that.start, that.up);
 				that._paper.set(that._svgShape, that._svgText).mouseover(that.mouseOver);
 				that._paper.set(that._svgShape, that._svgText).mouseout(that.mouseOut);
@@ -256,97 +268,74 @@ function(Card_Services, Workspace_Services) {
 		this.start = function() {
 			that._isDragging = true;
 
-        	that.clearAddButtons();
-			
+			that._svgText.startX = that._svgText.attr("x");
+			that._svgText.startY = that._svgText.attr("y");
+
+			that._svgShape.startX = that._svgShape.attr("x");
+			that._svgShape.startY = that._svgShape.attr("y");
+
+			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
+			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
+
+			that._svgDropShadow.toFront();
 			that._svgShape.toFront();
 			that._svgText.toFront();
 		};
 
 		// ----- Handler for moving a board around the board map
 		this.move = function (dx, dy, x, y, e) {
-			// determine the original x/y positions of the board
-			var rectStartX = (that._xPos-1)*that._width,
-				rectStartY = (that._yPos-1)*that._height;
+			that._svgDropShadowGlow.remove();
 
-			// determine the the x/y position of the board
-			var newRectStartX = rectStartX+dx,
-				newRectStartY = rectStartY+dy;
+			that._svgText.attr({
+				x: that._svgText.startX+dx,
+				y: that._svgText.startY+dy
+			});
 
-			// check that we're not going outside the boundries of the SVG
-			if (newRectStartX < 0) newRectStartX = 0;
-			else if ((newRectStartX+that._width) > that._paper.width) newRectStartX = that._paper.width-that._width;
+			that._svgShape.attr({
+				x: that._svgShape.startX+dx,
+				y: that._svgShape.startY+dy
+			});
 
-			if (newRectStartY < 0) newRectStartY = 0;
-			else if ((newRectStartY+that._height) > that._paper.height) newRectStartY = that._paper.height-that._height;
+			that._svgDropShadow.attr({
+				x: that._svgDropShadow.startX+dx,
+				y: that._svgDropShadow.startY+dy
+			});
 
-			// determine the new text position on the board
-			var newTxtStartX = newRectStartX+(that._width/2),
-				newTxtStartY = newRectStartY+(that._height/2);
-
-            that._svgShape.attr({ x: newRectStartX, y: newRectStartY });
-            that._svgText.attr({ x: newTxtStartX, y: newTxtStartY });
-
-            if (that._newPosition) that._parent.boardMoved(newRectStartX,newRectStartY,that._newPosition);
-            else that._parent.boardMoved(newRectStartX,newRectStartY,that._position);
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map
     	this.up = function () {
     		that._isDragging = false;
 
-			if (that._newPosition) {
-				that.setPosition(that._newPosition);
-				that._newPosition = null;
-			}
+			that._svgText.startX = null;
+			that._svgText.startY = null;
 
-			that.draw();
-			
-			that._parent.storeBoardPositions();
+			that._svgShape.startX = null;
+			that._svgShape.startY = null;
+
+			that._svgDropShadow.startX = null;
+			that._svgDropShadow.startY = null;
+
+        	that._parent.trigger("updateCardPosition", that._model.id, that._svgShape.attr("x"), that._svgShape.attr("y"));
         };
 
-        // ----- Handler for when the mouse hovers over the board object
-        this.mouseOver = function(e) {
-        	if (!that._parent.isBoardDragging()) {
-				that.clearAddButtons();
+        this.mouseOver = function() {
+        	that._parent.$("#board").css('cursor','pointer');
+        };
 
-				// check which spots n/s/e/w relative to the current board are available for new baords to be added
-				var availableAddBoardPositions = that._parent.getAvailableAddSpots(that._id, that._xPos, that._yPos);
-
-				if (availableAddBoardPositions.length > 0) {
-					if (availableAddBoardPositions.indexOf("n") != -1) that._addBoardButtons.push(new BoardMap.BoardAdd(that, that._paper, "north", that._position, that._width, that._height));
-					if (availableAddBoardPositions.indexOf("s") != -1) that._addBoardButtons.push(new BoardMap.BoardAdd(that, that._paper, "south", that._position, that._width, that._height));
-					if (availableAddBoardPositions.indexOf("e") != -1) that._addBoardButtons.push(new BoardMap.BoardAdd(that, that._paper, "east", that._position, that._width, that._height));
-					if (availableAddBoardPositions.indexOf("w") != -1) that._addBoardButtons.push(new BoardMap.BoardAdd(that, that._paper, "west", that._position, that._width, that._height));
-				}
-
-				for (var i=0, addBoardButtonsLength = that._addBoardButtons.length; i<addBoardButtonsLength; i+=1) {
-					that._addBoardButtons[i].draw()
-				}
-			}
-        }
-
-        // Handler for when the mouse leaves the board object
-        this.mouseOut = function(e) {
-        	var boardBounds = that.getBounds();
-
-        	if ((e.offsetX < boardBounds.startX) || (e.offsetX > boardBounds.endX) || (e.offsetY < boardBounds.startY) || (e.offsetY > boardBounds.endY)) that.clearAddButtons();
-        }
-
-        this.clearAddButtons = function() {
-			// clear out the current SVG add button icons and empty the container array
-			for (var i=0, addBoardButtonsLength = that._addBoardButtons.length; i<addBoardButtonsLength; i+=1) {
-				if (that._addBoardButtons[i]) {
-					that._addBoardButtons[i].undraw();
-					that._addBoardButtons[i] = null;
-
-				}
-			}
-
-			that._addBoardButtons = [];
-        }
+        this.mouseOut = function() {
+        	that._parent.$("#board").css('cursor','default');
+        };
 	}
 
-	// ===== Generates the add board buttons on the board map
+	/*// ===== Generates the add board buttons on the board map
 
 	BoardMap.BoardAdd = function(parent, paper, placement, parentPosition, parentWidth, parentHeight) {
 		var that = this;

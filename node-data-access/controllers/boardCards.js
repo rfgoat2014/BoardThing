@@ -36,6 +36,12 @@ exports.get = function (req, res) {
 					for (var i = 0, cardLength = cards.length; i < cardLength; i += 1) {
 						// Sanity check that there is a card specified in the position
 						if (cards[i]) {
+							var width = 180,
+								height = "";
+
+							if (cards[i].width) width = cards[i].width;
+							if (cards[i].height) height = cards[i].height;
+
 							var returnCard = null
 
 							// First pass through only capture root cards (those not part of a cluster)
@@ -51,8 +57,8 @@ exports.get = function (req, res) {
 								    isVoting: cards[i].isVoting,
 							        votesReceived: cards[i].votesReceived,
 							        isLocked: cards[i].isLocked,
-									width: cards[i].width,
-									height: cards[i].height,
+									width: width,
+									height: height,
 									xPos: cards[i].xPos,
 									yPos: cards[i].yPos,
 									zPos: cards[i].zPos,
@@ -74,8 +80,8 @@ exports.get = function (req, res) {
 								    isVoting: cards[i].isVoting,
 							        votesReceived: cards[i].votesReceived,
 							        isLocked: cards[i].isLocked,
-									width: cards[i].width,
-									height: cards[i].height,
+									width: width,
+									height: height,
 									xPos: cards[i].xPos,
 									yPos: cards[i].yPos,
 									zPos: cards[i].zPos,
@@ -253,7 +259,7 @@ exports.insert = function (req, res) {
 								cards: []
 							};
 
-				  			res.send({ message: "success", card: returnCard });
+				  			res.send({ status: "success", card: returnCard });
 			  			}
 					});
 				}
@@ -374,7 +380,7 @@ exports.insertImage = function (req, res) {
 												cards: []
 											};
 
-								  			res.send({ message: "success", card: returnCard });
+								  			res.send({ status: "success", card: returnCard });
 										}
 									});
 								}
@@ -494,7 +500,7 @@ exports.downloadImage = function (req, res) {
 													cards: []
 												};
 
-												res.send({ message: "success", card: returnCard });
+												res.send({ status: "success", card: returnCard });
 											}
 										});
 									}
@@ -511,7 +517,7 @@ exports.downloadImage = function (req, res) {
 	  							fileReq.end(data);
 						    }
 						    else {
-								res.send({ message: "failed" });
+								res.send({ status: "failed" });
 						    }
 						});
 					}
@@ -635,7 +641,7 @@ exports.duplicate = function (req, res) {
 											zPos: null,
 										};
 
-										res.send({ message: "success", card: returnCard });
+										res.send({ status: "success", card: returnCard });
 									}
 								});
 							}).end();
@@ -677,7 +683,7 @@ exports.duplicate = function (req, res) {
 										zPos: null,
 									};
 
-									res.send({ message: "success", card: returnCard });
+									res.send({ status: "success", card: returnCard });
 								}
 							});
 						}
@@ -1338,7 +1344,7 @@ exports.updateDimensions = function (req, res) {
 
 // ===== Update the position of the card on a board
 exports.updatePosition = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)

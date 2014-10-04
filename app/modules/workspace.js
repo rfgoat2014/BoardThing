@@ -19,8 +19,14 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 		el: "<div>",
 		_paper: null,
 		_selectedBoard: null,
+		_boardEntities: [],
+		_dropPosition: null,
+	    _cardsDroppedInPosition: 0,
 
 		initialize: function(options) {
+			this.on("cardAdded", this.cardAdded);
+			this.on("updateCardPosition", this.updateCardPosition);
+
 			this.render();
 
 		    // Check if is being viewed on a mobile device
@@ -66,11 +72,6 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 		},
 
 		setupBoard: function() {
-			if (this._paper) {
-				this._paper.remove();
-				this._paper = null;
-			}
-			
 			this.$("#board").empty();
 
 			this.$("#board").width(this._selectedBoard.get("width"));
@@ -81,8 +82,6 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 
 			if (overflowWidth > 0) this.$("#board-container").scrollLeft(overflowWidth/2);
 			if (overflowHeight > 0) this.$("#board-container").scrollTop(overflowHeight/2);
-
-			this._paper = Raphael(document.getElementById("board"), this._selectedBoard.get("width"), this._selectedBoard.get("height"));
 		},
 
 		getBoardItems: function() {
@@ -102,7 +101,7 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 
 						if (response.board.id.toString() == that._selectedBoard.get("id").toString()) {
 							that._selectedBoard.set("cards", response.board.cards);
-						
+
 							that.drawBoardItems();
 						}
 					}
@@ -113,7 +112,35 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 		},
 
 		drawBoardItems: function() {
-			console.log("Drawing Cards");
+			// Clear out the paper if it's already defined
+			if (this._paper) {
+				this._paper.remove();
+				this._paper = null;
+			}
+
+			// Create the SVG paper object
+			this._paper = Raphael(document.getElementById("board"), this._selectedBoard.get("width"), this._selectedBoard.get("height"));
+
+			//Clear out the board entities array. Being really rigorous to stop memory leaks
+			if (this._boardEntities.length > 0) {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					this._boardEntities[i] = null;
+				}
+
+				this._boardEntities = [];
+			}
+
+			// Get all the cards the exist in the selected board and draw them;
+			if (this._selectedBoard.get("cards")) {
+				for (var i=0, boardCardsLength=this._selectedBoard.get("cards").length; i<boardCardsLength; i+=1) {
+					if (this._selectedBoard.get("cards")[i].type == "text") {
+						var newCard = new Card.Text(this, this._paper, this._selectedBoard.get("cards")[i]);
+						newCard.draw();
+
+						this._boardEntities.push(newCard);
+					}
+				}
+			}
 		},
 
 		createAddCardDialog: function() {
@@ -162,6 +189,54 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 			catch (err) {
 				Utils.sendClientError("hideAddCard", err);
 			}
+		},
+
+
+		cardAdded: function(card) {
+    		try {
+				var xPos = Math.floor($(document).width()/2)-90;
+				var yPos = Math.floor($(document).height()/2);
+
+				if (this._dropPosition) {
+					xPos = this._dropPosition.x;
+					yPos = this._dropPosition.y;
+				}
+
+				var newCard = {
+					id: card.id, 
+					parentId: null,
+					type: card.type,  
+					boardId: this._selectedBoard.get("id"),
+					boardOwner: this.model.get("owner"),	
+					title: card.title, 
+					content: card.content, 
+					isLocked: false, 
+					cards: [],
+					created: card.created, 
+					createdDate: new Date(card.created),
+					width: null,
+					height: null,
+					xPos: (xPos + (this._cardsDroppedInPosition*10)),
+					yPos: (yPos + (this._cardsDroppedInPosition*10)),
+					color: card.color
+				};
+
+				this.updateCardPosition(newCard.id, newCard.xPos, newCard.yPos);
+
+	        	this._cardsDroppedInPosition++;
+
+				//this.addCardToBoard(newCard);
+			}
+			catch (err) {
+				Utils.sendClientError("cardAdded", err);
+			}
+		},
+
+		updateCardPosition: function(cardId, x, y) {
+	        Card_Services.UpdatePosition(this._selectedBoard.get("id"), cardId, x, y);
+
+			// Push to socket
+			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.get("id"), card: newCard }));
 		},
 
 		getWorkspaceId: function() {
