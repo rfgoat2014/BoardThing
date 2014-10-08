@@ -109,14 +109,16 @@ function(Card) {
 				});
 
 				var words = that._model.content.split(" "),
-					maxWidth = that._model.width+(that._shapeAttributes.padding*2),
+					maxWidth = that._model.width-(that._shapeAttributes.padding*2),
 					tempText = "";
 
 				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {
 					that._svgText.attr("text", tempText + " " + words[i]);
 
-					if (that._svgText.getBBox().width > maxWidth) tempText += "\n" + words[i];
-					else tempText += " " + words[i];
+					if (that._svgText.getBBox().width > maxWidth) tempText = tempText + "\n" + words[i];
+					else tempText = tempText + " " + words[i];
+
+					that._svgText.attr("text", tempText);
 				}
 
 				that._svgText.attr({
