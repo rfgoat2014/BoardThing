@@ -1,6 +1,7 @@
 define([
 	"modules/board",
 	"modules/card",
+	"modules/cluster",
 	"modules/boardMap",
 	"modules/utils",
 	"modules/card.services",
@@ -8,7 +9,7 @@ define([
 	"raphael"
 ],
 
-function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
+function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
@@ -25,7 +26,7 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 
 		initialize: function(options) {
 			this.on("cardAdded", this.cardAdded);
-			this.on("updateCardPosition", this.updateCardPosition);
+			this.on("cardPositionUpdated", this.cardPositionUpdated);
 
 			this.render();
 
@@ -134,7 +135,7 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 			if (this._selectedBoard.get("cards")) {
 				for (var i=0, boardCardsLength=this._selectedBoard.get("cards").length; i<boardCardsLength; i+=1) {
 					if (this._selectedBoard.get("cards")[i].type == "text") {
-						var newCard = new Card.Text(this, this._paper, this._selectedBoard.get("cards")[i]);
+						var newCard = new Card.Text(this, null, this._paper, this._selectedBoard.get("cards")[i]);
 						newCard.draw();
 
 						this._boardEntities.push(newCard);
@@ -229,6 +230,43 @@ function(Board, Card, BoardMap, Utils, Card_Services, Workspace_Services) {
 			}
 			catch (err) {
 				Utils.sendClientError("cardAdded", err);
+			}
+		},
+
+		cardPositionUpdated: function(cardId, x, y) {
+			var hitEntityIndex = -1,
+				selectedEntityIndex = -1;
+
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if ((this._boardEntities[i].getId() != cardId) && (this._boardEntities[i].isHitting(x, y))) hitEntityIndex = i;
+				
+				if (this._boardEntities[i].getId() == cardId) selectedEntityIndex = i;
+			}
+
+			if (hitEntityIndex != -1) {
+				if (this._boardEntities[hitEntityIndex].getType() == "card") {
+					this._boardEntities[hitEntityIndex].undraw();
+					this._boardEntities[selectedEntityIndex].undraw();
+
+					this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, this._boardEntities[hitEntityIndex].getModel());
+					this._boardEntities[hitEntityIndex].addCard(this._boardEntities[selectedEntityIndex].getModel());
+					this._boardEntities[hitEntityIndex].draw();
+
+					this._boardEntities[selectedEntityIndex] = null;
+					this._boardEntities.splice(selectedEntityIndex, 1);
+				}
+				else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
+					this._boardEntities[selectedEntityIndex].undraw();
+
+					this._boardEntities[hitEntityIndex].addCard(this._boardEntities[selectedEntityIndex].getModel());
+					this._boardEntities[hitEntityIndex].draw();
+
+					this._boardEntities[selectedEntityIndex] = null;
+					this._boardEntities.splice(selectedEntityIndex, 1);
+				}
+			}
+			else {
+				if(selectedEntityIndex != -1) this.updateCardPosition(cardId, this._boardEntities[selectedEntityIndex].getSVGShapePosition().x, this._boardEntities[selectedEntityIndex].getSVGShapePosition().y);
 			}
 		},
 

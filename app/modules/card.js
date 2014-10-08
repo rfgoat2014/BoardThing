@@ -8,6 +8,36 @@ define([
 function(Card_Services, Workspace_Services) {
 	var Card = {};
 
+	Card.GenerateModel = function(model, parentId) {
+		var cardModel = {
+			id: model.id, 
+			type: model.type,
+			title: model.title, 
+			content: model.content, 
+			parentIsVoting: false, 
+			isVoting: false, 
+			votesReceived: 0, 
+			isLocked: false, 
+			xPos: model.xPos, 
+			yPos: model.yPos, 
+			created: model.created, 
+			createdDate: new Date(model.created),
+			width: model.width,
+			height: model.height,
+			color: model.color
+		};
+
+		if (model.votesReceived > 0) {
+			if (model.type.trim().toLowerCase() == "text") cardModel.content = model.content + " (+" + model.votesReceived + ")";
+			else cardModel.title = model.title + " (+" + model.votesReceived + ")";
+		}
+
+		if (parentId) cardModel.parentId = parentId;
+		else cardModel.parentId = null;
+
+		return cardModel;
+	}
+
 	Card.Add = Backbone.View.extend({
     	el: "<div>",
 
@@ -118,9 +148,10 @@ function(Card_Services, Workspace_Services) {
 	});
 
 	// ===== Obect responsible for drawing and manipulating the SVG object on the canvass
-	Card.Text = function(parent, paper, model) {
+	Card.Text = function(workspace, parent, paper, model) {
 		var that = this;
 
+		this._workspace = workspace;
 		this._paper = paper;
 		that._parent = parent;
 
@@ -138,76 +169,76 @@ function(Card_Services, Workspace_Services) {
 
 		this._isDragging = false;
 
+		this.getId = function() {
+			return that._model.id;
+		};
+
+		this.getModel = function() {
+			return that._model;
+		};
+
 		this.getType = function() {
+			return "card";
+		};
+
+		this.getCardType = function() {
 			return "text";
-		}
-
-		this.bringToFront = function() {
-			that._paper.set(that._svgShape, that._svgText).toFront();
-		}
-
-		this.sendToBack = function() {
-			that._paper.set(that._svgShape, that._svgText).toBack();
-		}
+		};
 
 		this.getIsDragging = function() {
 			return that._isDragging;
-		}
-
-		// ---- Check if a specified X/Y position touches the current shape
-		this.isHitting = function(x, y) {
-			var rectStartX = (that._xPos-1)*that._width,
-				rectStartY = (that._yPos-1)*that._height;
-
-			if ((!that._isDragging) && 
-				((x >= rectStartX) && (x <= (rectStartX+that._width)) &&
-				 (y >= rectStartY) && (y <= (rectStartY+that._height)))) {
-				return true;
-			}
-
-			return false;
 		};
 
-		this.getBounds = function() {
-			return {
-				startX: ((that._xPos-1)*that._width),
-				endX: (((that._xPos-1)*that._width)+that._width),
-				startY: ((that._yPos-1)*that._height),
-				endY: (((that._yPos-1)*that._height)+that._height)
+		this.getSVGShapePosition = function() {
+			return { 
+				x: that._svgShape.attr("x"), 
+				y: that._svgShape.attr("y")
 			};
 		};
 
-		this.draw = function() {
-			var wrapText = function(text) {
-				var svgText = that._paper.text(100, 100).attr('text-anchor', 'start');
-				svgText.attr({ "font-size": that._shapeAttributes.fontSize, "font-family": that._shapeAttributes.fontFamily });
+		this.setX = function (xPos) {
+			that._model.xPos = xPos;
+		};
 
-				var words = text.split(" ");
+		this.setY = function (yPos) {
+			that._model.yPos = yPos;
+		};
 
-				var tempText = "";
+		this.getWidth = function() {
+			return that._svgShape.attr("width");
+		};
 
-				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {
-					svgText.attr("text", tempText + " " + words[i]);
+		this.getHeight = function() {
+			return that._svgShape.attr("height");
+		};
 
-					if (svgText.getBBox().width > maxWidth) tempText += "\n" + words[i];
-					else tempText += " " + words[i];
+		this.bringToFront = function() {
+			that._paper.set(that._svgShape, that._svgText).toFront();
+		};
+
+		this.sendToBack = function() {
+			that._paper.set(that._svgShape, that._svgText).toBack();
+		};
+
+		// ---- Check if a specified X/Y position touches the current shape
+		this.isHitting = function(x, y) {
+			if (that._svgShape) {
+				var bounds = {
+					startX: that._svgShape.attr("x"),
+					endX: that._svgShape.attr("x")+that._svgShape.attr("width"),
+					startY: that._svgShape.attr("y"),
+					endY: that._svgShape.attr("y")+that._svgShape.attr("height"),
 				}
 
-				return tempText;
+				if ((x > bounds.startX) && (x < bounds.endX) && (y > bounds.startY) && (y < bounds.endY)) return true;
+				else return false;
 			}
+			else return false;
+		};
 
+		this.draw = function() {
 			if (!that._isDragging) {
-				// clear the current SVG shape  representing the board on the board map
-				if (that._svgShape) {
-					that._svgShape.remove();
-					that._svgShape = null;
-				}	
-
-				// clear the current SVG shape for the board title
-				if (that._svgText) {
-					that._svgText.remove();
-					that._svgText = null;
-				}
+				that.undraw();
 
 				that._svgText = that._paper.text((that._model.xPos+that._shapeAttributes.padding), (that._model.yPos+that._shapeAttributes.padding));
 				that._svgText.attr({ 
@@ -217,14 +248,16 @@ function(Card_Services, Workspace_Services) {
 				});
 
 				var words = that._model.content.split(" "),
-					maxWidth = that._model.width+(that._shapeAttributes.padding*2),
+					maxWidth = that._model.width-(that._shapeAttributes.padding*2),
 					tempText = "";
 
 				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {
 					that._svgText.attr("text", tempText + " " + words[i]);
 
-					if (that._svgText.getBBox().width > maxWidth) tempText += "\n" + words[i];
-					else tempText += " " + words[i];
+					if (that._svgText.getBBox().width > maxWidth) tempText = tempText + "\n" + words[i];
+					else tempText = tempText + " " + words[i];
+
+					that._svgText.attr("text", tempText);
 				}
 
 				that._svgText.attr({
@@ -240,20 +273,23 @@ function(Card_Services, Workspace_Services) {
 					fill: "#ffffff" 
 				});	
 
-				that._svgDropShadow = that._paper.rect(that._model.xPos, that._model.yPos, width, that._svgText.getBBox().height+(that._shapeAttributes.padding*2));
-				that._svgDropShadow.attr({ 
-					stroke: "none"
-				});	
+				if (that._parent == null) {
+					that._svgDropShadow = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
+					that._svgDropShadow.attr({ 
+						stroke: "none"
+					});	
 
-				that._svgDropShadowGlow = that._svgDropShadow.glow({
-					offsetx: 0.5,
-					offsety: 0.5,
-					opacity: 0.6, 
-					color: "#bbbbbb", 
-					width: 3
-				});
+					that._svgDropShadowGlow = that._svgDropShadow.glow({
+						offsetx: 0.5,
+						offsety: 0.5,
+						opacity: 0.6, 
+						color: "#bbbbbb", 
+						width: 3
+					});
 
-				that._svgDropShadow.toBack();
+					that._svgDropShadow.toBack();
+				}
+
 				that._svgShape.toFront();
 				that._svgText.toFront();
 
@@ -261,6 +297,31 @@ function(Card_Services, Workspace_Services) {
 				that._paper.set(that._svgShape, that._svgText).drag(that.move, that.start, that.up);
 				that._paper.set(that._svgShape, that._svgText).mouseover(that.mouseOver);
 				that._paper.set(that._svgShape, that._svgText).mouseout(that.mouseOut);
+			}
+		};
+
+		this.undraw = function() {
+			// clear the current SVG shape  representing the board on the board map
+			if (that._svgShape) {
+				that._svgShape.remove();
+				that._svgShape = null;
+			}	
+
+			// clear the current SVG shape for the board title
+			if (that._svgText) {
+				that._svgText.remove();
+				that._svgText = null;
+			}
+
+			// clear the current SVG shape for the board title
+			if (that._svgDropShadow) {
+				that._svgDropShadow.remove();
+				that._svgDropShadow = null;
+			}
+
+			if (that._svgDropShadowGlow) {
+				that._svgDropShadowGlow.remove();
+				that._svgDropShadowGlow = null;
 			}
 		};
 
@@ -274,18 +335,19 @@ function(Card_Services, Workspace_Services) {
 			that._svgShape.startX = that._svgShape.attr("x");
 			that._svgShape.startY = that._svgShape.attr("y");
 
-			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
-			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
+			if (that._parent == null) {
+				that._svgDropShadow.startX = that._svgDropShadow.attr("x");
+				that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
-			that._svgDropShadow.toFront();
+				that._svgDropShadow.toFront();
+			}
+
 			that._svgShape.toFront();
 			that._svgText.toFront();
 		};
 
 		// ----- Handler for moving a board around the board map
 		this.move = function (dx, dy, x, y, e) {
-			that._svgDropShadowGlow.remove();
-
 			that._svgText.attr({
 				x: that._svgText.startX+dx,
 				y: that._svgText.startY+dy
@@ -296,22 +358,26 @@ function(Card_Services, Workspace_Services) {
 				y: that._svgShape.startY+dy
 			});
 
-			that._svgDropShadow.attr({
-				x: that._svgDropShadow.startX+dx,
-				y: that._svgDropShadow.startY+dy
-			});
+			if (that._parent == null) {
+				that._svgDropShadowGlow.remove();
 
-			that._svgDropShadowGlow = that._svgDropShadow.glow({
-				offsetx: 0.5,
-				offsety: 0.5,
-				opacity: 0.6, 
-				color: "#bbbbbb", 
-				width: 3
-			});
+				that._svgDropShadow.attr({
+					x: that._svgDropShadow.startX+dx,
+					y: that._svgDropShadow.startY+dy
+				});
+
+				that._svgDropShadowGlow = that._svgDropShadow.glow({
+					offsetx: 0.5,
+					offsety: 0.5,
+					opacity: 0.6, 
+					color: "#bbbbbb", 
+					width: 3
+				});
+			}
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map
-    	this.up = function () {
+    	this.up = function (e, fromCluster) {
     		that._isDragging = false;
 
 			that._svgText.startX = null;
@@ -320,18 +386,23 @@ function(Card_Services, Workspace_Services) {
 			that._svgShape.startX = null;
 			that._svgShape.startY = null;
 
-			that._svgDropShadow.startX = null;
-			that._svgDropShadow.startY = null;
+			if (that._parent == null) {
+				that._svgDropShadow.startX = null;
+				that._svgDropShadow.startY = null;
+			}
 
-        	that._parent.trigger("updateCardPosition", that._model.id, that._svgShape.attr("x"), that._svgShape.attr("y"));
+			that._model.xPos = that._svgShape.attr("x");
+			that._model.yPos = that._svgShape.attr("y");
+
+        	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
         };
 
         this.mouseOver = function() {
-        	that._parent.$("#board").css('cursor','pointer');
+        	that._workspace.$("#board").css('cursor','pointer');
         };
 
         this.mouseOut = function() {
-        	that._parent.$("#board").css('cursor','default');
+        	that._workspace.$("#board").css('cursor','default');
         };
 	}
 
