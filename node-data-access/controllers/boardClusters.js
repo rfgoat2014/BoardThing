@@ -3,7 +3,7 @@ var Board = require(config.boardModel),
 
 // ===== Actions for updating a cluster (this also covers creating a cluster as clusters are just a relationship between 2 cards)
 exports.update = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)
@@ -26,10 +26,11 @@ exports.update = function (req, res) {
 				if (req.body.action.trim().toLowerCase() == "create") {
 					// we're intending to create a new cluster
 					// retrieve all of a boards cards
+
 					Card
 					.find({ board: board._id })
 					.exec(function(err, cards) {
-						for (var i=0, cardsLength = cardsLength; i<cardsLength; i++) {
+						for (var i=0, cardsLength = cards.length; i<cardsLength; i++) {
 							// sanity check that there is actually a card in the selected position
 							if (cards[i]) {
 								var updateCard = false;
@@ -47,7 +48,7 @@ exports.update = function (req, res) {
 									updateCard = true;
 								}
 
-								;// loop through all the cards that were defined as the children to this new cluster
+								// loop through all the cards that were defined as the children to this new cluster
 								for (var j=0, specifiedChildCardLength = req.body.cards.length; j<specifiedChildCardLength; j += 1) {
 									// check if the current board card we're looking at is one of the cards we want to be child to the new cluster
 									if (cards[i]._id == req.body.cards[j].id) {

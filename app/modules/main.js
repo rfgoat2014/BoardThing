@@ -44,7 +44,7 @@ function(Workspace, Workspace_Services) {
 					var workspaces = response.workspaces;
 
 					for (var i=0, workspacesLength=workspaces.length; i<workspacesLength; i+=1) {
-						that._workspaces.push(new Workspace.ListItem({ model: new Workspace.Model(workspaces[i]), parent: that }));
+						that._workspaces.push(new Workspace.ListItem({ model: workspaces[i], parent: that }));
 					}
 
 					that.renderWorkspaces();
@@ -58,7 +58,7 @@ function(Workspace, Workspace_Services) {
 			this.$("#workspace-list-body").empty();
 
 			this._workspaces.sort(function (a, b) {
-				return a.model.get("created") < b.model.get("created") ? 1 : a.model.get("created") > b.model.get("created") ? -1 : 0; 
+				return a.model.created < b.model.created ? 1 : a.model.created > b.model.created ? -1 : 0; 
 			});
 
 			for (var i=0, workspacesLength=this._workspaces.length; i<workspacesLength; i++) {
@@ -85,7 +85,7 @@ function(Workspace, Workspace_Services) {
 			this.$("#modal-overlay").empty();
 			this.$("#modal-overlay").hide();
 
-			this._workspaces.push(new Workspace.ListItem({ model: new Workspace.Model(workspace), parent: this }));
+			this._workspaces.push(new Workspace.ListItem({ model: workspace, parent: this }));
 
 			this.renderWorkspaces();
 

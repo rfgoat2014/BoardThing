@@ -69,13 +69,13 @@ function(require, exports, module, Home, Main, Workspace, User_Services, Workspa
           $.cookie("BoardThing_username", userResponse.user.username, { path: '/' });
         }
 
-        var workspaceModel = new Workspace.Model({ id: id });
+        var workspaceModel = { id: id };
         
         Workspace_Services.Get(id, function(workspaceResponse) {
           if ((workspaceResponse != null) && (workspaceResponse.status == "success")) {
             $("#page-loading-status").html("Creating workspace layout");
 
-            var displayView = new Workspace.Index({ model: new Workspace.Model(workspaceResponse.workspace) });
+            var displayView = new Workspace.Index({ model: workspaceResponse.workspace });
 
             $("body").empty();
             $("body").html(displayView.el);

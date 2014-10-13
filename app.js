@@ -757,43 +757,43 @@
 	app.put("/workspace/boards/cards/:boardId/:cardId", boardCards.update);
 	app.delete("/workspace/boards/cards/:boardId/:cardId", boardCards.delete);
 
-	app.post("/boards/cards/downloadImage/:boardId", boardCards.downloadImage);
+	app.post("/workspace/boards/cards/downloadImage/:boardId", boardCards.downloadImage);
 
-	app.get("/boards/cards/image/:boardId/:cardId", boardCards.getImage);
-	app.post("/boards/cards/image/:boardId", boardCards.insertImage);
-	app.put("/boards/cards/image/:boardId/:cardId", boardCards.updateImage);
+	app.get("/workspace/boards/cards/image/:boardId/:cardId", boardCards.getImage);
+	app.post("/workspace/boards/cards/image/:boardId", boardCards.insertImage);
+	app.put("/workspace/boards/cards/image/:boardId/:cardId", boardCards.updateImage);
 
-	app.post("/boards/cards/duplicate/:boardId/:cardId", boardCards.duplicate);
+	app.post("/workspace/boards/cards/duplicate/:boardId/:cardId", boardCards.duplicate);
 	
-	app.put("/boards/cards/lock/:boardId/:cardId", boardCards.lock);
-	app.put("/boards/cards/unlock/:boardId/:cardId", boardCards.unlock);
+	app.put("/workspace/boards/cards/lock/:boardId/:cardId", boardCards.lock);
+	app.put("/workspace/boards/cards/unlock/:boardId/:cardId", boardCards.unlock);
 
-	app.put("/boards/cards/resize/:boardId/:cardId", boardCards.updateDimensions);
+	app.put("/workspace/boards/cards/resize/:boardId/:cardId", boardCards.updateDimensions);
 	app.put("/workspace/boards/cards/position/:boardId/:cardId", boardCards.updatePosition);
-	app.put("/boards/cards/zindex/:boardId", boardCards.updateZIndex);
+	app.put("/workspace/boards/cards/zindex/:boardId", boardCards.updateZIndex);
 	
 	app.get("/boards/chat/:boardId", chat.get);
 	app.post("/boards/chat/:boardId", chat.insert);
 	
-	app.post("/boards/clusters/:boardId/:clusterId", boardClusters.attachClusterToMain);
-	app.put("/boards/clusters/:boardId/:clusterId", boardClusters.update);
-	app.delete("/boards/clusters/:boardId/:clusterId", boardClusters.delete);
+	app.post("/workspace/boards/clusters/:boardId/:clusterId", boardClusters.attachClusterToMain);
+	app.put("/workspace/boards/clusters/:boardId/:clusterId", boardClusters.update);
+	app.delete("/workspace/boards/clusters/:boardId/:clusterId", boardClusters.delete);
 	
-	app.post("/boards/clusters/cards/:boardId/:clusterId/:cardId", boardClusters.attachCard);
-	app.delete("/boards/clusters/cards/:boardId/:clusterId/:cardId", boardClusters.detachCard);
-	app.post("/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.attachCluster);
-	app.delete("/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.detachCluster);
+	app.post("/workspace/boards/clusters/cards/:boardId/:clusterId/:cardId", boardClusters.attachCard);
+	app.delete("/workspace/boards/clusters/cards/:boardId/:clusterId/:cardId", boardClusters.detachCard);
+	app.post("/workspace/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.attachCluster);
+	app.delete("/workspace/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.detachCluster);
 	
-	app.put("/boards/clusters/collapse/:boardId/:clusterId", boardClusters.collapse);
-	app.put("/boards/clusters/expand/:boardId/:clusterId", boardClusters.expand);
+	app.put("/workspace/boards/clusters/collapse/:boardId/:clusterId", boardClusters.collapse);
+	app.put("/workspace/boards/clusters/expand/:boardId/:clusterId", boardClusters.expand);
 	
-	app.put("/boards/clusters/sort/:boardId/:clusterId", boardClusters.sort);
-	app.put("/boards/clusters/position/:boardId/:clusterId", boardClusters.updatePosition);
+	app.put("/workspace/boards/clusters/sort/:boardId/:clusterId", boardClusters.sort);
+	app.put("/workspace/boards/clusters/position/:boardId/:clusterId", boardClusters.updatePosition);
 
-	app.put("/boards/clusters/startVoting/:boardId/:clusterId", boardClusters.startDotVoting);
-	app.put("/boards/clusters/stopVoting/:boardId/:clusterId", boardClusters.stopDotVoting);
-	app.post("/boards/clusters/castVote/:boardId/:cardId", boardCards.addVote);
-	app.delete("/boards/clusters/clearVotes/:boardId/:cardId", boardCards.removeVotes);
+	app.put("/workspace/boards/clusters/startVoting/:boardId/:clusterId", boardClusters.startDotVoting);
+	app.put("/workspace/boards/clusters/stopVoting/:boardId/:clusterId", boardClusters.stopDotVoting);
+	app.post("/workspace/boards/clusters/castVote/:boardId/:cardId", boardCards.addVote);
+	app.delete("/workspace/boards/clusters/clearVotes/:boardId/:cardId", boardCards.removeVotes);
 
 	// Catch any occuring client errors
 

@@ -4,12 +4,13 @@ define([
 	"modules/cluster",
 	"modules/boardMap",
 	"modules/utils",
-	"modules/card.services",
 	"modules/workspace.services",
+	"modules/card.services",
+	"modules/cluster.services",
 	"raphael"
 ],
 
-function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Services) {
+function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
@@ -27,6 +28,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 		initialize: function(options) {
 			this.on("cardAdded", this.cardAdded);
 			this.on("cardPositionUpdated", this.cardPositionUpdated);
+			this.on("clusterPositionUpdated", this.clusterPositionUpdated);
 
 			this.render();
 
@@ -46,19 +48,19 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 			var that = this;
 
 			$.get("/app/templates/workspace/index.html", function(contents) {
-				var boards = that.model.get("boards");
+				var boards = that.model.boards;
 
 				for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
-					if ((that.model.get("startBoardId")) && (that.model.get("startBoardId").toString() == boards[i].id.toString())) that._selectedBoard = new Board.Model(boards[i]);
-					else if ((!that.model.get("startBoardId")) && (boards[i].position == 1)) that._selectedBoard = new Board.Model(boards[i]);
+					if ((that.model.startBoardId) && (that.model.startBoardId.toString() == boards[i].id.toString())) that._selectedBoard = boards[i];
+					else if ((!that.model.startBoardId) && (boards[i].position == 1)) that._selectedBoard = boards[i];
 				
 					if (that._selectedBoard) break;
 				}
 
-				if ((!that._selectedBoard) && (boards.length > 0)) that._selectedBoard = new Board.Model(boards[0]);
-				else if (!that._selectedBoard) that._selectedBoard = new Board.Model({ id: "", title: "", cards: [] });
+				if ((!that._selectedBoard) && (boards.length > 0)) that._selectedBoard = boards[0];
+				else if (!that._selectedBoard) that._selectedBoard = { id: "", title: "", cards: [] };
 
-				that.$el.html(_.template(contents, that._selectedBoard.toJSON()));
+				that.$el.html(_.template(contents, that._selectedBoard));
 
 				that.connectSockets();
 
@@ -75,11 +77,11 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 		setupBoard: function() {
 			this.$("#board").empty();
 
-			this.$("#board").width(this._selectedBoard.get("width"));
-			this.$("#board").height(this._selectedBoard.get("height"));
+			this.$("#board").width(this._selectedBoard.width);
+			this.$("#board").height(this._selectedBoard.height);
 
-			var overflowWidth = this._selectedBoard.get("width") - $(window).width(),
-				overflowHeight = this._selectedBoard.get("height") - $(window).height();
+			var overflowWidth = this._selectedBoard.width - $(window).width(),
+				overflowHeight = this._selectedBoard.height - $(window).height();
 
 			if (overflowWidth > 0) this.$("#board-container").scrollLeft(overflowWidth/2);
 			if (overflowHeight > 0) this.$("#board-container").scrollTop(overflowHeight/2);
@@ -88,7 +90,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 		getBoardItems: function() {
 			var that = this;
 
-			var boards = this.model.get("boards");
+			var boards = this.model.boards;
 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
 				Card_Services.Get(boards[i].id, function(response) {
@@ -100,8 +102,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 							}
 						}
 
-						if (response.board.id.toString() == that._selectedBoard.get("id").toString()) {
-							that._selectedBoard.set("cards", response.board.cards);
+						if (response.board.id.toString() == that._selectedBoard.id.toString()) {
+							that._selectedBoard.cards = response.board.cards;
 
 							that.drawBoardItems();
 						}
@@ -120,7 +122,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 			}
 
 			// Create the SVG paper object
-			this._paper = Raphael(document.getElementById("board"), this._selectedBoard.get("width"), this._selectedBoard.get("height"));
+			this._paper = Raphael(document.getElementById("board"), this._selectedBoard.width, this._selectedBoard.height);
 
 			//Clear out the board entities array. Being really rigorous to stop memory leaks
 			if (this._boardEntities.length > 0) {
@@ -132,16 +134,30 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 			}
 
 			// Get all the cards the exist in the selected board and draw them;
-			if (this._selectedBoard.get("cards")) {
-				for (var i=0, boardCardsLength=this._selectedBoard.get("cards").length; i<boardCardsLength; i+=1) {
-					if (this._selectedBoard.get("cards")[i].type == "text") {
-						var newCard = new Card.Text(this, null, this._paper, this._selectedBoard.get("cards")[i]);
+			if (this._selectedBoard.cards) {
+				for (var i=0, boardCardsLength=this._selectedBoard.cards.length; i<boardCardsLength; i+=1) {
+					if (this._selectedBoard.cards[i].children.length == 0) {
+						var newCard = new Card.Item(this, null, this._paper, Card.GenerateModel(this._selectedBoard.cards[i], null));
 						newCard.draw();
 
 						this._boardEntities.push(newCard);
 					}
+					else this.createCluster(this._selectedBoard.cards[i], null);
 				}
 			}
+		},
+
+		createCluster: function(cluster, parentId) {
+			var newCluster = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(cluster, parentId));
+			
+			for (var i=0, clusterCardsLength=cluster.cards.length; i<clusterCardsLength; i+=1) {
+				if (cluster.cards[i].children.length == 0) newCluster.addCard(Card.GenerateModel(cluster.cards[i], parentId));
+				else this.createCluster(cluster.cards[i]);
+			}
+
+			newCluster.draw();
+
+			this._boardEntities.push(newCluster);
 		},
 
 		createAddCardDialog: function() {
@@ -207,8 +223,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 					id: card.id, 
 					parentId: null,
 					type: card.type,  
-					boardId: this._selectedBoard.get("id"),
-					boardOwner: this.model.get("owner"),	
+					boardId: this._selectedBoard.id,
+					boardOwner: this.model.owner,	
 					title: card.title, 
 					content: card.content, 
 					isLocked: false, 
@@ -248,9 +264,13 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 					this._boardEntities[hitEntityIndex].undraw();
 					this._boardEntities[selectedEntityIndex].undraw();
 
-					this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, this._boardEntities[hitEntityIndex].getModel());
-					this._boardEntities[hitEntityIndex].addCard(this._boardEntities[selectedEntityIndex].getModel());
+					this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
+					this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 					this._boardEntities[hitEntityIndex].draw();
+
+					Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
+						console.log(response);
+					});
 
 					this._boardEntities[selectedEntityIndex] = null;
 					this._boardEntities.splice(selectedEntityIndex, 1);
@@ -258,8 +278,12 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 				else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
 					this._boardEntities[selectedEntityIndex].undraw();
 
-					this._boardEntities[hitEntityIndex].addCard(this._boardEntities[selectedEntityIndex].getModel());
+					this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 					this._boardEntities[hitEntityIndex].draw();
+
+					Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function(response) {
+						console.log(response);
+					});
 
 					this._boardEntities[selectedEntityIndex] = null;
 					this._boardEntities.splice(selectedEntityIndex, 1);
@@ -271,18 +295,46 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 		},
 
 		updateCardPosition: function(cardId, x, y) {
-	        Card_Services.UpdatePosition(this._selectedBoard.get("id"), cardId, x, y);
+	        Card_Services.UpdatePosition(this._selectedBoard.id, cardId, x, y);
 
 			// Push to socket
-			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.get("id"), card: newCard }));
+			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.id, card: newCard }));
+		},
+
+		clusterPositionUpdated: function(clusterId, x, y) {
+			var hitEntityIndex = -1,
+				selectedEntityIndex = -1;
+
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if ((this._boardEntities[i].getId() != clusterId) && (this._boardEntities[i].isHitting(x, y))) hitEntityIndex = i;
+				
+				if (this._boardEntities[i].getId() == clusterId) selectedEntityIndex = i;
+			}
+
+			if (hitEntityIndex != -1) {
+				if (this._boardEntities[hitEntityIndex].getType() == "card") {
+				}
+				else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
+				}
+			}
+			else {
+				if(selectedEntityIndex != -1) this.updateCardPosition(clusterId, this._boardEntities[selectedEntityIndex].getSVGShapePosition().x, this._boardEntities[selectedEntityIndex].getSVGShapePosition().y);
+			}
+		},
+
+		updateClusterPosition: function(clusterId, x, y) {
+	        Cluster_Services.UpdatePosition(this._selectedBoard.id, clusterId, x, y);
+
+			// Push to socket
+			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.id, card: newCard }));
 		},
 
 		getWorkspaceId: function() {
-			return this.model.get("id");
+			return this.model.id;
 		},
 
 		getSelectedBoardId: function() {
-			return this._selectedBoard.get("id");
+			return this._selectedBoard.id;
 		},
 
 		getSelectedColor: function() {
@@ -321,7 +373,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 				}
 				catch (er) {}
 
-				that._socket.send(JSON.stringify({ topic: that.model.get("id"), action: "Establishing connection" }));
+				that._socket.send(JSON.stringify({ topic: that.model.id, action: "Establishing connection" }));
 
 			    that._socket.on("message", function(package) {
 			  		that._connectionAttempts = 0;
@@ -479,7 +531,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 			var that = this;
 
 			$.get("/app/templates/workspace/listItem.html", function(contents) {
-				that.$el.html(_.template(contents, that.model.toJSON()));
+				that.$el.html(_.template(contents, that.model));
 
 				that.afterRender();
 
@@ -488,7 +540,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 		},
 
 		afterRender: function() {
-			if (!this.model.get("isOwner")) this.$("#workspace-share_" + this.model.get("id"));
+			if (!this.model.isOwner) this.$("#workspace-share_" + this.model.id);
 		},
 
 		bindEvents: function() {
@@ -498,14 +550,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Card_Services, Workspace_Service
 				e.stopPropagation();
 				e.preventDefault();
 
-				that.parent.trigger("viewWorkspace", that.model.get("id"));
+				that.parent.trigger("viewWorkspace", that.id);
 			});
 		}
 	});
-
-	//////////////////////// Models
-
-	Workspace.Model = Backbone.Model.extend();
 
 	return Workspace;
 });

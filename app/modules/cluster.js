@@ -6,11 +6,12 @@ define([
 function(Card) {
 	var Cluster = {};
 
-	Cluster.GenerateModel = function(model) {
+	Cluster.GenerateModel = function(model, parentId) {
 		var clusterModel = {
 			id: model.id, 
 			type: model.type, 
 			collapsed: model.collapsed, 
+			parentId: parentId,
 			parentIsVoting: false, 
 			isVoting: false, 
 			votesReceived: 0, 
@@ -77,7 +78,7 @@ function(Card) {
 		};
 
 		this.addCard = function(cardModel) {
-			that._cards.push(new Card.Text(that._workspace, that, that._paper, Card.GenerateModel(cardModel, that._model.id)));
+			that._cards.push(new Card.Item(that._workspace, that, that._paper, cardModel));
 		}
 
 		// ---- Check if a specified X/Y position touches the current shape
@@ -108,6 +109,7 @@ function(Card) {
 					"font-weight": "bold"
 				});
 
+				// there is no word wrapping in svg text so we need to manually wrap it
 				var words = that._model.content.split(" "),
 					maxWidth = that._model.width-(that._shapeAttributes.padding*2),
 					tempText = "";
@@ -125,11 +127,13 @@ function(Card) {
 					y: ((that._model.yPos+that._shapeAttributes.padding)+(that._svgText.getBBox().height/2))
 				});
 
+				// figure out what size the cluster should be
 				var width = that._svgText.getBBox().width+(that._shapeAttributes.padding*2);
 				if (width < 180) width = 180;
 
 				var height = that._svgText.getBBox().height+(that._shapeAttributes.padding*2);
 
+				// set the card position in the cluster and draw it out
 				for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
 					that._cards[i].setX((that._model.xPos+that._shapeAttributes.padding));
 					that._cards[i].setY(that._model.yPos+height);
@@ -145,37 +149,40 @@ function(Card) {
 					opacity: "0.1"
 				});
 
-				if (that._parent == null) {
-					that._svgDropShadowCover = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
-					that._svgDropShadowCover.attr({ 
-						fill: "#ffffff",
-						stroke: "none"
-					});	
+				// we need to block the inner glow as the cluser is transparent
+				that._svgDropShadowCover = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
+				that._svgDropShadowCover.attr({ 
+					fill: "#ffffff",
+					stroke: "none"
+				});	
 
-					that._svgDropShadow = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
-					that._svgDropShadow.attr({
-						stroke: "none"
-					});	
+				// this has the glow applied to it to give it a drop shadow
+				that._svgDropShadow = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
+				that._svgDropShadow.attr({
+					stroke: "none"
+				});	
 
-					that._svgDropShadowCover.toBack();
-					that._svgDropShadow.toBack();
+				that._svgDropShadowCover.toBack();
+				that._svgDropShadow.toBack();
 
-					that._svgDropShadowGlow = that._svgDropShadow.glow({
-						offsetx: 0.5,
-						offsety: 0.5,
-						opacity: 0.6, 
-						color: "#bbbbbb", 
-						width: 3
-					});
-				}
+				// create the drop shadow
+				that._svgDropShadowGlow = that._svgDropShadow.glow({
+					offsetx: 0.5,
+					offsety: 0.5,
+					opacity: 0.6, 
+					color: "#bbbbbb", 
+					width: 3
+				});
 
 				that._svgShape.toFront();
 				that._svgText.toFront();
 
+				// bring all the cards to the front
 				for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
 					that._cards[i].bringToFront();
 				}
 
+				// adding shape listeners
 				that._paper.set(that._svgShape, that._svgText).drag(that.move, that.start, that.up);
 				that._paper.set(that._svgShape, that._svgText).mouseover(that.mouseOver);
 				that._paper.set(that._svgShape, that._svgText).mouseout(that.mouseOut);
@@ -222,17 +229,14 @@ function(Card) {
 			that._svgShape.startX = that._svgShape.attr("x");
 			that._svgShape.startY = that._svgShape.attr("y");
 
-			if (that._parent == null) {
-				that._svgDropShadowCover.startX = that._svgDropShadowCover.attr("x");
-				that._svgDropShadowCover.startY = that._svgDropShadowCover.attr("y");
+			that._svgDropShadowCover.startX = that._svgDropShadowCover.attr("x");
+			that._svgDropShadowCover.startY = that._svgDropShadowCover.attr("y");
 
-				that._svgDropShadow.startX = that._svgDropShadow.attr("x");
-				that._svgDropShadow.startY = that._svgDropShadow.attr("y");
+			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
+			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
-				that._svgDropShadow.toFront();
-				that._svgDropShadowCover.toFront();
-			}
-
+			that._svgDropShadow.toFront();
+			that._svgDropShadowCover.toFront();
 			that._svgShape.toFront();
 			that._svgText.toFront();
 
@@ -253,27 +257,25 @@ function(Card) {
 				y: that._svgShape.startY+dy
 			});
 
-			if (that._parent == null) {
-				that._svgDropShadowGlow.remove();
+			that._svgDropShadowGlow.remove();
 
-				that._svgDropShadow.attr({
-					x: that._svgDropShadow.startX+dx,
-					y: that._svgDropShadow.startY+dy
-				});
+			that._svgDropShadow.attr({
+				x: that._svgDropShadow.startX+dx,
+				y: that._svgDropShadow.startY+dy
+			});
 
-				that._svgDropShadowCover.attr({
-					x: that._svgDropShadowCover.startX+dx,
-					y: that._svgDropShadowCover.startY+dy
-				});
+			that._svgDropShadowCover.attr({
+				x: that._svgDropShadowCover.startX+dx,
+				y: that._svgDropShadowCover.startY+dy
+			});
 
-				that._svgDropShadowGlow = that._svgDropShadow.glow({
-					offsetx: 0.5,
-					offsety: 0.5,
-					opacity: 0.6, 
-					color: "#bbbbbb", 
-					width: 3
-				});
-			}
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
 
 			for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
 				that._cards[i].move(dx, dy, x, y, e);
@@ -290,13 +292,11 @@ function(Card) {
 			that._svgShape.startX = null;
 			that._svgShape.startY = null;
 
-			if (that._parent == null) {
-				that._svgDropShadowCover.startX = null;
-				that._svgDropShadowCover.startY = null;
+			that._svgDropShadowCover.startX = null;
+			that._svgDropShadowCover.startY = null;
 
-				that._svgDropShadow.startX = null;
-				that._svgDropShadow.startY = null;
-			}
+			that._svgDropShadow.startX = null;
+			that._svgDropShadow.startY = null;
 
 			that._model.xPos = that._svgShape.attr("x");
 			that._model.yPos = that._svgShape.attr("y");
@@ -304,6 +304,9 @@ function(Card) {
 			for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
 				that._cards[i].up(e, true);
 			}
+
+			// this movement was a result of a parents position being updated
+        	if (!fromCluster) that._workspace.trigger("clusterPositionUpdated", that._model.id, e.layerX, e.layerY);
         };
 
         this.mouseOver = function() {

@@ -186,6 +186,9 @@ exports.sendUserPassword = function(req,res) {
 
 // ===== Action to create a new user
 exports.insert = function (req, res) {
+	console.log("DOOOOOM")
+
+
 	if (req.isAuthenticated()) req.logout();
 
 	// build the new user details

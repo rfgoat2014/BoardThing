@@ -148,7 +148,7 @@ function(Card_Services, Workspace_Services) {
 	});
 
 	// ===== Obect responsible for drawing and manipulating the SVG object on the canvass
-	Card.Text = function(workspace, parent, paper, model) {
+	Card.Item = function(workspace, parent, paper, model) {
 		var that = this;
 
 		this._workspace = workspace;
@@ -213,11 +213,11 @@ function(Card_Services, Workspace_Services) {
 		};
 
 		this.bringToFront = function() {
-			that._paper.set(that._svgShape, that._svgText).toFront();
+			that._paper.set(that._svgDropShadow, that._svgShape, that._svgText).toFront();
 		};
 
 		this.sendToBack = function() {
-			that._paper.set(that._svgShape, that._svgText).toBack();
+			that._paper.set(that._svgDropShadow, that._svgShape, that._svgText).toBack();
 		};
 
 		// ---- Check if a specified X/Y position touches the current shape
@@ -247,6 +247,7 @@ function(Card_Services, Workspace_Services) {
 					"font-family": that._shapeAttributes.fontFamily 
 				});
 
+				// there is no word wrapping in svg text so we need to manually wrap it
 				var words = that._model.content.split(" "),
 					maxWidth = that._model.width-(that._shapeAttributes.padding*2),
 					tempText = "";
@@ -264,6 +265,7 @@ function(Card_Services, Workspace_Services) {
 					y: ((that._model.yPos+that._shapeAttributes.padding)+(that._svgText.getBBox().height/2))
 				});
 
+				// figure out what width the card should be
 				var width = that._svgText.getBBox().width+(that._shapeAttributes.padding*2);
 				if (width < 180) width = 180;
 
@@ -273,22 +275,20 @@ function(Card_Services, Workspace_Services) {
 					fill: "#ffffff" 
 				});	
 
-				if (that._parent == null) {
-					that._svgDropShadow = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
-					that._svgDropShadow.attr({ 
-						stroke: "none"
-					});	
+				that._svgDropShadow = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
+				that._svgDropShadow.attr({ 
+					stroke: "none"
+				});	
 
-					that._svgDropShadowGlow = that._svgDropShadow.glow({
-						offsetx: 0.5,
-						offsety: 0.5,
-						opacity: 0.6, 
-						color: "#bbbbbb", 
-						width: 3
-					});
+				that._svgDropShadowGlow = that._svgDropShadow.glow({
+					offsetx: 0.5,
+					offsety: 0.5,
+					opacity: 0.6, 
+					color: "#bbbbbb", 
+					width: 3
+				});
 
-					that._svgDropShadow.toBack();
-				}
+				that._svgDropShadow.toBack();
 
 				that._svgShape.toFront();
 				that._svgText.toFront();
@@ -335,13 +335,10 @@ function(Card_Services, Workspace_Services) {
 			that._svgShape.startX = that._svgShape.attr("x");
 			that._svgShape.startY = that._svgShape.attr("y");
 
-			if (that._parent == null) {
-				that._svgDropShadow.startX = that._svgDropShadow.attr("x");
-				that._svgDropShadow.startY = that._svgDropShadow.attr("y");
+			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
+			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
-				that._svgDropShadow.toFront();
-			}
-
+			that._svgDropShadow.toFront();
 			that._svgShape.toFront();
 			that._svgText.toFront();
 		};
@@ -358,22 +355,20 @@ function(Card_Services, Workspace_Services) {
 				y: that._svgShape.startY+dy
 			});
 
-			if (that._parent == null) {
-				that._svgDropShadowGlow.remove();
+			that._svgDropShadowGlow.remove();
 
-				that._svgDropShadow.attr({
-					x: that._svgDropShadow.startX+dx,
-					y: that._svgDropShadow.startY+dy
-				});
+			that._svgDropShadow.attr({
+				x: that._svgDropShadow.startX+dx,
+				y: that._svgDropShadow.startY+dy
+			});
 
-				that._svgDropShadowGlow = that._svgDropShadow.glow({
-					offsetx: 0.5,
-					offsety: 0.5,
-					opacity: 0.6, 
-					color: "#bbbbbb", 
-					width: 3
-				});
-			}
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map
@@ -386,14 +381,13 @@ function(Card_Services, Workspace_Services) {
 			that._svgShape.startX = null;
 			that._svgShape.startY = null;
 
-			if (that._parent == null) {
-				that._svgDropShadow.startX = null;
-				that._svgDropShadow.startY = null;
-			}
+			that._svgDropShadow.startX = null;
+			that._svgDropShadow.startY = null;
 
 			that._model.xPos = that._svgShape.attr("x");
 			that._model.yPos = that._svgShape.attr("y");
 
+			// this movement was a result of a parents position being updated
         	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
         };
 
@@ -405,64 +399,6 @@ function(Card_Services, Workspace_Services) {
         	that._workspace.$("#board").css('cursor','default');
         };
 	}
-
-	/*// ===== Generates the add board buttons on the board map
-
-	BoardMap.BoardAdd = function(parent, paper, placement, parentPosition, parentWidth, parentHeight) {
-		var that = this;
-
-		this._paper = paper;
-		this._parent = parent;
-
-		this._placement = placement;
-
-		if (parentPosition.split(".").length == 2) {
-			this._parentXPos = parseInt(parentPosition.split(".")[0]);
-			this._parentYPos = parseInt(parentPosition.split(".")[1]);
-		}
-
-		this._parentWidth = parentWidth;
-		this._parentHeight = parentHeight;
-
-		this._imageLocation = "/img/addBoard.png"
-		this._width = 15;
-		this._height = 15;
-
-		this._svgShape = null;
-		this._isOver = false;
-
-		this.draw = function() {
-			var rectStartX = (that._parentXPos-1)*that._parentWidth,
-				rectStartY = (that._parentYPos-1)*that._parentHeight;
-
-			switch(this._placement) {
-				case "north":
-				that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+(that._parentWidth/2))-(that._width/2)), (rectStartY-(that._height/2)), that._width, that._height);
-				break;
-				case "south":
-				that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+(that._parentWidth/2))-(that._width/2)), ((rectStartY+that._parentHeight)-(that._height/2)), that._width, that._height);
-				break;
-				case "east":
-				that._svgShape = that._paper.image(that._imageLocation, ((rectStartX+that._parentWidth)-(that._width/2)), ((rectStartY+(that._parentHeight/2))-(that._height/2)), that._width, that._height);
-				break;
-				case "west":
-				that._svgShape = that._paper.image(that._imageLocation, (rectStartX-(that._width/2)), ((rectStartY+(that._parentHeight/2))-(that._height/2)), that._width, that._height);
-				break;
-			}
-
-			that._svgShape.toFront();
-
-			that._paper.set(that._svgShape).mouseout(that.mouseOut);
-		}
-
-		this.undraw = function() {
-			if (that._svgShape) that._svgShape.remove();
-		}
-
-        this.mouseOut = function(e) {
-       		that._parent.clearAddButtons();
-        }
-	}*/
 
 	return Card;
 });

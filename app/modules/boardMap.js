@@ -30,7 +30,7 @@ function(Board, Board_Services, Workspace_Services) {
 			var that = this;
 
 			$.get("/app/templates/boardMap/index.html", function(contents) {
-				that.$el.html(_.template(contents, that.model.toJSON()));
+				that.$el.html(_.template(contents, that.model));
 
 				that.afterRender();
 			}, "text");
@@ -40,7 +40,7 @@ function(Board, Board_Services, Workspace_Services) {
             var boards = this.model.get("boards");
 
             for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-            	this._boards.push(new BoardMap.Board({ model: new Board.Model(boards[i]), parent: this }));
+            	this._boards.push(new BoardMap.Board({ model: boards[i], parent: this }));
             }
 
             this.drawBoardMap();
@@ -111,7 +111,7 @@ function(Board, Board_Services, Workspace_Services) {
 			var that = this;
 
             Board_Services.Insert(this.model.get("id"), "New Board", function(response) {
-            	that._boards.push(new BoardMap.Board({ model: new Board.Model(response.board), parent: that }));
+            	that._boards.push(new BoardMap.Board({ model: response.board, parent: that }));
 
             	that.drawBoardMap(true);
             });
@@ -134,7 +134,7 @@ function(Board, Board_Services, Workspace_Services) {
 			var that = this;
 
 			$.get("/app/templates/boardMap/board.html", function(contents) {
-				that.$el.html(_.template(contents, that.model.toJSON()));
+				that.$el.html(_.template(contents, that.model));
 			}, "text");
 		},
 
