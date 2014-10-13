@@ -54,9 +54,7 @@ function(Card) {
 			fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif"
 		},
 
-		this._cards = [];
-
-		this._clusters = [];
+		this._entities = [];
 
 		this._isDragging = false;
 
@@ -87,50 +85,51 @@ function(Card) {
 			};
 		};
 
-		this.getEntity = function(id) {
-			var entity = null;
+		this.childClusterToCard = function(clusterId) {
+			for (var i=0, custersLength=that._clusters.length; i<custersLength; i+=1) {
+				if (that._entities.getId() == clusterId) {
+					var cardModel = that._entities[i].getModel();
 
-			for (var i=0, cardsLength=that._cards.length; i<cardsLength; i+=1) {
-				if (this._cards[i]._model.id == id) {
-					entity = this._cards[i];
-					this._cards[i].undraw();
+					that._entities[i] = null;
+					that._entities.splice(i, 1);
 
-					this._cards[i] = null;
-					this._cards.splice(i, 1);
+					this.addCard(cardModel, i);
 					break;
 				}
 			}
-			
-			if (!entity) {
-				for (var i=0, custersLength=that._clusters.length; i<custersLength; i+=1) {
-					if (this._clusters[i]._model.id == id) {
-						entity = this._clusters[i];
-						this._clusters[i].undraw();
+		};
 
-						this._clusters[i] = null;
-						this._clusters.splice(i, 1);
-						break;
-					}
+		this.getEntity = function(id) {
+			var entity = null;
+
+			for (var i=0, cardsLength=that._entities.length; i<cardsLength; i+=1) {
+				if (that._entities[i].getId() == id) {
+					entity = that._entities[i];
+					that._entities[i].undraw();
+
+					that._entities[i] = null;
+					that._entities.splice(i, 1);
+					break;
 				}
 			}
 
 			if (entity) {
-				if ((this._cards.length === 0) && (this._clusters.length === 0)) {
-					this.undraw();
-					this._workspace.trigger("clusterToCard", this._model.id);
+				if ((that._entities.length === 0)) {
+					that.undraw();
+					that._workspace.trigger("clusterToCard", that.getId());
 				}
-				else this.draw();
+				else that.draw();
 			}
 			
 			if (!entity) {
-				for (var i=0, custersLength=that._clusters.length; i<custersLength; i+=1) {
-					entity = this._clusters[i].getEntity(id);
+				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+					if (that._entities[i].getType() == "cluster") entity = that._entities[i].getEntity(id);
 
 					if (entity) break;
 				}
 			}
 
-			if (entity) return { parentId: this._model.id, entity: entity };
+			if (entity) return { parentId: that.getId(), entity: entity };
 			else return null;
 		};
 
@@ -150,8 +149,9 @@ function(Card) {
 			else return false;
 		};
 
-		this.addCard = function(cardModel) {
-			that._cards.push(new Card.Item(that._workspace, that, that._paper, cardModel));
+		this.addCard = function(cardModel, index) {
+			if (index == null) that._entities.push(new Card.Item(that._workspace, that, that._paper, cardModel));
+			else that._entities.splice(index, 0, new Card.Item(that._workspace, that, that._paper, cardModel));
 		};
 
 		this.draw = function() {
@@ -191,13 +191,14 @@ function(Card) {
 				var height = that._svgText.getBBox().height+(that._shapeAttributes.padding*2);
 
 				// set the card position in the cluster and draw it out
-				for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
-					that._cards[i].setX((that._model.xPos+that._shapeAttributes.padding));
-					that._cards[i].setY(that._model.yPos+height);
-					that._cards[i].draw();
+				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+					that._entities[i].setX((that._model.xPos+that._shapeAttributes.padding));
+					that._entities[i].setY(that._model.yPos+height);
+					that._entities[i].draw();
 
-					if ((that._cards[i].getWidth()+(that._shapeAttributes.padding*2)) > width) width = (that._cards[i].getWidth()+(that._shapeAttributes.padding*2));
-					height += that._cards[i].getHeight() + that._shapeAttributes.padding;
+					if ((that._entities[i].getWidth()+(that._shapeAttributes.padding*2)) > width) width = (that._entities[i].getWidth()+(that._shapeAttributes.padding*2));
+					
+					height += that._entities[i].getHeight() + that._shapeAttributes.padding;
 				}
 
 				that._svgShape = that._paper.rect(that._model.xPos, that._model.yPos, width, height);
@@ -235,8 +236,8 @@ function(Card) {
 				that._svgText.toFront();
 
 				// bring all the cards to the front
-				for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
-					that._cards[i].bringToFront();
+				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+					that._entities[i].bringToFront();
 				}
 
 				// adding shape listeners
@@ -297,8 +298,8 @@ function(Card) {
 			that._svgShape.toFront();
 			that._svgText.toFront();
 
-			for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
-				that._cards[i].start();
+			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+				that._entities[i].start();
 			}
 		};
 
@@ -334,8 +335,8 @@ function(Card) {
 				width: 3
 			});
 
-			for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
-				that._cards[i].move(dx, dy, x, y, e);
+			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+				that._entities[i].move(dx, dy, x, y, e);
 			}
 		};
 
@@ -358,8 +359,8 @@ function(Card) {
 			that._model.xPos = that._svgShape.attr("x");
 			that._model.yPos = that._svgShape.attr("y");
 
-			for (var i=0, boardCardsLength=that._cards.length; i<boardCardsLength; i+=1) {
-				that._cards[i].up(e, true);
+			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+				that._entities[i].up(e, true);
 			}
 
 			// this movement was a result of a parents position being updated

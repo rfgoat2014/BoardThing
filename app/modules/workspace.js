@@ -285,7 +285,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			}
 
 			if (!clusterFound) {
-
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].childClusterToCard(clusterId);
+				}
 			}
 		},
 
