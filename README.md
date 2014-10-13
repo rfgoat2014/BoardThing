@@ -16,5 +16,4 @@ Initially the main board listing page was built using AngularJS and the main boa
 
 Initial Goals ---------------
 
-- Recreate the board listing page using Backbone.js.
-- Work out how the board map will work.
+- Recreate the cards and clusters mechanism in SVG
