@@ -342,7 +342,17 @@ function(Card_Services, Workspace_Services) {
 			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
 			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
+			that._svgDropShadowGlow.remove();
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
+
 			that._svgDropShadow.toFront();
+			that._svgDropShadowGlow.toFront();
 			that._svgShape.toFront();
 			that._svgText.toFront();
 		};
