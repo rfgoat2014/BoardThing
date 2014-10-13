@@ -27,6 +27,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 		initialize: function(options) {
 			this.on("cardAdded", this.cardAdded);
+			this.on("clusterToCard", this.clusterToCard);
 			this.on("cardPositionUpdated", this.cardPositionUpdated);
 			this.on("clusterPositionUpdated", this.clusterPositionUpdated);
 
@@ -64,14 +65,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 				that.connectSockets();
 
-				that.afterRender();
+				that.setupBoard();
+
+				that.bindEvents();
 			}, "text");
-		},
-
-		afterRender: function() {
-			var that = this;
-
-			this.setupBoard();
 		},
 
 		setupBoard: function() {
@@ -85,6 +82,16 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 			if (overflowWidth > 0) this.$("#board-container").scrollLeft(overflowWidth/2);
 			if (overflowHeight > 0) this.$("#board-container").scrollTop(overflowHeight/2);
+		},
+
+		bindEvents: function() {
+			var that = this;
+			
+			this.$("#card-create-overlay").unbind("click");
+
+			this.$("#card-create-overlay").click(function(event) {
+				that.hideAddCard();
+			});
 		},
 
 		getBoardItems: function() {
@@ -242,13 +249,47 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 	        	this._cardsDroppedInPosition++;
 
-				//this.addCardToBoard(newCard);
+				this.addCardToBoard(newCard);
 			}
 			catch (err) {
 				Utils.sendClientError("cardAdded", err);
 			}
 		},
 
+		addCardToBoard: function(newCard) {
+			var card = new Card.Item(this, null, this._paper, Card.GenerateModel(newCard, null));
+			card.draw();
+
+			this._boardEntities.push(card);
+		},
+
+		clusterToCard: function(clusterId) {
+			var clusterFound = false;
+
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if (this._boardEntities[i].getType() == "cluster") {
+					if (this._boardEntities[i].getId() == clusterId) {
+						clusterFound = true;
+
+						var cardModel = this._boardEntities[i].getModel();
+						cardModel.parentId = null;
+
+						this._boardEntities[i] = null;
+						this._boardEntities.splice(i, 1);
+
+						this.addCardToBoard(cardModel);
+
+						break;
+					}
+				}
+			}
+
+			if (!clusterFound) {
+
+			}
+		},
+
+		// ----- This method is a big one, it handles the movement of cards around the board
 		cardPositionUpdated: function(cardId, x, y) {
 			var hitEntityIndex = -1,
 				selectedEntityIndex = -1;
@@ -259,38 +300,73 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				if (this._boardEntities[i].getId() == cardId) selectedEntityIndex = i;
 			}
 
-			if (hitEntityIndex != -1) {
-				if (this._boardEntities[hitEntityIndex].getType() == "card") {
-					this._boardEntities[hitEntityIndex].undraw();
-					this._boardEntities[selectedEntityIndex].undraw();
+			// Check if this is a root card that is being moved, this makes thins alot easier
+			if (selectedEntityIndex != -1) {
+				// Figure out if this is hitting an eisting entity when it gets dropped
+				if (hitEntityIndex != -1) {
+					if (this._boardEntities[hitEntityIndex].getType() == "card") {
+						this._boardEntities[hitEntityIndex].undraw();
+						this._boardEntities[selectedEntityIndex].undraw();
 
-					this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
-					this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-					this._boardEntities[hitEntityIndex].draw();
+						this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
+						this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						this._boardEntities[hitEntityIndex].draw();
 
-					Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
-						console.log(response);
-					});
+						Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
+							console.log(response);
+						});
 
-					this._boardEntities[selectedEntityIndex] = null;
-					this._boardEntities.splice(selectedEntityIndex, 1);
+						this._boardEntities[selectedEntityIndex] = null;
+						this._boardEntities.splice(selectedEntityIndex, 1);
+					}
+					else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
+						this._boardEntities[selectedEntityIndex].undraw();
+
+						this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						this._boardEntities[hitEntityIndex].draw();
+
+						Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function(response) {
+							console.log(response);
+						});
+
+						this._boardEntities[selectedEntityIndex] = null;
+						this._boardEntities.splice(selectedEntityIndex, 1);
+					}
 				}
-				else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
-					this._boardEntities[selectedEntityIndex].undraw();
+				else {
+					var cardPosition = this._boardEntities[selectedEntityIndex].getSVGShapePosition();
 
-					this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-					this._boardEntities[hitEntityIndex].draw();
-
-					Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function(response) {
-						console.log(response);
-					});
-
-					this._boardEntities[selectedEntityIndex] = null;
-					this._boardEntities.splice(selectedEntityIndex, 1);
+					this.updateCardPosition(cardId, cardPosition.x, cardPosition.y);
 				}
 			}
 			else {
-				if(selectedEntityIndex != -1) this.updateCardPosition(cardId, this._boardEntities[selectedEntityIndex].getSVGShapePosition().x, this._boardEntities[selectedEntityIndex].getSVGShapePosition().y);
+				var childEntity = null;
+
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") {
+						childEntity = this._boardEntities[i].getEntity(cardId);
+
+						if (childEntity) break;
+					}
+				}
+
+				if (childEntity) {
+					if (hitEntityIndex != -1) {
+						
+					}
+					else {
+						var cardModel = childEntity.entity.getModel();
+						cardModel.parentId = null;
+						cardModel.xPos = x;
+						cardModel.yPos = y;
+
+						Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, cardModel.id);
+
+						this.addCardToBoard(cardModel);
+
+						this.updateCardPosition(cardModel.id, x, y);
+					}
+				}
 			}
 		},
 

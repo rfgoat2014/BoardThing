@@ -185,6 +185,10 @@ function(Card_Services, Workspace_Services) {
 			return "text";
 		};
 
+		this.getParentId = function() {
+			return this._model.parentId;
+		};
+
 		this.getIsDragging = function() {
 			return that._isDragging;
 		};

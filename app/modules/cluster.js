@@ -56,14 +56,24 @@ function(Card) {
 
 		this._cards = [];
 
+		this._clusters = [];
+
 		this._isDragging = false;
 
 		this.getId = function() {
 			return that._model.id;
 		};
 
+		this.getModel = function() {
+			return that._model;
+		};
+
 		this.getType = function() {
 			return "cluster";
+		};
+
+		this.getParentId = function() {
+			return this._model.parentId;
 		};
 
 		this.getIsDragging = function() {
@@ -77,9 +87,52 @@ function(Card) {
 			};
 		};
 
-		this.addCard = function(cardModel) {
-			that._cards.push(new Card.Item(that._workspace, that, that._paper, cardModel));
-		}
+		this.getEntity = function(id) {
+			var entity = null;
+
+			for (var i=0, cardsLength=that._cards.length; i<cardsLength; i+=1) {
+				if (this._cards[i]._model.id == id) {
+					entity = this._cards[i];
+					this._cards[i].undraw();
+
+					this._cards[i] = null;
+					this._cards.splice(i, 1);
+					break;
+				}
+			}
+			
+			if (!entity) {
+				for (var i=0, custersLength=that._clusters.length; i<custersLength; i+=1) {
+					if (this._clusters[i]._model.id == id) {
+						entity = this._clusters[i];
+						this._clusters[i].undraw();
+
+						this._clusters[i] = null;
+						this._clusters.splice(i, 1);
+						break;
+					}
+				}
+			}
+
+			if (entity) {
+				if ((this._cards.length === 0) && (this._clusters.length === 0)) {
+					this.undraw();
+					this._workspace.trigger("clusterToCard", this._model.id);
+				}
+				else this.draw();
+			}
+			
+			if (!entity) {
+				for (var i=0, custersLength=that._clusters.length; i<custersLength; i+=1) {
+					entity = this._clusters[i].getEntity(id);
+
+					if (entity) break;
+				}
+			}
+
+			if (entity) return { parentId: this._model.id, entity: entity };
+			else return null;
+		};
 
 		// ---- Check if a specified X/Y position touches the current shape
 		this.isHitting = function(x, y) {
@@ -95,6 +148,10 @@ function(Card) {
 				else return false;
 			}
 			else return false;
+		};
+
+		this.addCard = function(cardModel) {
+			that._cards.push(new Card.Item(that._workspace, that, that._paper, cardModel));
 		};
 
 		this.draw = function() {
