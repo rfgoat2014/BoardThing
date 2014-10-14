@@ -148,16 +148,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 						this._boardEntities.push(newCard);
 					}
-					else this.createCluster(this._selectedBoard.cards[i], null);
+					else this.addClusterToBoard(this._selectedBoard.cards[i], null);
 				}
 			}
-		},
-
-		createCluster: function(cluster, parentId) {
-			var newCluster = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(cluster, parentId));
-			newCluster.generateEntities();
-
-			this._boardEntities.push(newCluster);
 		},
 
 		createAddCardDialog: function() {
@@ -254,6 +247,17 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			card.draw();
 
 			this._boardEntities.push(card);
+
+			return card;
+		},
+
+		addClusterToBoard: function(cluster, parentId) {
+			var cluster = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(cluster, parentId));
+			cluster.generateEntities();
+
+			this._boardEntities.push(cluster);
+
+			return cluster;
 		},
 
 		clusterToCard: function(clusterId) {
@@ -351,7 +355,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 				if (childEntity) {
 					if (hitEntityIndex != -1) {
-						
+
 					}
 					else {
 						var cardModel = childEntity.card;
@@ -361,9 +365,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 						Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, cardModel.id);
 
-						this.addCardToBoard(cardModel);
+						var newEnitity = null,
+							newShapePos = null;
 
-						this.updateCardPosition(cardModel.id, x, y);
+
+						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(cardModel);
+						else newEnitity = this.addClusterToBoard(cardModel);
+
+						newShapePos = newEnitity.getSVGShapePosition();
+						this.updateCardPosition(newEnitity.getId(), newShapePos.x, newShapePos.y);
 					}
 				}
 			}
@@ -371,16 +381,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 		updateCardPosition: function(cardId, x, y) {
 	        Card_Services.UpdatePosition(this._selectedBoard.id, cardId, x, y);
-
-			// Push to socket
-			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.id, card: newCard }));
-		},
-
-		updateClusterPosition: function(clusterId, x, y) {
-	        Cluster_Services.UpdatePosition(this._selectedBoard.id, clusterId, x, y);
-
-			// Push to socket
-			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.id, card: newCard }));
 		},
 
 		getWorkspaceId: function() {
