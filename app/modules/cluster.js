@@ -33,9 +33,6 @@ function(Card) {
 		if (model.cards) clusterModel.cards = model.cards;
 		else clusterModel.cards = [];
 
-		if (model.clusters) clusterModel.clusters = model.clusters;
-		else clusterModel.clusters = [];
-
 		return clusterModel;
 	}
 
@@ -74,6 +71,10 @@ function(Card) {
 			return this._model.parentId;
 		};
 
+		this.setParentId = function(parentId) {
+			this._model.parentId = parentId;
+		};
+
 		this.getIsDragging = function() {
 			return that._isDragging;
 		};
@@ -85,53 +86,112 @@ function(Card) {
 			};
 		};
 
+		this.setX = function (xPos) {
+			that._model.xPos = xPos;
+		};
+
+		this.setY = function (yPos) {
+			that._model.yPos = yPos;
+		};
+
+		this.getWidth = function() {
+			return that._svgShape.attr("width");
+		};
+
+		this.getHeight = function() {
+			return that._svgShape.attr("height");
+		};
+
+		this.bringToFront = function() {
+			that._paper.set(that._svgDropShadowGlow, that._svgDropShadowCover, that._svgShape, that._svgText).toFront();
+
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+				that._entities[i].bringToFront();
+			}
+		};
+
+		this.sendToBack = function() {
+			that._paper.set(that._svgDropShadow, that._svgDropShadowCover, that._svgShape, that._svgText).toBack();
+		};
+
 		this.childClusterToCard = function(clusterId) {
-			for (var i=0, custersLength=that._clusters.length; i<custersLength; i+=1) {
-				if (that._entities.getId() == clusterId) {
-					var cardModel = that._entities[i].getModel();
+			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
+				if (that._model.cards[i].id == clusterId) {
+					var selectedCluster = that._model.cards[i];
 
-					that._entities[i] = null;
-					that._entities.splice(i, 1);
+					that._model.cards.splice(i, 1);
+					that._model.cards.splice(i, 0, selectedCluster);
 
-					this.addCard(cardModel, i);
+					that.generateEntities();
 					break;
 				}
 			}
 		};
 
 		this.getEntity = function(id) {
-			var entity = null;
+			var card = null;
 
-			for (var i=0, cardsLength=that._entities.length; i<cardsLength; i+=1) {
-				if (that._entities[i].getId() == id) {
-					entity = that._entities[i];
-					that._entities[i].undraw();
+			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
+				if (that._model.cards[i].id == id) {
+					card = that._model.cards[i];
 
-					that._entities[i] = null;
-					that._entities.splice(i, 1);
+					that._model.cards.splice(i,1);
 					break;
 				}
 			}
 
-			if (entity) {
-				if ((that._entities.length === 0)) {
-					that.undraw();
-					that._workspace.trigger("clusterToCard", that.getId());
+			if (card) {
+				if ((that._model.cards.length === 0)) {
+					that._workspace.trigger("clusterToCard", that._model.id);
 				}
-				else that.draw();
+				else that.generateEntities();
 			}
-			
-			if (!entity) {
+			else {
 				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-					if (that._entities[i].getType() == "cluster") entity = that._entities[i].getEntity(id);
+					if (that._entities[i].getType() == "cluster") {
+						var entity = that._entities[i].getEntity(id);
 
-					if (entity) break;
+						if (entity) return entity;
+					}
 				}
 			}
 
-			if (entity) return { parentId: that.getId(), entity: entity };
+			if (card) return { parentId: that.getId(), card: card };
 			else return null;
 		};
+
+		this.addCard = function(cardModel) {
+			that._model.cards.push(cardModel);
+
+			that.generateEntities();
+		};
+
+		this.addCluster = function(clusterModel) {
+			that._model.cards.push(clusterModel);
+
+			that.generateEntities();
+		};
+
+		this.generateEntities = function() {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
+				that._entities[i].undraw();
+				that._entities[i] = null;
+			}
+
+			that._entities = [];
+
+			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i++) {
+				if ((that._model.cards[i].cards == null) || (that._model.cards[i].cards.length == 0)) {
+					that._entities.push(new Card.Item(that._workspace, that, that._paper, that._model.cards[i]));
+				}
+				else {
+					that._entities.push(new Cluster.Item(that._workspace, that, that._paper, that._model.cards[i]));
+					that._entities[(that._entities.length-1)].generateEntities();
+				}
+			}
+
+			that.draw();
+		},
 
 		// ---- Check if a specified X/Y position touches the current shape
 		this.isHitting = function(x, y) {
@@ -147,11 +207,6 @@ function(Card) {
 				else return false;
 			}
 			else return false;
-		};
-
-		this.addCard = function(cardModel, index) {
-			if (index == null) that._entities.push(new Card.Item(that._workspace, that, that._paper, cardModel));
-			else that._entities.splice(index, 0, new Card.Item(that._workspace, that, that._paper, cardModel));
 		};
 
 		this.draw = function() {
@@ -190,7 +245,7 @@ function(Card) {
 
 				var height = that._svgText.getBBox().height+(that._shapeAttributes.padding*2);
 
-				// set the card position in the cluster and draw it out
+				// set the position in the cluster and draw it out
 				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 					that._entities[i].setX((that._model.xPos+that._shapeAttributes.padding));
 					that._entities[i].setY(that._model.yPos+height);
@@ -220,10 +275,8 @@ function(Card) {
 					stroke: "none"
 				});	
 
-				that._svgDropShadowCover.toBack();
-				that._svgDropShadow.toBack();
-
 				// create the drop shadow
+				if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
 				that._svgDropShadowGlow = that._svgDropShadow.glow({
 					offsetx: 0.5,
 					offsety: 0.5,
@@ -232,11 +285,10 @@ function(Card) {
 					width: 3
 				});
 
-				that._svgShape.toFront();
-				that._svgText.toFront();
+				that.bringToFront();
 
 				// bring all the cards to the front
-				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
 					that._entities[i].bringToFront();
 				}
 
@@ -275,6 +327,10 @@ function(Card) {
 				that._svgDropShadowGlow.remove();
 				that._svgDropShadowGlow = null;
 			}
+
+			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+				that._entities[i].undraw();
+			}
 		};
 
 		// ----- Handler for the start of a drag action for this board object
@@ -293,10 +349,9 @@ function(Card) {
 			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
 			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
-			that._svgDropShadow.toFront();
-			that._svgDropShadowCover.toFront();
-			that._svgShape.toFront();
-			that._svgText.toFront();
+			that.drawDropShadow();
+
+			that.bringToFront();
 
 			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 				that._entities[i].start();
@@ -315,8 +370,6 @@ function(Card) {
 				y: that._svgShape.startY+dy
 			});
 
-			that._svgDropShadowGlow.remove();
-
 			that._svgDropShadow.attr({
 				x: that._svgDropShadow.startX+dx,
 				y: that._svgDropShadow.startY+dy
@@ -327,17 +380,13 @@ function(Card) {
 				y: that._svgDropShadowCover.startY+dy
 			});
 
-			that._svgDropShadowGlow = that._svgDropShadow.glow({
-				offsetx: 0.5,
-				offsety: 0.5,
-				opacity: 0.6, 
-				color: "#bbbbbb", 
-				width: 3
-			});
-
 			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 				that._entities[i].move(dx, dy, x, y, e);
 			}
+
+			that.drawDropShadow();
+
+			that.bringToFront();
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map
@@ -363,8 +412,24 @@ function(Card) {
 				that._entities[i].up(e, true);
 			}
 
+			that.drawDropShadow();
+
+			that.bringToFront();
+
 			// this movement was a result of a parents position being updated
-        	if (!fromCluster) that._workspace.trigger("clusterPositionUpdated", that._model.id, e.layerX, e.layerY);
+        	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+        };
+
+        this.drawDropShadow = function() {
+			if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
+
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
         };
 
         this.mouseOver = function() {

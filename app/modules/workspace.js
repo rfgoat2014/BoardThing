@@ -29,7 +29,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			this.on("cardAdded", this.cardAdded);
 			this.on("clusterToCard", this.clusterToCard);
 			this.on("cardPositionUpdated", this.cardPositionUpdated);
-			this.on("clusterPositionUpdated", this.clusterPositionUpdated);
 
 			this.render();
 
@@ -143,7 +142,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			// Get all the cards the exist in the selected board and draw them;
 			if (this._selectedBoard.cards) {
 				for (var i=0, boardCardsLength=this._selectedBoard.cards.length; i<boardCardsLength; i+=1) {
-					if (this._selectedBoard.cards[i].children.length == 0) {
+					if (this._selectedBoard.cards[i].cards.length == 0) {
 						var newCard = new Card.Item(this, null, this._paper, Card.GenerateModel(this._selectedBoard.cards[i], null));
 						newCard.draw();
 
@@ -156,13 +155,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 		createCluster: function(cluster, parentId) {
 			var newCluster = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(cluster, parentId));
-			
-			for (var i=0, clusterCardsLength=cluster.cards.length; i<clusterCardsLength; i+=1) {
-				if (cluster.cards[i].children.length == 0) newCluster.addCard(Card.GenerateModel(cluster.cards[i], parentId));
-				else this.createCluster(cluster.cards[i]);
-			}
-
-			newCluster.draw();
+			newCluster.generateEntities();
 
 			this._boardEntities.push(newCluster);
 		},
@@ -272,13 +265,12 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						clusterFound = true;
 
 						var cardModel = this._boardEntities[i].getModel();
-						cardModel.parentId = null;
 
+						this._boardEntities[i].undraw();
 						this._boardEntities[i] = null;
 						this._boardEntities.splice(i, 1);
 
 						this.addCardToBoard(cardModel);
-
 						break;
 					}
 				}
@@ -311,12 +303,17 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						this._boardEntities[selectedEntityIndex].undraw();
 
 						this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
-						this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+
+						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+
 						this._boardEntities[hitEntityIndex].draw();
 
-						Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
-							console.log(response);
-						});
+						if (this._boardEntities[selectedEntityIndex].getType() == "card") {
+							Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
+								console.log(response);
+							});
+						}
 
 						this._boardEntities[selectedEntityIndex] = null;
 						this._boardEntities.splice(selectedEntityIndex, 1);
@@ -324,8 +321,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
 						this._boardEntities[selectedEntityIndex].undraw();
 
-						this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-						this._boardEntities[hitEntityIndex].draw();
+						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
 						Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function(response) {
 							console.log(response);
@@ -357,7 +354,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						
 					}
 					else {
-						var cardModel = childEntity.entity.getModel();
+						var cardModel = childEntity.card;
 						cardModel.parentId = null;
 						cardModel.xPos = x;
 						cardModel.yPos = y;
@@ -377,27 +374,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 			// Push to socket
 			//this._socket.send(JSON.stringify({ action:"topicCardAdded", topic: this.model.id, card: newCard }));
-		},
-
-		clusterPositionUpdated: function(clusterId, x, y) {
-			var hitEntityIndex = -1,
-				selectedEntityIndex = -1;
-
-			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if ((this._boardEntities[i].getId() != clusterId) && (this._boardEntities[i].isHitting(x, y))) hitEntityIndex = i;
-				
-				if (this._boardEntities[i].getId() == clusterId) selectedEntityIndex = i;
-			}
-
-			if (hitEntityIndex != -1) {
-				if (this._boardEntities[hitEntityIndex].getType() == "card") {
-				}
-				else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
-				}
-			}
-			else {
-				if(selectedEntityIndex != -1) this.updateCardPosition(clusterId, this._boardEntities[selectedEntityIndex].getSVGShapePosition().x, this._boardEntities[selectedEntityIndex].getSVGShapePosition().y);
-			}
 		},
 
 		updateClusterPosition: function(clusterId, x, y) {

@@ -189,6 +189,10 @@ function(Card_Services, Workspace_Services) {
 			return this._model.parentId;
 		};
 
+		this.setParentId = function() {
+			this._model.parentId = parentId;
+		};
+
 		this.getIsDragging = function() {
 			return that._isDragging;
 		};
@@ -217,11 +221,11 @@ function(Card_Services, Workspace_Services) {
 		};
 
 		this.bringToFront = function() {
-			that._paper.set(that._svgDropShadow, that._svgShape, that._svgText).toFront();
+			that._paper.set(that._svgDropShadow, that._svgDropShadowGlow, that._svgShape, that._svgText).toFront();
 		};
 
 		this.sendToBack = function() {
-			that._paper.set(that._svgDropShadow, that._svgShape, that._svgText).toBack();
+			that._paper.set(that._svgDropShadow, that._svgDropShadowGlow, that._svgShape, that._svgText).toBack();
 		};
 
 		// ---- Check if a specified X/Y position touches the current shape
@@ -292,10 +296,7 @@ function(Card_Services, Workspace_Services) {
 					width: 3
 				});
 
-				that._svgDropShadow.toBack();
-
-				that._svgShape.toFront();
-				that._svgText.toFront();
+				that.bringToFront();
 
 				// draw the board and it's title on the board map
 				that._paper.set(that._svgShape, that._svgText).drag(that.move, that.start, that.up);
@@ -342,19 +343,9 @@ function(Card_Services, Workspace_Services) {
 			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
 			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
-			that._svgDropShadowGlow.remove();
-			that._svgDropShadowGlow = that._svgDropShadow.glow({
-				offsetx: 0.5,
-				offsety: 0.5,
-				opacity: 0.6, 
-				color: "#bbbbbb", 
-				width: 3
-			});
+			that.drawDropShadow();
 
-			that._svgDropShadow.toFront();
-			that._svgDropShadowGlow.toFront();
-			that._svgShape.toFront();
-			that._svgText.toFront();
+			that.bringToFront();
 		};
 
 		// ----- Handler for moving a board around the board map
@@ -369,20 +360,12 @@ function(Card_Services, Workspace_Services) {
 				y: that._svgShape.startY+dy
 			});
 
-			that._svgDropShadowGlow.remove();
-
 			that._svgDropShadow.attr({
 				x: that._svgDropShadow.startX+dx,
 				y: that._svgDropShadow.startY+dy
 			});
 
-			that._svgDropShadowGlow = that._svgDropShadow.glow({
-				offsetx: 0.5,
-				offsety: 0.5,
-				opacity: 0.6, 
-				color: "#bbbbbb", 
-				width: 3
-			});
+			that.drawDropShadow();
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map
@@ -401,8 +384,22 @@ function(Card_Services, Workspace_Services) {
 			that._model.xPos = that._svgShape.attr("x");
 			that._model.yPos = that._svgShape.attr("y");
 
+			that.drawDropShadow();
+
 			// this movement was a result of a parents position being updated
         	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+        };
+
+        this.drawDropShadow = function() {
+			if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
+
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
         };
 
         this.mouseOver = function() {
