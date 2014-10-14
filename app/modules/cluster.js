@@ -285,6 +285,7 @@ function(Card) {
 					width: 3
 				});
 
+				// bring this cluster to the front of whatever shape it's sitting on
 				that.bringToFront();
 
 				// bring all the cards to the front

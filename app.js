@@ -786,9 +786,7 @@
 	
 	app.put("/workspace/boards/clusters/collapse/:boardId/:clusterId", boardClusters.collapse);
 	app.put("/workspace/boards/clusters/expand/:boardId/:clusterId", boardClusters.expand);
-	
 	app.put("/workspace/boards/clusters/sort/:boardId/:clusterId", boardClusters.sort);
-	app.put("/workspace/boards/clusters/position/:boardId/:clusterId", boardClusters.updatePosition);
 
 	app.put("/workspace/boards/clusters/startVoting/:boardId/:clusterId", boardClusters.startDotVoting);
 	app.put("/workspace/boards/clusters/stopVoting/:boardId/:clusterId", boardClusters.stopDotVoting);

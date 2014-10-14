@@ -300,9 +300,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 			// Check if this is a root card that is being moved, this makes thins alot easier
 			if (selectedEntityIndex != -1) {
-				// Figure out if this is hitting an eisting entity when it gets dropped
+				// Figure out if this is hitting an existing entity when it gets dropped
 				if (hitEntityIndex != -1) {
 					if (this._boardEntities[hitEntityIndex].getType() == "card") {
+						// The selected entity was dropped on a card so we need to turn this card into a cluster
 						this._boardEntities[hitEntityIndex].undraw();
 						this._boardEntities[selectedEntityIndex].undraw();
 
@@ -313,16 +314,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 						this._boardEntities[hitEntityIndex].draw();
 
-						if (this._boardEntities[selectedEntityIndex].getType() == "card") {
-							Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
-								console.log(response);
-							});
-						}
+						Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
+							console.log(response);
+						});
 
 						this._boardEntities[selectedEntityIndex] = null;
 						this._boardEntities.splice(selectedEntityIndex, 1);
 					}
 					else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
+						// The selected entity was dropped on a cluster so add it to the cluster
 						this._boardEntities[selectedEntityIndex].undraw();
 
 						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
@@ -337,12 +337,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					}
 				}
 				else {
+					// We didnt drop on anything so lets update the position
 					var cardPosition = this._boardEntities[selectedEntityIndex].getSVGShapePosition();
 
 					this.updateCardPosition(cardId, cardPosition.x, cardPosition.y);
 				}
 			}
 			else {
+				// The entity wasnt a root object so  let's try and find it in the board clusters
 				var childEntity = null;
 
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
@@ -353,11 +355,17 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					}
 				}
 
+				// Check if we found the selected entity in one of the clusters
 				if (childEntity) {
 					if (hitEntityIndex != -1) {
-
+						// We dropped the entity on another one so we need to handle it
+						if (this._boardEntities[hitEntityIndex].getType() == "card") {
+						}
+						else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
+						}
 					}
 					else {
+						// The enity wasn't dropped on another so detach it from it's parent
 						var cardModel = childEntity.card;
 						cardModel.parentId = null;
 						cardModel.xPos = x;
