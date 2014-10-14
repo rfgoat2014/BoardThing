@@ -357,16 +357,35 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 				// Check if we found the selected entity in one of the clusters
 				if (childEntity) {
+					var cardModel = childEntity.card;
+
 					if (hitEntityIndex != -1) {
 						// We dropped the entity on another one so we need to handle it
 						if (this._boardEntities[hitEntityIndex].getType() == "card") {
+							this._boardEntities[hitEntityIndex].undraw();
+
+							this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
+
+							if (cardModel.cards.length === 0) this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							else if (cardModel.cards.length > 0) this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+
+							this._boardEntities[hitEntityIndex].draw();
+
+							Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), cardModel.id, function (response) {
+								console.log(response);
+							});
 						}
 						else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
+							if (cardModel.cards.length === 0) this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							else if (cardModel.cards.length > 0) this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+
+							Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), cardModel.id, function(response) {
+								console.log(response);
+							});
 						}
 					}
 					else {
-						// The enity wasn't dropped on another so detach it from it's parent
-						var cardModel = childEntity.card;
+						// The entity wasn't dropped on another so detach it from it's parent
 						cardModel.parentId = null;
 						cardModel.xPos = x;
 						cardModel.yPos = y;
@@ -375,7 +394,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 						var newEnitity = null,
 							newShapePos = null;
-
 
 						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(cardModel);
 						else newEnitity = this.addClusterToBoard(cardModel);
