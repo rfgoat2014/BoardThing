@@ -103,8 +103,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					if (response.status == "success") {
 						for (var j=0, boardsLength=boards.length; j<boardsLength; j+=1) {
 							if (response.board.id.toString() == boards[j].id.toString()) {
-								boards[j].cards = response.board.cards;response.board.cards
-;								break;
+								boards[j].cards = response.board.cards;response.board.cards;
+								break;
 							}
 						}
 
@@ -309,8 +309,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 						this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
 
-						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
 						this._boardEntities[hitEntityIndex].draw();
 
@@ -325,15 +325,19 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						// The selected entity was dropped on a cluster so add it to the cluster
 						this._boardEntities[selectedEntityIndex].undraw();
 
-						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						var addedClusterId = null;
 
-						Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function(response) {
-							console.log(response);
-						});
+						if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
-						this._boardEntities[selectedEntityIndex] = null;
-						this._boardEntities.splice(selectedEntityIndex, 1);
+						if (addedClusterId) {
+							Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
+								console.log(response);
+							});
+
+							this._boardEntities[selectedEntityIndex] = null;
+							this._boardEntities.splice(selectedEntityIndex, 1);
+						}
 					}
 				}
 				else {
@@ -376,12 +380,16 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 							});
 						}
 						else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
-							if (cardModel.cards.length === 0) this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
-							else if (cardModel.cards.length > 0) this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							var addedClusterId = null;
 
-							Cluster_Services.AttachCard(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), cardModel.id, function(response) {
-								console.log(response);
-							});
+							if (cardModel.cards.length === 0) addedClusterId = this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							else if (cardModel.cards.length > 0) addedClusterId = this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+
+							if (addedClusterId) {
+								Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, cardModel.id, function(response) {
+									console.log(response);
+								});
+							}
 						}
 					}
 					else {

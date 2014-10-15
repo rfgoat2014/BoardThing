@@ -146,7 +146,10 @@ function(Card) {
 				if ((that._model.cards.length === 0)) {
 					that._workspace.trigger("clusterToCard", that._model.id);
 				}
-				else that.generateEntities();
+				else {
+					if (that._parent) that._parent.generateEntities();
+					else that.generateEntities();
+				}
 			}
 			else {
 				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
@@ -162,16 +165,54 @@ function(Card) {
 			else return null;
 		};
 
-		this.addCard = function(cardModel) {
+		this.addCard = function(x, y, cardModel) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
+				if (that._entities[i].getType() == "cluster") {
+					var svgShapePosition = that._entities[i].getSVGShapePosition();
+
+					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
+						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
+						var cardId = that._entities[i].addCard(x, y, cardModel);
+						
+						if (cardId) {
+							that.draw();
+
+							return cardId;
+						}
+					} 
+				}
+			}
+
 			that._model.cards.push(cardModel);
 
 			that.generateEntities();
+
+			return that._model.id;
 		};
 
-		this.addCluster = function(clusterModel) {
+		this.addCluster = function(x, y, clusterModel) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
+				if (that._entities[i].getType() == "cluster") {
+					var svgShapePosition = that._entities[i].getSVGShapePosition();
+
+					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
+						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
+						var clusterId = that._entities[i].addCluster(x, y, clusterModel);
+						
+						if (clusterId) {
+							that.draw();
+							
+							return clusterId;
+						}
+					} 
+				}
+			}
+
 			that._model.cards.push(clusterModel);
 
 			that.generateEntities();
+
+			return that._model.id;
 		};
 
 		this.generateEntities = function() {
@@ -183,12 +224,14 @@ function(Card) {
 			that._entities = [];
 
 			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i++) {
-				if ((that._model.cards[i].cards == null) || (that._model.cards[i].cards.length == 0)) {
-					that._entities.push(new Card.Item(that._workspace, that, that._paper, that._model.cards[i]));
-				}
-				else {
-					that._entities.push(new Cluster.Item(that._workspace, that, that._paper, that._model.cards[i]));
-					that._entities[(that._entities.length-1)].generateEntities();
+				if (that._model.cards[i]) {
+					if ((that._model.cards[i].cards == null) || (that._model.cards[i].cards.length == 0)) {
+						that._entities.push(new Card.Item(that._workspace, that, that._paper, that._model.cards[i]));
+					}
+					else {
+						that._entities.push(new Cluster.Item(that._workspace, that, that._paper, that._model.cards[i]));
+						that._entities[(that._entities.length-1)].generateEntities();
+					}
 				}
 			}
 
