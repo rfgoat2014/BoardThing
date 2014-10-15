@@ -17,6 +17,8 @@ function(Card) {
 			votesReceived: 0, 
 			xPos: model.xPos,
 			yPos: model.yPos,
+			width: model.width,
+			height: model.height,
 			color: model.color, 
 			title: model.title, 
 			content: model.content, 
@@ -223,7 +225,7 @@ function(Card) {
 
 				// there is no word wrapping in svg text so we need to manually wrap it
 				var words = that._model.content.split(" "),
-					maxWidth = that._model.width-(that._shapeAttributes.padding*2),
+					maxWidth = 180,
 					tempText = "";
 
 				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {

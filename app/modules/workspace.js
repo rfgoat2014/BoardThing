@@ -103,8 +103,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					if (response.status == "success") {
 						for (var j=0, boardsLength=boards.length; j<boardsLength; j+=1) {
 							if (response.board.id.toString() == boards[j].id.toString()) {
-								boards[j].cards = response.board.cards;
-								break;
+								boards[j].cards = response.board.cards;response.board.cards
+;								break;
 							}
 						}
 
