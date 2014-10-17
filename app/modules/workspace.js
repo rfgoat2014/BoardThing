@@ -231,7 +231,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					color: card.color
 				};
 
-				this.updateCardPosition(newCard.id, newCard.xPos, newCard.yPos);
+				Card_Services.UpdatePosition(this._selectedBoard.id, newCard.id, newCard.xPos, newCard.yPos);
 
 	        	this._cardsDroppedInPosition++;
 
@@ -345,9 +345,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				}
 				else {
 					// We didnt drop on anything so lets update the position
-					var cardPosition = this._boardEntities[selectedEntityIndex].getSVGShapePosition();
-
-					this.updateCardPosition(cardId, cardPosition.x, cardPosition.y);
+					Card_Services.UpdatePosition(this._selectedBoard.id, cardId, this._boardEntities[selectedEntityIndex].getSVGShapeX(), this._boardEntities[selectedEntityIndex].getSVGShapeY());
 				}
 			}
 			else {
@@ -413,25 +411,32 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					}
 					else {
 						// This is onto a blank space so we need to add the entity to the main board
-						cardModel.xPos = x;
-						cardModel.yPos = y;
 
+						// See if we can get the child svg shape postion. This will drop it into the place specified. If not fall back to the mouse position
+						var childSVGShape = this._boardEntities[selectedEntityIndex].getChildSVGShape(cardModel.id);
+
+						if (childSVGShape) {
+							cardModel.xPos = childSVGShape.x;
+							cardModel.yPos = childSVGShape.y;
+						}
+						else {
+							cardModel.xPos = x;
+							cardModel.yPos = y;
+						}
+
+						// Redraw the source entity as something has been detached
 						this._boardEntities[selectedEntityIndex].generateEntities();
 
 						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(Card.GenerateModel(cardModel, null));
 						else newEnitity = this.addClusterToBoard(Cluster.GenerateModel(cardModel, null));
 
-						this.updateCardPosition(cardModel.id, x, y);
+						Card_Services.UpdatePosition(this._selectedBoard.id, cardModel.id, cardModel.xPos, cardModel.yPos);
 					}
 
 					// Call the source cluster to check if it's still valid as cluster. If it's now empty transform into a card.
 					if (!this._boardEntities[selectedEntityIndex].getIsValidCluster()) this.clusterToCard(this._boardEntities[selectedEntityIndex].getId());
 				}
 			}
-		},
-
-		updateCardPosition: function(cardId, x, y) {
-	        Card_Services.UpdatePosition(this._selectedBoard.id, cardId, x, y);
 		},
 
 		getWorkspaceId: function() {

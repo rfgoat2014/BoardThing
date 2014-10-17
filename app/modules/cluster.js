@@ -73,19 +73,41 @@ function(Card) {
 			return this._model.parentId;
 		};
 
-		this.setParentId = function(parentId) {
-			this._model.parentId = parentId;
-		};
-
 		this.getIsDragging = function() {
 			return that._isDragging;
 		};
 
-		this.getSVGShapePosition = function() {
-			return { 
-				x: that._svgShape.attr("x"), 
-				y: that._svgShape.attr("y")
-			};
+		this.getChildSVGShape = function(id) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+				if (that._entities[i].getId() == id) return { x: that._entities[i].getSVGShapeX(), y: that._entities[i].getSVGShapeY() };
+				
+				if (that._entities[i].getType() == "cluster") {
+					var childShape = that._entities[i].getChildSVGShape(id);
+					if (childShape) return childShape;
+				}
+			}
+
+			return null;
+		};
+
+		this.getSVGShapeX = function() {
+			return that._svgShape.attr("x");
+		};
+
+		this.getSVGShapeY = function() {
+			return that._svgShape.attr("y");
+		};
+
+		this.getWidth = function() {
+			return that._svgShape.attr("width");
+		};
+
+		this.getHeight = function() {
+			return that._svgShape.attr("height");
+		};
+
+		this.setParentId = function(parentId) {
+			this._model.parentId = parentId;
 		};
 
 		this.setX = function (xPos) {
@@ -96,12 +118,20 @@ function(Card) {
 			that._model.yPos = yPos;
 		};
 
-		this.getWidth = function() {
-			return that._svgShape.attr("width");
-		};
+		// ---- Check if a specified X/Y position touches the current shape
+		this.isHitting = function(x, y) {
+			if (that._svgShape) {
+				var bounds = {
+					startX: that._svgShape.attr("x"),
+					endX: that._svgShape.attr("x")+that._svgShape.attr("width"),
+					startY: that._svgShape.attr("y"),
+					endY: that._svgShape.attr("y")+that._svgShape.attr("height"),
+				}
 
-		this.getHeight = function() {
-			return that._svgShape.attr("height");
+				if ((x > bounds.startX) && (x < bounds.endX) && (y > bounds.startY) && (y < bounds.endY)) return true;
+				else return false;
+			}
+			else return false;
 		};
 
 		this.bringToFront = function() {
@@ -119,10 +149,11 @@ function(Card) {
 		this.addCard = function(x, y, cardModel) {
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
 				if ((that._entities[i].getId() != cardModel.id) && (that._entities[i].getType() == "cluster")) { 
-					var svgShapePosition = that._entities[i].getSVGShapePosition();
+					var svgShapeX = that._entities[i].getSVGShapeX(),
+						svgShapeY = that._entities[i].getSVGShapeY();
 
-					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
-						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
+					if (((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
+						((y >= svgShapeY) && (y <= (svgShapeY + that._entities[i].getHeight())))) {
 						var cardId = that._entities[i].addCard(x, y, cardModel);
 						
 						if (cardId) {
@@ -142,10 +173,11 @@ function(Card) {
 		this.addCluster = function(x, y, clusterModel) {
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
 				if ((that._entities[i].getId() != clusterModel.id) && (that._entities[i].getType() == "cluster")) { 
-					var svgShapePosition = that._entities[i].getSVGShapePosition();
+					var svgShapeX = that._entities[i].getSVGShapeX(),
+						svgShapeY = that._entities[i].getSVGShapeY();
 
-					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
-						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
+					if (((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
+						((y >= svgShapeY) && (y <= (svgShapeY + that._entities[i].getHeight())))) {
 						var clusterId = that._entities[i].addCluster(x, y, clusterModel);
 						
 						if (clusterId) {
@@ -223,22 +255,6 @@ function(Card) {
 
 			that.draw();
 		},
-
-		// ---- Check if a specified X/Y position touches the current shape
-		this.isHitting = function(x, y) {
-			if (that._svgShape) {
-				var bounds = {
-					startX: that._svgShape.attr("x"),
-					endX: that._svgShape.attr("x")+that._svgShape.attr("width"),
-					startY: that._svgShape.attr("y"),
-					endY: that._svgShape.attr("y")+that._svgShape.attr("height"),
-				}
-
-				if ((x > bounds.startX) && (x < bounds.endX) && (y > bounds.startY) && (y < bounds.endY)) return true;
-				else return false;
-			}
-			else return false;
-		};
 
 		this.draw = function() {
 			if (!that._isDragging) {

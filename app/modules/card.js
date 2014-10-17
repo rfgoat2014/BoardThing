@@ -198,11 +198,12 @@ function(Card_Services, Workspace_Services) {
 			return that._isDragging;
 		};
 
-		this.getSVGShapePosition = function() {
-			return { 
-				x: that._svgShape.attr("x"), 
-				y: that._svgShape.attr("y")
-			};
+		this.getSVGShapeX = function() {
+			return that._svgShape.attr("x");
+		};
+
+		this.getSVGShapeY = function() {
+			return that._svgShape.attr("y");
 		};
 
 		this.setX = function (xPos) {
