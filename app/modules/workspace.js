@@ -322,26 +322,21 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						this._boardEntities.splice(selectedEntityIndex, 1);
 					}
 					else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
-						if () {
+						// The selected entity was dropped on a cluster so add it to the cluster
+						this._boardEntities[selectedEntityIndex].undraw();
 
-						}
-						else {
-							// The selected entity was dropped on a cluster so add it to the cluster
-							this._boardEntities[selectedEntityIndex].undraw();
+						var addedClusterId = null;
 
-							var addedClusterId = null;
+						if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
-							if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-							else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+						if (addedClusterId) {
+							Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
+								console.log(response);
+							});
 
-							if (addedClusterId) {
-								Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
-									console.log(response);
-								});
-
-								this._boardEntities[selectedEntityIndex] = null;
-								this._boardEntities.splice(selectedEntityIndex, 1);
-							}
+							this._boardEntities[selectedEntityIndex] = null;
+							this._boardEntities.splice(selectedEntityIndex, 1);
 						}
 					}
 				}
@@ -360,7 +355,13 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					if (this._boardEntities[i].getType() == "cluster") {
 						childEntity = this._boardEntities[i].getEntity(cardId);
 
-						if (childEntity) break;
+						if (childEntity) {	
+							this._boardEntities[i].generateEntities();
+
+							// The entity wasn't dropped on another so detach it from it's parent
+							Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, childEntity.card.id);
+							break;
+						}
 					}
 				}
 
@@ -386,11 +387,13 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						}
 						else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
 							var addedClusterId = null;
-
-							if (cardModel.cards.length === 0) addedClusterId = this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
-							else if (cardModel.cards.length > 0) addedClusterId = this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							
+							if (cardModel.cards.length === 0) addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							else if (cardModel.cards.length > 0) addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
 
 							if (addedClusterId) {
+								this._boardEntities[hitEntityIndex].generateEntities();
+
 								Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, cardModel.id, function(response) {
 									console.log(response);
 								});
@@ -398,15 +401,12 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						}
 					}
 					else {
-						// The entity wasn't dropped on another so detach it from it's parent
+						var newEnitity = null,
+							newShapePos = null;
+
 						cardModel.parentId = null;
 						cardModel.xPos = x;
 						cardModel.yPos = y;
-
-						Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, cardModel.id);
-
-						var newEnitity = null,
-							newShapePos = null;
 
 						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(cardModel);
 						else newEnitity = this.addClusterToBoard(cardModel);
