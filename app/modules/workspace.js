@@ -279,12 +279,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					}
 				}
 			}
-
-			if (!clusterFound) {
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-					if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].childClusterToCard(clusterId);
-				}
-			}
 		},
 
 		// ----- This method is a big one, it handles the movement of cards around the board
@@ -304,20 +298,27 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				if (hitEntityIndex != -1) {
 					if (this._boardEntities[hitEntityIndex].getType() == "card") {
 						// The selected entity was dropped on a card so we need to turn this card into a cluster
+						// Remove the existing SVG entities from the board
 						this._boardEntities[hitEntityIndex].undraw();
+
 						this._boardEntities[selectedEntityIndex].undraw();
 
+						// Create the new cluster object
 						this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
 
+						// Add the dropped object to the cluster
 						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
-						this._boardEntities[hitEntityIndex].draw();
+						// Draw in the cluster
+						this._boardEntities[hitEntityIndex].generateEntities();
 
+						// Make the cluster in the database
 						Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
 							console.log(response);
 						});
 
+						// Remove the dropped entity from the main board
 						this._boardEntities[selectedEntityIndex] = null;
 						this._boardEntities.splice(selectedEntityIndex, 1);
 					}
@@ -329,6 +330,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 						if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+
+						this._boardEntities[hitEntityIndex].generateEntities();
 
 						if (addedClusterId) {
 							Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
@@ -356,7 +359,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						childEntity = this._boardEntities[i].getEntity(cardId);
 
 						if (childEntity) {	
-							this._boardEntities[i].generateEntities();
+							selectedEntityIndex = i;
 
 							// The entity wasn't dropped on another so detach it from it's parent
 							Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, childEntity.card.id);
@@ -372,48 +375,57 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					if (hitEntityIndex != -1) {
 						// We dropped the entity on another one so we need to handle it
 						if (this._boardEntities[hitEntityIndex].getType() == "card") {
+							// Undraw the first card and null it out (just to be sure)
 							this._boardEntities[hitEntityIndex].undraw();
 
+							// Turn the hit card into a cluster
 							this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
 
-							if (cardModel.cards.length === 0) this._boardEntities[hitEntityIndex].addCard(Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
-							else if (cardModel.cards.length > 0) this._boardEntities[hitEntityIndex].addCluster(Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							// Add the dropped entity to the newly created clusrer
+							if (cardModel.cards.length === 0) this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							else if (cardModel.cards.length > 0) this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
 
-							this._boardEntities[hitEntityIndex].draw();
+							// Redraw both the source and the new cluster
+							this._boardEntities[selectedEntityIndex].generateEntities();
+							this._boardEntities[hitEntityIndex].generateEntities();
 
+							// Save the changes in the database
 							Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), cardModel.id, function (response) {
 								console.log(response);
 							});
 						}
 						else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
-							var addedClusterId = null;
-							
-							if (cardModel.cards.length === 0) addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
-							else if (cardModel.cards.length > 0) addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							// Add the dropped entity to the selected cluster. We will need to get back the parent cluster it was added for the upte
+							var parentClusterId = null;
 
-							if (addedClusterId) {
+							if (cardModel.cards.length === 0) parentClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+							else if (cardModel.cards.length > 0) parentClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
+
+							if (parentClusterId) {
+								this._boardEntities[selectedEntityIndex].generateEntities();
 								this._boardEntities[hitEntityIndex].generateEntities();
 
-								Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, cardModel.id, function(response) {
+								Cluster_Services.AttachCard(this._selectedBoard.id, parentClusterId, cardModel.id, function(response) {
 									console.log(response);
 								});
 							}
 						}
 					}
 					else {
-						var newEnitity = null,
-							newShapePos = null;
-
-						cardModel.parentId = null;
+						// This is onto a blank space so we need to add the entity to the main board
 						cardModel.xPos = x;
 						cardModel.yPos = y;
 
-						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(cardModel);
-						else newEnitity = this.addClusterToBoard(cardModel);
+						this._boardEntities[selectedEntityIndex].generateEntities();
 
-						newShapePos = newEnitity.getSVGShapePosition();
-						this.updateCardPosition(newEnitity.getId(), newShapePos.x, newShapePos.y);
+						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(Card.GenerateModel(cardModel, null));
+						else newEnitity = this.addClusterToBoard(Cluster.GenerateModel(cardModel, null));
+
+						this.updateCardPosition(cardModel.id, x, y);
 					}
+
+					// Call the source cluster to check if it's still valid as cluster. If it's now empty transform into a card.
+					if (!this._boardEntities[selectedEntityIndex].getIsValidCluster()) this.clusterToCard(this._boardEntities[selectedEntityIndex].getId());
 				}
 			}
 		},

@@ -116,22 +116,58 @@ function(Card) {
 			that._paper.set(that._svgDropShadow, that._svgDropShadowCover, that._svgShape, that._svgText).toBack();
 		};
 
-		this.childClusterToCard = function(clusterId) {
-			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
-				if (that._model.cards[i].id == clusterId) {
-					var selectedCluster = that._model.cards[i];
+		this.addCard = function(x, y, cardModel) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
+				if ((that._entities[i].getId() != cardModel.id) && (that._entities[i].getType() == "cluster")) { 
+					var svgShapePosition = that._entities[i].getSVGShapePosition();
 
-					that._model.cards.splice(i, 1);
-					that._model.cards.splice(i, 0, selectedCluster);
+					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
+						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
+						var cardId = that._entities[i].addCard(x, y, cardModel);
+						
+						if (cardId) {
+							that.draw();
 
-					that.generateEntities();
-					break;
+							return cardId;
+						}
+					} 
 				}
 			}
+
+			that._model.cards.push(cardModel);
+
+			return that._model.id;
+		};
+
+		this.addCluster = function(x, y, clusterModel) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
+				if ((that._entities[i].getId() != clusterModel.id) && (that._entities[i].getType() == "cluster")) { 
+					var svgShapePosition = that._entities[i].getSVGShapePosition();
+
+					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
+						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
+						var clusterId = that._entities[i].addCluster(x, y, clusterModel);
+						
+						if (clusterId) {
+							that.draw();
+							
+							return clusterId;
+						}
+					} 
+				}
+			}
+
+			that._model.cards.push(clusterModel);
+
+			return that._model.id;
+		};
+
+		this.getIsValidCluster = function() {
+			if (that._model.cards.length > 0) return true;
+			else return false
 		};
 
 		this.getIsChildEntity = function(id) {
-			console.log("checking");
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
 			console.log(that._entities[i].getId());
 			console.log(id);
@@ -163,60 +199,6 @@ function(Card) {
 			}
 
 			return null;
-		};
-
-		this.entityDroppedOnParent = function(cardId, x, y) {
-			that.generateEntities();
-		};
-
-		this.addCard = function(x, y, cardModel) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				if (that._entities[i].getType() == "cluster") {
-					var svgShapePosition = that._entities[i].getSVGShapePosition();
-
-					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
-						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
-						var cardId = that._entities[i].addCard(x, y, cardModel);
-						
-						if (cardId) {
-							that.draw();
-
-							return cardId;
-						}
-					} 
-				}
-			}
-
-			that._model.cards.push(cardModel);
-
-			that.generateEntities();
-
-			return that._model.id;
-		};
-
-		this.addCluster = function(x, y, clusterModel) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				if (that._entities[i].getType() == "cluster") {
-					var svgShapePosition = that._entities[i].getSVGShapePosition();
-
-					if (((x >= svgShapePosition.x) && (x < (svgShapePosition.x + that._entities[i].getWidth()))) && 
-						((y >= svgShapePosition.y) && (y <= (svgShapePosition.y + that._entities[i].getHeight())))) {
-						var clusterId = that._entities[i].addCluster(x, y, clusterModel);
-						
-						if (clusterId) {
-							that.draw();
-							
-							return clusterId;
-						}
-					} 
-				}
-			}
-
-			that._model.cards.push(clusterModel);
-
-			that.generateEntities();
-
-			return that._model.id;
 		};
 
 		this.generateEntities = function() {
