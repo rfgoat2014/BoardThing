@@ -130,39 +130,43 @@ function(Card) {
 			}
 		};
 
-		this.getEntity = function(id) {
-			var card = null;
+		this.getIsChildEntity = function(id) {
+			console.log("checking");
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+			console.log(that._entities[i].getId());
+			console.log(id);
+				if (that._entities[i].getId() == id) return true;
+				else if ((that._entities[i].getType() == "cluster") && (that._entities[i].getIsChildEntity(id))) return true;
+			}
 
+			return false;
+		};
+
+		this.getEntity = function(id) {
 			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
 				if (that._model.cards[i].id == id) {
-					card = that._model.cards[i];
+					var card = that._model.cards[i];
 
 					that._model.cards.splice(i,1);
-					break;
+
+					return { parentId: that._model.id, card: card};
 				}
 			}
 
-			if (card) {
-				if ((that._model.cards.length === 0)) {
-					that._workspace.trigger("clusterToCard", that._model.id);
-				}
-				else {
-					if (that._parent) that._parent.generateEntities();
-					else that.generateEntities();
-				}
-			}
-			else {
-				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-					if (that._entities[i].getType() == "cluster") {
-						var entity = that._entities[i].getEntity(id);
+			// Check if this the selected entity is the child of this cluster
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+				if (that._entities[i].getType() == "cluster") {
+					var entity = that._entities[i].getEntity(id);
 
-						if (entity) return entity;
-					}
+					if (entity) return entity;
 				}
 			}
 
-			if (card) return { parentId: that.getId(), card: card };
-			else return null;
+			return null;
+		};
+
+		this.entityDroppedOnParent = function(cardId, x, y) {
+			that.generateEntities();
 		};
 
 		this.addCard = function(x, y, cardModel) {
