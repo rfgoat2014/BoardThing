@@ -322,21 +322,26 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						this._boardEntities.splice(selectedEntityIndex, 1);
 					}
 					else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
-						// The selected entity was dropped on a cluster so add it to the cluster
-						this._boardEntities[selectedEntityIndex].undraw();
+						if () {
 
-						var addedClusterId = null;
+						}
+						else {
+							// The selected entity was dropped on a cluster so add it to the cluster
+							this._boardEntities[selectedEntityIndex].undraw();
 
-						if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
-						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+							var addedClusterId = null;
 
-						if (addedClusterId) {
-							Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
-								console.log(response);
-							});
+							if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+							else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
-							this._boardEntities[selectedEntityIndex] = null;
-							this._boardEntities.splice(selectedEntityIndex, 1);
+							if (addedClusterId) {
+								Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
+									console.log(response);
+								});
+
+								this._boardEntities[selectedEntityIndex] = null;
+								this._boardEntities.splice(selectedEntityIndex, 1);
+							}
 						}
 					}
 				}
@@ -638,7 +643,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				e.stopPropagation();
 				e.preventDefault();
 
-				that.parent.trigger("viewWorkspace", that.id);
+				that.parent.trigger("viewWorkspace", that.model.id);
 			});
 		}
 	});
