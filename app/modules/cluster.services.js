@@ -68,6 +68,8 @@ function() {
 	};
 
 	Cluster.Collapse = function(boardId, clusterId, callback) {
+		console.log(boardId)
+		console.log(clusterId)
         $.ajax({
             url: "/workspace/boards/clusters/collapse/" + boardId + "/" + clusterId,
             type: 'PUT',

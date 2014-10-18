@@ -254,7 +254,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 		},
 
 		addClusterToBoard: function(cluster, parentId) {
-			var cluster = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(cluster, parentId));
+			var clusterModel = Cluster.GenerateModel(cluster, parentId);
+
+			var cluster = new Cluster.Item(this, null, this._paper, clusterModel);
 			cluster.generateEntities();
 
 			this._boardEntities.push(cluster);
@@ -430,7 +432,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						this._boardEntities[selectedEntityIndex].generateEntities();
 
 						if ((!cardModel.cards) || (cardModel.cards.length == 0)) newEnitity = this.addCardToBoard(Card.GenerateModel(cardModel, null));
-						else newEnitity = this.addClusterToBoard(Cluster.GenerateModel(cardModel, null));
+						else {
+							var newCluster = Cluster.GenerateModel(cardModel, null);
+							newCluster.collapsed = false;
+
+							this.updateClusterExpanded(newCluster.id);
+
+							newEnitity = this.addClusterToBoard(newCluster);
+						}
 
 						Card_Services.UpdatePosition(this._selectedBoard.id, cardModel.id, cardModel.xPos, cardModel.yPos);
 					}

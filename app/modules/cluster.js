@@ -251,6 +251,8 @@ function(Card) {
 				}
 			}
 
+			clusterModel.collapsed = true;
+
 			that._model.cards.push(clusterModel);
 
 			return that._model.id;
