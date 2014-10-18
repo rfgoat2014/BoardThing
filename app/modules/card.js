@@ -372,8 +372,6 @@ function(Card_Services, Workspace_Services) {
 
 		// ----- Handler for finishing the drag of a board around the board map
     	this.up = function (e, fromCluster) {
-    		that._isDragging = false;
-
 			that._svgText.startX = null;
 			that._svgText.startY = null;
 
@@ -389,7 +387,9 @@ function(Card_Services, Workspace_Services) {
 			that.drawDropShadow();
 
 			// this movement was a result of a parents position being updated
-        	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+        	if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+
+    		that._isDragging = false;
         };
 
         this.drawDropShadow = function() {

@@ -108,6 +108,10 @@ function(Card) {
 			return that._svgShape.attr("height");
 		};
 
+		this.getCollapsed = function() {
+			return that._model.collapsed;
+		};
+
 		this.getIsValidCluster = function() {
 			if (that._model.cards.length > 0) return true;
 			else return false
@@ -159,9 +163,11 @@ function(Card) {
 			that._model.yPos = yPos;
 		};
 
+		// {{ Public Methods}}
+
 		// ---- Check if a specified X/Y position touches the current shape
 		this.isHitting = function(x, y) {
-			if (that._svgShape) {
+			if ((that._svgShape) && (!that._model.collapsed)) {
 				var bounds = {
 					startX: that._svgShape.attr("x"),
 					endX: that._svgShape.attr("x")+that._svgShape.attr("width"),
@@ -174,8 +180,6 @@ function(Card) {
 			}
 			else return false;
 		};
-
-		// {{ Public Methods}}
 
 		this.bringToFront = function() {
 			that._paper.set(that._svgDropShadowGlow, that._svgDropShadowCover, that._svgShape, that._svgText).toFront();
@@ -194,11 +198,11 @@ function(Card) {
 		this.expandCollapse = function() {
 			if (that._model.collapsed) {
 				that._model.collapsed = false;
-        		that._workspace.trigger("updateClusterExpanded", that._model.id);
+        		if (that._parent == null) that._workspace.trigger("updateClusterExpanded", that._model.id);
 			}
 			else {
 				that._model.collapsed = true;
-				that._workspace.trigger("updateClusterCollapsed", that._model.id);
+				if (that._parent == null) that._workspace.trigger("updateClusterCollapsed", that._model.id);
 			}
 
 			that.parentGenerateEntities();
@@ -206,7 +210,7 @@ function(Card) {
 
 		this.addCard = function(x, y, cardModel) {
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				if ((that._entities[i].getId() != cardModel.id) && (that._entities[i].getType() == "cluster")) { 
+				if ((that._entities[i].getId() != cardModel.id) && (that._entities[i].getType() == "cluster") && (!that._entities[i].getCollapsed())) { 
 					var svgShapeX = that._entities[i].getSVGShapeX(),
 						svgShapeY = that._entities[i].getSVGShapeY();
 
@@ -230,7 +234,7 @@ function(Card) {
 
 		this.addCluster = function(x, y, clusterModel) {
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				if ((that._entities[i].getId() != clusterModel.id) && (that._entities[i].getType() == "cluster")) { 
+				if ((that._entities[i].getId() != clusterModel.id) && (that._entities[i].getType() == "cluster") && (!that._entities[i].getCollapsed())) { 
 					var svgShapeX = that._entities[i].getSVGShapeX(),
 						svgShapeY = that._entities[i].getSVGShapeY();
 
@@ -445,23 +449,6 @@ function(Card) {
 				e.stopPropagation();
 			}
 
-			// This is a greedy function so we have to manually build a double click event
-
-			if (that._singleClick) {
-	   			clearTimeout(that._clickTimer);
-				that._singleClick = false;
-
-				that.expandCollapse();
-	   		}
-	   		else {
-				that._singleClick = true;
-
-			    that._clickTimer = setTimeout(function() {
-			        clearTimeout(that._clickTimer);
-			        that._singleClick = false;
-			    }, 250);
-		    }
-
 			that._svgText.startX = that._svgText.attr("x");
 			that._svgText.startY = that._svgText.attr("y");
 
@@ -555,12 +542,27 @@ function(Card) {
 
 			that.bringToFront();
 
-			if (that._isDragging) {
-				// this movement was a result of a parents position being updated
-	        	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
-			}
+			// this movement was a result of a parents position being updated
+			if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
 
     		that._isDragging = false;
+
+			// This is a greedy function so we have to manually build a double click event
+
+			if (that._singleClick) {
+	   			clearTimeout(that._clickTimer);
+				that._singleClick = false;
+
+				that.expandCollapse();
+	   		}
+	   		else {
+				that._singleClick = true;
+
+			    that._clickTimer = setTimeout(function() {
+			        clearTimeout(that._clickTimer);
+			        that._singleClick = false;
+			    }, 250);
+		    }
         };
 
         this.mouseOver = function() {

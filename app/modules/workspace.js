@@ -443,13 +443,13 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 		updateClusterExpanded: function(clusterId) {
 			Cluster_Services.Expand(this._selectedBoard.id, clusterId, function(response) {
-				console.log("success");
+				console.log(response);
 			});
 		},
 
 		updateClusterCollapsed: function(clusterId) {
 			Cluster_Services.Collapse(this._selectedBoard.id, clusterId, function(response) {
-				console.log("success");
+				console.log(response);
 			});
 		},
 
