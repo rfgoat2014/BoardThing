@@ -29,6 +29,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			this.on("cardAdded", this.cardAdded);
 			this.on("clusterToCard", this.clusterToCard);
 			this.on("cardPositionUpdated", this.cardPositionUpdated);
+			this.on("updateClusterExpanded", this.updateClusterExpanded);
+			this.on("updateClusterCollapsed", this.updateClusterCollapsed);
 
 			this.render();
 
@@ -437,6 +439,18 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					if (!this._boardEntities[selectedEntityIndex].getIsValidCluster()) this.clusterToCard(this._boardEntities[selectedEntityIndex].getId());
 				}
 			}
+		},
+
+		updateClusterExpanded: function(clusterId) {
+			Cluster_Services.Expand(this._selectedBoard.id, clusterId, function(response) {
+				console.log("success");
+			});
+		},
+
+		updateClusterCollapsed: function(clusterId) {
+			Cluster_Services.Collapse(this._selectedBoard.id, clusterId, function(response) {
+				console.log("success");
+			});
 		},
 
 		getWorkspaceId: function() {

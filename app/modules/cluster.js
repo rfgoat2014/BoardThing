@@ -57,6 +57,8 @@ function(Card) {
 
 		this._isDragging = false;
 
+		// {{ Getters }}
+
 		this.getId = function() {
 			return that._model.id;
 		};
@@ -106,6 +108,45 @@ function(Card) {
 			return that._svgShape.attr("height");
 		};
 
+		this.getIsValidCluster = function() {
+			if (that._model.cards.length > 0) return true;
+			else return false
+		};
+
+		this.getIsChildEntity = function(id) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+				if (that._entities[i].getId() == id) return true;
+				else if ((that._entities[i].getType() == "cluster") && (that._entities[i].getIsChildEntity(id))) return true;
+			}
+
+			return false;
+		};
+
+		this.getEntity = function(id) {
+			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
+				if (that._model.cards[i].id == id) {
+					var card = that._model.cards[i];
+
+					that._model.cards.splice(i,1);
+
+					return { parentId: that._model.id, card: card};
+				}
+			}
+
+			// Check if this the selected entity is the child of this cluster
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+				if (that._entities[i].getType() == "cluster") {
+					var entity = that._entities[i].getEntity(id);
+
+					if (entity) return entity;
+				}
+			}
+
+			return null;
+		};
+
+		// {{ Setters }}
+
 		this.setParentId = function(parentId) {
 			this._model.parentId = parentId;
 		};
@@ -134,8 +175,12 @@ function(Card) {
 			else return false;
 		};
 
+		// {{ Public Methods}}
+
 		this.bringToFront = function() {
 			that._paper.set(that._svgDropShadowGlow, that._svgDropShadowCover, that._svgShape, that._svgText).toFront();
+
+			if (that._svgCardCount) that._paper.set(that._svgCardCount).toFront();
 
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
 				that._entities[i].bringToFront();
@@ -144,6 +189,19 @@ function(Card) {
 
 		this.sendToBack = function() {
 			that._paper.set(that._svgDropShadow, that._svgDropShadowCover, that._svgShape, that._svgText).toBack();
+		};
+
+		this.expandCollapse = function() {
+			if (that._model.collapsed) {
+				that._model.collapsed = false;
+        		that._workspace.trigger("updateClusterExpanded", that._model.id);
+			}
+			else {
+				that._model.collapsed = true;
+				that._workspace.trigger("updateClusterCollapsed", that._model.id);
+			}
+
+			that.parentGenerateEntities();
 		};
 
 		this.addCard = function(x, y, cardModel) {
@@ -194,46 +252,17 @@ function(Card) {
 			return that._model.id;
 		};
 
-		this.getIsValidCluster = function() {
-			if (that._model.cards.length > 0) return true;
-			else return false
-		};
-
-		this.getIsChildEntity = function(id) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-			console.log(that._entities[i].getId());
-			console.log(id);
-				if (that._entities[i].getId() == id) return true;
-				else if ((that._entities[i].getType() == "cluster") && (that._entities[i].getIsChildEntity(id))) return true;
-			}
-
-			return false;
-		};
-
-		this.getEntity = function(id) {
-			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
-				if (that._model.cards[i].id == id) {
-					var card = that._model.cards[i];
-
-					that._model.cards.splice(i,1);
-
-					return { parentId: that._model.id, card: card};
-				}
-			}
-
-			// Check if this the selected entity is the child of this cluster
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-				if (that._entities[i].getType() == "cluster") {
-					var entity = that._entities[i].getEntity(id);
-
-					if (entity) return entity;
-				}
-			}
-
-			return null;
-		};
+		this.parentGenerateEntities = function() {
+			if (that._parent == null) that.generateEntities();
+			else that._parent.draw();
+		}
 
 		this.generateEntities = function() {
+			if (that._svgCardCount) {
+				that._svgCardCount.remove();
+				that._svgCardCount = null;
+			}
+
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
 				that._entities[i].undraw();
 				that._entities[i] = null;
@@ -241,20 +270,19 @@ function(Card) {
 
 			that._entities = [];
 
-			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i++) {
-				if (that._model.cards[i]) {
-					if ((that._model.cards[i].cards == null) || (that._model.cards[i].cards.length == 0)) {
-						that._entities.push(new Card.Item(that._workspace, that, that._paper, that._model.cards[i]));
-					}
-					else {
-						that._entities.push(new Cluster.Item(that._workspace, that, that._paper, that._model.cards[i]));
-						that._entities[(that._entities.length-1)].generateEntities();
+			if (!that._model.collapsed) {
+				for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i++) {
+					if (that._model.cards[i]) {
+						if ((that._model.cards[i].cards == null) || (that._model.cards[i].cards.length == 0)) that._entities.push(new Card.Item(that._workspace, that, that._paper, that._model.cards[i]));
+						else that._entities.push(new Cluster.Item(that._workspace, that, that._paper, that._model.cards[i]));
 					}
 				}
 			}
 
 			that.draw();
 		},
+
+		// {{ Drawing methods }}
 
 		this.draw = function() {
 			if (!that._isDragging) {
@@ -284,7 +312,7 @@ function(Card) {
 
 				that._svgText.attr({
 					y: ((that._model.yPos+that._shapeAttributes.padding)+(that._svgText.getBBox().height/2))
-				});
+				})
 
 				// figure out what size the cluster should be
 				var width = that._svgText.getBBox().width+(that._shapeAttributes.padding*2);
@@ -292,15 +320,25 @@ function(Card) {
 
 				var height = that._svgText.getBBox().height+(that._shapeAttributes.padding*2);
 
-				// set the position in the cluster and draw it out
-				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-					that._entities[i].setX((that._model.xPos+that._shapeAttributes.padding));
-					that._entities[i].setY(that._model.yPos+height);
-					that._entities[i].draw();
+				// We don't actually need this if as collapsed clusters have no entities. Just there for sanity.
+				if (!that._model.collapsed) {
+					// set the position in the cluster and draw it out
+					for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+						that._entities[i].setX((that._model.xPos+that._shapeAttributes.padding));
+						that._entities[i].setY(that._model.yPos+height);
+						
+						if (that._entities[i].getType() == "cluster") that._entities[i].generateEntities();
+						else that._entities[i].draw();
 
-					if ((that._entities[i].getWidth()+(that._shapeAttributes.padding*2)) > width) width = (that._entities[i].getWidth()+(that._shapeAttributes.padding*2));
-					
-					height += that._entities[i].getHeight() + that._shapeAttributes.padding;
+						if ((that._entities[i].getWidth()+(that._shapeAttributes.padding*2)) > width) width = (that._entities[i].getWidth()+(that._shapeAttributes.padding*2));
+						
+						height += that._entities[i].getHeight() + that._shapeAttributes.padding;
+					}
+				}
+				else {
+					that._svgCardCount = that._paper.text((that._model.xPos+that._shapeAttributes.padding), (that._model.yPos+height), that._model.cards.length);
+
+					height += that._svgCardCount.getBBox().height;
 				}
 
 				that._svgShape = that._paper.rect(that._model.xPos, that._model.yPos, width, height);
@@ -347,6 +385,18 @@ function(Card) {
 			}
 		};
 
+        this.drawDropShadow = function() {
+			if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
+
+			that._svgDropShadowGlow = that._svgDropShadow.glow({
+				offsetx: 0.5,
+				offsety: 0.5,
+				opacity: 0.6, 
+				color: "#bbbbbb", 
+				width: 3
+			});
+        };
+
 		this.undraw = function() {
 			// clear the current SVG shape  representing the board on the board map
 			if (that._svgShape) {
@@ -376,14 +426,41 @@ function(Card) {
 				that._svgDropShadowGlow = null;
 			}
 
+			if (that._svgCardCount) {
+				that._svgCardCount.remove();
+				that._svgCardCount = null;
+			}
+
 			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 				that._entities[i].undraw();
 			}
 		};
 
+		// {{ Event handlers }}
+
 		// ----- Handler for the start of a drag action for this board object
-		this.start = function() {
-			that._isDragging = true;
+		this.start = function(x, y, e) {
+			if (e) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+
+			// This is a greedy function so we have to manually build a double click event
+
+			if (that._singleClick) {
+	   			clearTimeout(that._clickTimer);
+				that._singleClick = false;
+
+				that.expandCollapse();
+	   		}
+	   		else {
+				that._singleClick = true;
+
+			    that._clickTimer = setTimeout(function() {
+			        clearTimeout(that._clickTimer);
+			        that._singleClick = false;
+			    }, 250);
+		    }
 
 			that._svgText.startX = that._svgText.attr("x");
 			that._svgText.startY = that._svgText.attr("y");
@@ -397,9 +474,10 @@ function(Card) {
 			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
 			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
 
-			that.drawDropShadow();
-
-			that.bringToFront();
+			if (that._svgCardCount) {
+				that._svgCardCount.startX = that._svgCardCount.attr("x");
+				that._svgCardCount.startY = that._svgCardCount.attr("y");
+			}
 
 			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 				that._entities[i].start();
@@ -408,6 +486,8 @@ function(Card) {
 
 		// ----- Handler for moving a board around the board map
 		this.move = function (dx, dy, x, y, e) {
+			that._isDragging = true;
+
 			that._svgText.attr({
 				x: that._svgText.startX+dx,
 				y: that._svgText.startY+dy
@@ -428,6 +508,13 @@ function(Card) {
 				y: that._svgDropShadowCover.startY+dy
 			});
 
+			if (that._svgCardCount) {
+				that._svgCardCount.attr({
+					x: that._svgCardCount.startX+dx,
+					y: that._svgCardCount.startY+dy
+				});
+			}
+
 			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 				that._entities[i].move(dx, dy, x, y, e);
 			}
@@ -439,7 +526,6 @@ function(Card) {
 
 		// ----- Handler for finishing the drag of a board around the board map
     	this.up = function (e, fromCluster) {
-    		that._isDragging = false;
 
 			that._svgText.startX = null;
 			that._svgText.startY = null;
@@ -456,6 +542,11 @@ function(Card) {
 			that._model.xPos = that._svgShape.attr("x");
 			that._model.yPos = that._svgShape.attr("y");
 
+			if (that._svgCardCount) {
+				that._svgCardCount.startX = null;
+				that._svgCardCount.startY = null;
+			}
+
 			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
 				that._entities[i].up(e, true);
 			}
@@ -464,20 +555,12 @@ function(Card) {
 
 			that.bringToFront();
 
-			// this movement was a result of a parents position being updated
-        	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
-        };
+			if (that._isDragging) {
+				// this movement was a result of a parents position being updated
+	        	if (!fromCluster) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+			}
 
-        this.drawDropShadow = function() {
-			if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
-
-			that._svgDropShadowGlow = that._svgDropShadow.glow({
-				offsetx: 0.5,
-				offsety: 0.5,
-				opacity: 0.6, 
-				color: "#bbbbbb", 
-				width: 3
-			});
+    		that._isDragging = false;
         };
 
         this.mouseOver = function() {

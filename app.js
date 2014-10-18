@@ -784,8 +784,8 @@
 	app.post("/workspace/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.attachCluster);
 	app.delete("/workspace/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.detachCluster);
 	
-	app.put("/workspace/boards/clusters/collapse/:boardId/:clusterId", boardClusters.collapse);
 	app.put("/workspace/boards/clusters/expand/:boardId/:clusterId", boardClusters.expand);
+	app.put("/workspace/boards/clusters/collapse/:boardId/:clusterId", boardClusters.collapse);
 	app.put("/workspace/boards/clusters/sort/:boardId/:clusterId", boardClusters.sort);
 
 	app.put("/workspace/boards/clusters/startVoting/:boardId/:clusterId", boardClusters.startDotVoting);

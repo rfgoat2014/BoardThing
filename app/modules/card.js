@@ -334,8 +334,6 @@ function(Card_Services, Workspace_Services) {
 
 		// ----- Handler for the start of a drag action for this board object
 		this.start = function() {
-			that._isDragging = true;
-
 			that._svgText.startX = that._svgText.attr("x");
 			that._svgText.startY = that._svgText.attr("y");
 
@@ -352,6 +350,8 @@ function(Card_Services, Workspace_Services) {
 
 		// ----- Handler for moving a board around the board map
 		this.move = function (dx, dy, x, y, e) {
+			that._isDragging = true;
+
 			that._svgText.attr({
 				x: that._svgText.startX+dx,
 				y: that._svgText.startY+dy

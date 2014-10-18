@@ -56,5 +56,27 @@ function() {
     	});
 	};
 
+	Cluster.Expand = function(boardId, clusterId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/expand/" + boardId + "/" + clusterId,
+            type: 'PUT',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
+	Cluster.Collapse = function(boardId, clusterId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/collapse/" + boardId + "/" + clusterId,
+            type: 'PUT',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
 	return Cluster;
 });
