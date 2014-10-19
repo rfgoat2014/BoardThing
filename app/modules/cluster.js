@@ -214,15 +214,12 @@ function(Card) {
 					var svgShapeX = that._entities[i].getSVGShapeX(),
 						svgShapeY = that._entities[i].getSVGShapeY();
 
-					if (((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
+					if ((that._entities[i].getId() != cardModel.id) &&
+						((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
 						((y >= svgShapeY) && (y <= (svgShapeY + that._entities[i].getHeight())))) {
 						var cardId = that._entities[i].addCard(x, y, cardModel);
 						
-						if (cardId) {
-							that.draw();
-
-							return cardId;
-						}
+						if (cardId) return cardId;
 					} 
 				}
 			}
@@ -244,15 +241,12 @@ function(Card) {
 					var svgShapeX = that._entities[i].getSVGShapeX(),
 						svgShapeY = that._entities[i].getSVGShapeY();
 
-					if (((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
+					if ((that._entities[i].getId() != clusterModel.id) &&
+						((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
 						((y >= svgShapeY) && (y <= (svgShapeY + that._entities[i].getHeight())))) {
 						var clusterId = that._entities[i].addCluster(x, y, clusterModel);
 						
-						if (clusterId) {
-							that.draw();
-							
-							return clusterId;
-						}
+						if (clusterId) return clusterId;
 					} 
 				}
 			}

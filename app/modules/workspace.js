@@ -305,14 +305,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						// Remove the existing SVG entities from the board
 						this._boardEntities[hitEntityIndex].undraw();
 
-						this._boardEntities[selectedEntityIndex].undraw();
-
 						// Create the new cluster object
 						this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
 
 						// Add the dropped object to the cluster
 						if (this._boardEntities[selectedEntityIndex].getType() == "card") this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
+
+						this._boardEntities[selectedEntityIndex].undraw();
 
 						// Draw in the cluster
 						this._boardEntities[hitEntityIndex].generateEntities();
@@ -328,13 +328,12 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					}
 					else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
 						// The selected entity was dropped on a cluster so add it to the cluster
-						this._boardEntities[selectedEntityIndex].undraw();
-
 						var addedClusterId = null;
 
 						if (this._boardEntities[selectedEntityIndex].getType() == "card") addedClusterId = this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 						else if (this._boardEntities[selectedEntityIndex].getType() == "cluster") addedClusterId = this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(this._boardEntities[selectedEntityIndex].getModel(), this._boardEntities[selectedEntityIndex].getId()));
 
+						this._boardEntities[selectedEntityIndex].undraw();
 						this._boardEntities[hitEntityIndex].generateEntities();
 
 						if (addedClusterId) {
@@ -377,7 +376,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 					if (hitEntityIndex != -1) {
 						// We dropped the entity on another one so we need to handle it
 						if (this._boardEntities[hitEntityIndex].getType() == "card") {
-							// Undraw the first card and null it out (just to be sure)
+							// Undraw the first card
 							this._boardEntities[hitEntityIndex].undraw();
 
 							// Turn the hit card into a cluster
