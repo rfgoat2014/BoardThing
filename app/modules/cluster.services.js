@@ -78,5 +78,19 @@ function() {
     	});
 	};
 
+	Cluster.Sort = function(boardId, clusterId, cards, callback) {
+		$.ajax({
+		    url: "/workspace/boards/clusters/sort/" + boardId + "/" + clusterId,
+		    type: 'PUT',
+		    dataType: "json",
+		    data: {
+		    	cards: cards
+		    },
+			success: function(response) {
+				if (callback) callback(response);
+			}
+		});
+	}
+
 	return Cluster;
 });

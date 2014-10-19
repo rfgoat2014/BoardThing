@@ -1423,7 +1423,7 @@ exports.updatePosition = function (req, res) {
 
 // ===== Update the z position of the card on the board
 exports.updateZIndex = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)

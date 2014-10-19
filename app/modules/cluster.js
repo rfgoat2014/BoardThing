@@ -57,6 +57,8 @@ function(Card) {
 
 		this._isDragging = false;
 
+		this._model.cards.sort(function (a, b) { return a.zPos > b.zPos ? 1 : a.zPos < b.zPos ? -1 : 0; });
+
 		// {{ Getters }}
 
 		this.getId = function() {
@@ -65,6 +67,21 @@ function(Card) {
 
 		this.getModel = function() {
 			return that._model;
+		};
+
+		this.getChildModel = function(modelId) {
+			if (this._model.id == modelId) return that._model;
+			else {
+				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+					if (that._entities[i].getType() == "cluster") {
+						childModel = that._entities[i].getChildModel(modelId);
+
+						if (childModel) return getChildModel;
+					}
+				}
+			}
+
+			return null;
 		};
 
 		this.getType = function() {
@@ -117,15 +134,6 @@ function(Card) {
 			else return false
 		};
 
-		this.getIsChildEntity = function(id) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-				if (that._entities[i].getId() == id) return true;
-				else if ((that._entities[i].getType() == "cluster") && (that._entities[i].getIsChildEntity(id))) return true;
-			}
-
-			return false;
-		};
-
 		this.getEntity = function(id) {
 			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
 				if (that._model.cards[i].id == id) {
@@ -147,6 +155,15 @@ function(Card) {
 			}
 
 			return null;
+		};
+
+		this.getIsChildEntity = function(id) {
+			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
+				if (that._entities[i].getId() == id) return true;
+				else if ((that._entities[i].getType() == "cluster") && (that._entities[i].getIsChildEntity(id))) return true;
+			}
+
+			return false;
 		};
 
 		// {{ Setters }}

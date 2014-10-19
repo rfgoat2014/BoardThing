@@ -1334,7 +1334,6 @@ exports.sort = function (req, res) {
 			});
         }
 		else if (board) {
-
     		if ((!board.isPrivate)||
     			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
     			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
@@ -1351,8 +1350,9 @@ exports.sort = function (req, res) {
 								// loop through all the child cards of the cluster
 								for (var j=0, cardsLength = cards.length; j<cardsLength; j++) {
 									// based on what position we are in the order sent from the client set the correct position
-									if ((cards[j]) && (cards[j]._id == req.body.cards[i].id)) {
+									if ((cards[j]) && (cards[j]._id == req.body.cards[i])) {
 										cards[j].zPos = (i+1);
+										console.log(i)
 										
 										cards[j].save(function(err) {
 											if (err) {

@@ -29,6 +29,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			this.on("cardAdded", this.cardAdded);
 			this.on("clusterToCard", this.clusterToCard);
 			this.on("cardPositionUpdated", this.cardPositionUpdated);
+			this.on("saveClusterOrder", this.saveClusterOrder);
 			this.on("updateClusterExpanded", this.updateClusterExpanded);
 			this.on("updateClusterCollapsed", this.updateClusterCollapsed);
 
@@ -287,7 +288,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 		// ----- This method is a big one, it handles the movement of cards around the board
 		cardPositionUpdated: function(card, x, y) {
-			var hitEntityIndex = -1,
+			var that = this,
+				hitEntityIndex = -1,
 				selectedEntityIndex = -1;
 
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
@@ -320,6 +322,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						// Make the cluster in the database
 						Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), this._boardEntities[selectedEntityIndex].getId(), function (response) {
 							console.log(response);
+
+							// update the sort order of the target cluster
+							that.saveClusterOrder(that._boardEntities[hitEntityIndex].getId());
 						});
 
 						// Remove the dropped entity from the main board
@@ -339,6 +344,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 						if (addedClusterId) {
 							Cluster_Services.AttachCard(this._selectedBoard.id, addedClusterId, this._boardEntities[selectedEntityIndex].getId(), function(response) {
 								console.log(response);
+
+								// update the sort order of the target cluster
+								that.saveClusterOrder(addedClusterId);
 							});
 
 							this._boardEntities[selectedEntityIndex] = null;
@@ -363,7 +371,12 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 							selectedEntityIndex = i;
 
 							// The entity wasn't dropped on another so detach it from it's parent
-							Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, childEntity.card.id);
+							Cluster_Services.DetachCardFromcluster(this._selectedBoard.id, childEntity.parentId, childEntity.card.id, function(response) {
+								console.log(response);
+
+								// update the sort order of the source cluster
+								that.saveClusterOrder(that._boardEntities[selectedEntityIndex].getId());
+							});
 							break;
 						}
 					}
@@ -382,7 +395,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 							// Turn the hit card into a cluster
 							this._boardEntities[hitEntityIndex] = new Cluster.Item(this, null, this._paper, Cluster.GenerateModel(this._boardEntities[hitEntityIndex].getModel(), null));
 
-							// Add the dropped entity to the newly created clusrer
+							// Add the dropped entity to the newly created cluster
 							if (cardModel.cards.length === 0) this._boardEntities[hitEntityIndex].addCard(x, y, Card.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
 							else if (cardModel.cards.length > 0) this._boardEntities[hitEntityIndex].addCluster(x, y, Cluster.GenerateModel(cardModel, this._boardEntities[hitEntityIndex].getId()));
 
@@ -393,6 +406,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 							// Save the changes in the database
 							Cluster_Services.Insert(this._selectedBoard.id, this._boardEntities[hitEntityIndex].getId(), cardModel.id, function (response) {
 								console.log(response);
+
+								// update the sort order of the source cluster
+								that.saveClusterOrder(that._boardEntities[hitEntityIndex].getId());
 							});
 						}
 						else if (this._boardEntities[hitEntityIndex].getType() == "cluster") {
@@ -408,13 +424,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 								Cluster_Services.AttachCard(this._selectedBoard.id, parentClusterId, cardModel.id, function(response) {
 									console.log(response);
+
+									// update the sort order of the target cluster
+									that.saveClusterOrder(parentClusterId);
 								});
 							}
 						}
 					}
 					else {
 						// This is onto a blank space so we need to add the entity to the main board
-
 						// See if we can get the child svg shape postion. This will drop it into the place specified. If not fall back to the mouse position
 						var childSVGShape = this._boardEntities[selectedEntityIndex].getChildSVGShape(cardModel.id);
 
@@ -426,6 +444,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 							cardModel.xPos = x;
 							cardModel.yPos = y;
 						}
+
+						// update the sort order of the source cluster
+						this.saveClusterOrder(this._boardEntities[selectedEntityIndex].getModel());
 
 						// Redraw the source entity as something has been detached
 						this._boardEntities[selectedEntityIndex].generateEntities();
@@ -445,6 +466,28 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 					// Call the source cluster to check if it's still valid as cluster. If it's now empty transform into a card.
 					if (!this._boardEntities[selectedEntityIndex].getIsValidCluster()) this.clusterToCard(this._boardEntities[selectedEntityIndex].getId());
+				}
+			}
+		},
+
+		saveClusterOrder: function(clusterId) {
+			for (var i=0, entitiesLength=this._boardEntities.length; i<entitiesLength; i+=1) {
+				if (this._boardEntities[i].getType() == "cluster") {
+					clusterModel = this._boardEntities[i].getChildModel(clusterId);
+
+					if (clusterModel) {
+						var cardOrder = [];
+
+						for (var i=0, cardsLength=clusterModel.cards.length; i<cardsLength; i+=1) {
+							cardOrder.push(clusterModel.cards[i].id);
+						}
+
+						Cluster_Services.Sort(this._selectedBoard.id, clusterModel.id, cardOrder, function(response) {
+							console.log(response);
+						});
+
+						break;
+					}
 				}
 			}
 		},
