@@ -10,7 +10,6 @@ function(Card) {
 		var clusterModel = {
 			id: model.id, 
 			type: model.type, 
-			collapsed: model.collapsed, 
 			parentId: parentId,
 			parentIsVoting: false, 
 			isVoting: false, 
@@ -26,6 +25,12 @@ function(Card) {
 			created: model.created, 
 			createdDate: new Date(model.created)
 		};
+		
+		if (model.collapsed == null) {
+			if (parentId == null) clusterModel.collapsed = false;
+			else clusterModel.collapsed = true;
+		}
+		else clusterModel.collapsed = model.collapsed;
 
 		if (model.votesReceived > 0) {
 			if (model.type.trim().toLowerCase() == "text") clusterModel.content = model.content + " (+" + model.votesReceived + ")";
@@ -76,7 +81,7 @@ function(Card) {
 					if (that._entities[i].getType() == "cluster") {
 						childModel = that._entities[i].getChildModel(modelId);
 
-						if (childModel) return getChildModel;
+						if (childModel) return childModel;
 					}
 				}
 			}
@@ -225,6 +230,12 @@ function(Card) {
 			that.parentGenerateEntities();
 		};
 
+		this.closeChildren = function() {
+			for (var i=(that._model.cards.length-1); i>=0; i-=1) {
+				that._model.cards[i].collapsed = true;
+			}
+		};
+
 		this.addCard = function(x, y, cardModel) {
 			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
 				if ((that._entities[i].getId() != cardModel.id) && (that._entities[i].getType() == "cluster") && (!that._entities[i].getCollapsed())) { 
@@ -283,7 +294,7 @@ function(Card) {
 
 		this.parentGenerateEntities = function() {
 			if (that._parent == null) that.generateEntities();
-			else that._parent.draw();
+			else that._parent.parentGenerateEntities();
 		}
 
 		this.generateEntities = function() {
@@ -417,13 +428,15 @@ function(Card) {
         this.drawDropShadow = function() {
 			if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
 
-			that._svgDropShadowGlow = that._svgDropShadow.glow({
-				offsetx: 0.5,
-				offsety: 0.5,
-				opacity: 0.6, 
-				color: "#bbbbbb", 
-				width: 3
-			});
+			if (that._svgDropShadow) {
+				that._svgDropShadowGlow = that._svgDropShadow.glow({
+					offsetx: 0.5,
+					offsety: 0.5,
+					opacity: 0.6, 
+					color: "#bbbbbb", 
+					width: 3
+				});
+			}
         };
 
 		this.undraw = function() {
@@ -538,7 +551,6 @@ function(Card) {
 
 		// ----- Handler for finishing the drag of a board around the board map
     	this.up = function (e, fromCluster) {
-
 			that._svgText.startX = null;
 			that._svgText.startY = null;
 
@@ -570,24 +582,25 @@ function(Card) {
 			// this movement was a result of a parents position being updated
 			if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model, e.layerX, e.layerY);
 
+    		if ((!that._isDragging) && (!fromCluster)) {
+				// This is a greedy function so we have to manually build a double click event
+				if (that._singleClick) {
+		   			clearTimeout(that._clickTimer);
+					that._singleClick = false;
+
+					that.expandCollapse();
+		   		}
+		   		else {
+					that._singleClick = true;
+
+				    that._clickTimer = setTimeout(function() {
+				        clearTimeout(that._clickTimer);
+				        that._singleClick = false;
+				    }, 250);
+			    }
+			}
+
     		that._isDragging = false;
-
-			// This is a greedy function so we have to manually build a double click event
-
-			if (that._singleClick) {
-	   			clearTimeout(that._clickTimer);
-				that._singleClick = false;
-
-				that.expandCollapse();
-	   		}
-	   		else {
-				that._singleClick = true;
-
-			    that._clickTimer = setTimeout(function() {
-			        clearTimeout(that._clickTimer);
-			        that._singleClick = false;
-			    }, 250);
-		    }
         };
 
         this.mouseOver = function() {

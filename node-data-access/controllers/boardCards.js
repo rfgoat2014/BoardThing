@@ -132,6 +132,7 @@ function attachChildCards(currentNode,childNodes) {
 	for (var i=0, currentNodeChildLength = currentNode.children.length; i<currentNodeChildLength; i += 1) {
 		for (var j=0, childNodesLength = childNodes.length; j<childNodesLength; j++) {
 			if (currentNode.children[i] == childNodes[j].id) {
+				childNodes[j].collapsed = true;
 				currentNode.cards.push(childNodes[j]);
 				attachChildCards(currentNode.cards[(currentNode.cards.length-1)], childNodes);
 			}

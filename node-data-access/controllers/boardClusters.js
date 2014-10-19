@@ -1352,7 +1352,6 @@ exports.sort = function (req, res) {
 									// based on what position we are in the order sent from the client set the correct position
 									if ((cards[j]) && (cards[j]._id == req.body.cards[i])) {
 										cards[j].zPos = (i+1);
-										console.log(i)
 										
 										cards[j].save(function(err) {
 											if (err) {
