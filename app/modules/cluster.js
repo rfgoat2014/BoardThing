@@ -227,7 +227,13 @@ function(Card) {
 				}
 			}
 
-			that._model.cards.push(cardModel);
+			var insertPostion = that._model.cards.length;
+
+			for (var i=(that._model.cards.length-1); i>=0; i-=1) {
+				if (cardModel.yPos < that._model.cards[i].yPos) insertPostion = i;
+			}
+
+			that._model.cards.splice(insertPostion, 0, cardModel);
 
 			return that._model.id;
 		};
@@ -253,7 +259,13 @@ function(Card) {
 
 			clusterModel.collapsed = true;
 
-			that._model.cards.push(clusterModel);
+			var insertPostion = that._model.cards.length;
+
+			for (var i=(that._model.cards.length-1); i>=0; i-=1) {
+				if (clusterModel.yPos < that._model.cards[i].yPos) insertPostion = i;
+			}
+
+			that._model.cards.splice(insertPostion, 0, clusterModel);
 
 			return that._model.id;
 		};
@@ -545,7 +557,7 @@ function(Card) {
 			that.bringToFront();
 
 			// this movement was a result of a parents position being updated
-			if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+			if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model, e.layerX, e.layerY);
 
     		that._isDragging = false;
 

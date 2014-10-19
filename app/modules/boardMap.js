@@ -37,7 +37,7 @@ function(Board, Board_Services, Workspace_Services) {
 		},
 
 		afterRender: function() {
-            var boards = this.model.get("boards");
+            var boards = this.model.boards;
 
             for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
             	this._boards.push(new BoardMap.Board({ model: boards[i], parent: this }));
@@ -104,7 +104,7 @@ function(Board, Board_Services, Workspace_Services) {
             	});
             }
 
-            Workspace_Services.UpdateBoardPositions(this.model.get("id"), boardPositions);
+            Workspace_Services.UpdateBoardPositions(this.model.id, boardPositions);
 		},
 
 		addBoard: function() {
@@ -122,7 +122,7 @@ function(Board, Board_Services, Workspace_Services) {
 		el: "<div>",
 	
 		initialize: function(options) {
-			this.el.id = "board-map-board_" + this.model.get("id");
+			this.el.id = "board-map-board_" + this.model.id;
 			this.el.className = "board-map-board-container";
 
 			this._parent = options.parent;
@@ -139,15 +139,15 @@ function(Board, Board_Services, Workspace_Services) {
 		},
 
 		getBoardId: function() {
-			return this.model.get("id");
+			return this.model.id;
 		},
 
 		getBoardPosition: function() {
-			return this.model.get("position");
+			return this.model.position;
 		},
 
 		setBoardPosition: function(position) {
-			this.model.set("position", position);
+			this.model.position = position;
 		}
 	});
 

@@ -387,7 +387,7 @@ function(Card_Services, Workspace_Services) {
 			that.drawDropShadow();
 
 			// this movement was a result of a parents position being updated
-        	if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model.id, e.layerX, e.layerY);
+        	if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model, e.layerX, e.layerY);
 
     		that._isDragging = false;
         };

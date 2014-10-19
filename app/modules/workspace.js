@@ -286,14 +286,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 		},
 
 		// ----- This method is a big one, it handles the movement of cards around the board
-		cardPositionUpdated: function(cardId, x, y) {
+		cardPositionUpdated: function(card, x, y) {
 			var hitEntityIndex = -1,
 				selectedEntityIndex = -1;
 
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if ((this._boardEntities[i].getId() != cardId) && (this._boardEntities[i].isHitting(x, y))) hitEntityIndex = i;
+				if ((this._boardEntities[i].getId() != card.id) && (this._boardEntities[i].isHitting(x, y))) hitEntityIndex = i;
 				
-				if (this._boardEntities[i].getId() == cardId) selectedEntityIndex = i;
+				if (this._boardEntities[i].getId() == card.id) selectedEntityIndex = i;
 			}
 
 			// Check if this is a root card that is being moved, this makes thins alot easier
@@ -349,7 +349,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				}
 				else {
 					// We didnt drop on anything so lets update the position
-					Card_Services.UpdatePosition(this._selectedBoard.id, cardId, this._boardEntities[selectedEntityIndex].getSVGShapeX(), this._boardEntities[selectedEntityIndex].getSVGShapeY());
+					Card_Services.UpdatePosition(this._selectedBoard.id, card.id, this._boardEntities[selectedEntityIndex].getSVGShapeX(), this._boardEntities[selectedEntityIndex].getSVGShapeY());
 				}
 			}
 			else {
@@ -358,7 +358,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					if (this._boardEntities[i].getType() == "cluster") {
-						childEntity = this._boardEntities[i].getEntity(cardId);
+						childEntity = this._boardEntities[i].getEntity(card.id);
 
 						if (childEntity) {	
 							selectedEntityIndex = i;
