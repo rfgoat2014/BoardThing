@@ -61,7 +61,6 @@ function(Card) {
 		this._entities = [];
 
 		this._isDragging = false;
-		this._singleClick = false;
 
 		this._model.cards.sort(function (a, b) { return a.zPos > b.zPos ? 1 : a.zPos < b.zPos ? -1 : 0; });
 
