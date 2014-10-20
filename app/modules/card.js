@@ -350,24 +350,26 @@ function(Card_Services, Workspace_Services) {
 
 		// ----- Handler for moving a board around the board map
 		this.move = function (dx, dy, x, y, e) {
-			that._isDragging = true;
+			if ((dx != 0) || (dy != 0)) {
+				that._isDragging = true;
 
-			that._svgText.attr({
-				x: that._svgText.startX+dx,
-				y: that._svgText.startY+dy
-			});
+				that._svgText.attr({
+					x: that._svgText.startX+dx,
+					y: that._svgText.startY+dy
+				});
 
-			that._svgShape.attr({
-				x: that._svgShape.startX+dx,
-				y: that._svgShape.startY+dy
-			});
+				that._svgShape.attr({
+					x: that._svgShape.startX+dx,
+					y: that._svgShape.startY+dy
+				});
 
-			that._svgDropShadow.attr({
-				x: that._svgDropShadow.startX+dx,
-				y: that._svgDropShadow.startY+dy
-			});
+				that._svgDropShadow.attr({
+					x: that._svgDropShadow.startX+dx,
+					y: that._svgDropShadow.startY+dy
+				});
 
-			that.drawDropShadow();
+				that.drawDropShadow();
+			}
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map

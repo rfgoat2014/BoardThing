@@ -61,6 +61,7 @@ function(Card) {
 		this._entities = [];
 
 		this._isDragging = false;
+		this._singleClick = false;
 
 		this._model.cards.sort(function (a, b) { return a.zPos > b.zPos ? 1 : a.zPos < b.zPos ? -1 : 0; });
 
@@ -511,42 +512,44 @@ function(Card) {
 
 		// ----- Handler for moving a board around the board map
 		this.move = function (dx, dy, x, y, e) {
-			that._isDragging = true;
+			if ((dx != 0) || (dy != 0)) {
+				that._isDragging = true;
 
-			that._svgText.attr({
-				x: that._svgText.startX+dx,
-				y: that._svgText.startY+dy
-			});
-
-			that._svgShape.attr({
-				x: that._svgShape.startX+dx,
-				y: that._svgShape.startY+dy
-			});
-
-			that._svgDropShadow.attr({
-				x: that._svgDropShadow.startX+dx,
-				y: that._svgDropShadow.startY+dy
-			});
-
-			that._svgDropShadowCover.attr({
-				x: that._svgDropShadowCover.startX+dx,
-				y: that._svgDropShadowCover.startY+dy
-			});
-
-			if (that._svgCardCount) {
-				that._svgCardCount.attr({
-					x: that._svgCardCount.startX+dx,
-					y: that._svgCardCount.startY+dy
+				that._svgText.attr({
+					x: that._svgText.startX+dx,
+					y: that._svgText.startY+dy
 				});
+
+				that._svgShape.attr({
+					x: that._svgShape.startX+dx,
+					y: that._svgShape.startY+dy
+				});
+
+				that._svgDropShadow.attr({
+					x: that._svgDropShadow.startX+dx,
+					y: that._svgDropShadow.startY+dy
+				});
+
+				that._svgDropShadowCover.attr({
+					x: that._svgDropShadowCover.startX+dx,
+					y: that._svgDropShadowCover.startY+dy
+				});
+
+				if (that._svgCardCount) {
+					that._svgCardCount.attr({
+						x: that._svgCardCount.startX+dx,
+						y: that._svgCardCount.startY+dy
+					});
+				}
+
+				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
+					that._entities[i].move(dx, dy, x, y, e);
+				}
+
+				that.drawDropShadow();
+
+				that.bringToFront();
 			}
-
-			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-				that._entities[i].move(dx, dy, x, y, e);
-			}
-
-			that.drawDropShadow();
-
-			that.bringToFront();
 		};
 
 		// ----- Handler for finishing the drag of a board around the board map
@@ -582,7 +585,9 @@ function(Card) {
 			// this movement was a result of a parents position being updated
 			if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model, e.layerX, e.layerY);
 
-    		if ((!that._isDragging) && (!fromCluster)) {
+    		that._isDragging = false;
+
+    		if (!fromCluster) {
 				// This is a greedy function so we have to manually build a double click event
 				if (that._singleClick) {
 		   			clearTimeout(that._clickTimer);
@@ -599,8 +604,6 @@ function(Card) {
 				    }, 250);
 			    }
 			}
-
-    		that._isDragging = false;
         };
 
         this.mouseOver = function() {
