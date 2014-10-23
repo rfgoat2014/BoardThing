@@ -492,6 +492,26 @@ function(Card) {
 
 	    // {{ Getters }}
 
+	    public getId: function() {
+	    	return this.model.id;
+	    },
+
+	    public getXPos: function() {
+	    	return this.model.xPos;
+	    },
+
+	    public getYPos: function() {
+	    	return this.model.yPos;
+	    },
+
+	    public getWidth: function() {
+	    	return this.model.width;
+	    },
+
+	    public getHeight: function() {
+	    	return this.model.height;
+	    },
+
 	    public getType: function() {
 	    	return "cluster";
 	    },
@@ -593,7 +613,7 @@ function(Card) {
 					var cardOrdered = false;
 
 					for (var j = 0, orderedArrayLength=orderedArray.length; j<orderedArrayLength; j+=1) {
-						if (this._childViews[i].model.id == orderedArray[j].model.id) {
+						if (this._childViews[i].getId() == orderedArray[j].getId()) {
 							cardOrdered = true;
 							break;
 						}
@@ -606,7 +626,7 @@ function(Card) {
 
 				for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i++) {
 					if (newZPos === null) {
-						if ((orderedArray[i]) && (selectedElement) && (orderedArray[i].model.id != selectedElement.model.id)) {
+						if ((orderedArray[i]) && (selectedElement) && (orderedArray[i].getId() != selectedElement.getId())) {
 							var cardViewCenter = $(orderedArray[i].el).position().top + Math.round($(orderedArray[i].el).height()/2);
 
 							if ((this._workspace._currentMousePosition.y-(this._workspace.$("#board-cards").scrollTop()+this.$el.position().top)) < cardViewCenter) newZPos = i;
@@ -621,14 +641,14 @@ function(Card) {
 						arrayPart2 = orderedArray.slice(newZPos);
 
 					for (var i=0, arrayPartLength=arrayPart1.length; i<arrayPartLength; i+=1) {
-						if (arrayPart1[i].model.id == selectedElement.model.id) {
+						if (arrayPart1[i].getId() == selectedElement.getId()) {
 							arrayPart1.splice(i,1);
 							break;
 						}
 					}
 
 					for (var i=0, arrayPartLength=arrayPart2.length; i<arrayPartLength; i+=1) {
-						if (arrayPart2[i].model.id == selectedElement.model.id) {
+						if (arrayPart2[i].getId() == selectedElement.getId()) {
 							arrayPart2.splice(i,1);
 							break;
 						}
@@ -643,7 +663,7 @@ function(Card) {
 						var elementFound = false;
 
 						for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
-	   						if (this.model.cards[j].id == orderedArray[i].model.id) {
+	   						if (this.model.cards[j].id == orderedArray[i].getId()) {
 								elementFound = true;
 
 								this.model.cards[j].zPos = i+1;
@@ -654,7 +674,7 @@ function(Card) {
 
 	   					if (!elementFound) {
 							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-	       						if ((orderedArray[i]) && (this.model.clusters[j].id == orderedArray[i].model.id)) {
+	       						if ((orderedArray[i]) && (this.model.clusters[j].id == orderedArray[i].getId())) {
 	   								this.model.clusters[j].zPos = i+1;
 
 	   								cardOrder.push(this.model.clusters[j].id);
@@ -698,7 +718,7 @@ function(Card) {
 				var elementFound = false;
 
 				for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
-					if (this.model.cards[j].id == orderedArray[i].model.id) {
+					if (this.model.cards[j].id == orderedArray[i].getId()) {
 						elementFound = true;
 
 						this.model.cards[j].zPos = i+1;
@@ -709,7 +729,7 @@ function(Card) {
 
 				if (!elementFound) {
 					for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-						if (this.model.clusters[j].id == orderedArray[i].model.id) {
+						if (this.model.clusters[j].id == orderedArray[i].getId()) {
 							this.model.clusters[j].zPos = i+1;
 
 							cardOrder.push(this.model.clusters[j].id);
@@ -947,7 +967,7 @@ function(Card) {
 			}
 
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if ((this._childViews[i].getType() == "card") && (this._childViews[i].model.id == card.id)) {
+				if ((this._childViews[i].getType() == "card") && (this._childViews[i].getId() == card.id)) {
 					this._childViews[i].remove();
 	  				this._childViews.splice(i, 1);
 
@@ -983,14 +1003,14 @@ function(Card) {
 			}
 
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].model.id == clusterId)) {
-					var clusterXpos = this._childViews[i].model.xPos.
-						clusterYpos = this._childViews[i].model.yPos,
+				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].getId() == clusterId)) {
+					var clusterXpos = this._childViews[i].getXPos(),
+						clusterYpos = this._childViews[i].getYPos(),
 						cardCount = 0;
 
 					for (var j=0, clusterViewCardsLength=this._childViews[i]._childViews.length; j<clusterViewCardsLength; j+=1) {
 						if (this._childViews[i]._childViews.getType() == "card") {
-							var cardModel = Card.GenerateModel(this._childViews[i]._childViews[j].model, this._childViews[i].model.id);
+							var cardModel = Card.GenerateModel(this._childViews[i]._childViews[j].model, this._childViews[i].getId());
 								cardModel.xPos = clusterXpos + (cardCount*10);
 								cardModel.yPos = clusterYpos + (cardCount*10);
 
@@ -1081,7 +1101,7 @@ function(Card) {
 
 			if (this._childViews.length > 0) {
 				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					if ((this._childViews[i].getType() == "card") && (this._childViews[i].model.id == cardId)) {
+					if ((this._childViews[i].getType() == "card") && (this._childViews[i].getId() == cardId)) {
 						for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
 							if ((this.model.cards[j]) && (this.model.cards[j].id == cardId)) that.model.cards.splice(j,1);
 						}
@@ -1168,7 +1188,7 @@ function(Card) {
 			if ((this._childViews) && (this._childViews.length > 0)) {
 				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 					if (this._childViews[i].getType() == "cluster") {
-						if (this._childViews[i].model.id == clusterId)) {
+						if (this._childViews[i].getId() == clusterId)) {
 							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
 								if ((this.model.clusters[j]) && (this.model.clusters[j].id == clusterId)) that.model.clusters.splice(j,1);
 							}
@@ -1196,7 +1216,7 @@ function(Card) {
 			var that = this;
 
 			for (var i=0, clusterViewsLength=this._childViews.length; i<clusterViewsLength; i+=1) {
-				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].model.id == clusterId)) {
+				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].getId() == clusterId)) {
 					// Check if this cluster still hard cards and if not turn it back into a card
 					if (this._childViews[i]._childViews.length == 0) {
 						for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
@@ -1329,7 +1349,7 @@ function(Card) {
 
 		updateChildVotes: function(cardId) {
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-      			if (this._childViews[i].model.id == cardId) this._childViews[i].increaseVoteCount();
+      			if (this._childViews[i].getId() == cardId) this._childViews[i].increaseVoteCount();
       		}
 		},
 

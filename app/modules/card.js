@@ -395,6 +395,26 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 	    // {{ Getters }}
 
+	    public getId: function() {
+	    	return this.model.id;
+	    },
+
+	    public getXPos: function() {
+	    	return this.model.xPos;
+	    },
+
+	    public getYPos: function() {
+	    	return this.model.yPos;
+	    },
+
+	    public getWidth: function() {
+	    	return this.model.width;
+	    },
+
+	    public getHeight: function() {
+	    	return this.model.height;
+	    },
+
 	    public getType: function() {
 	    	return "card";
 	    },
