@@ -2,7 +2,6 @@ define([
 	"modules/card.services",
 	"modules/cluster.services",
 	"modules/workspace.services",
-	"raphael",
 	"spectrum"
 ],
 
@@ -39,10 +38,10 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		else cardModel.parentId = null;
 
 		return cardModel;
-	}
+	};
 	// Card Views
 
-  	Card.Views.Item = Backbone.View.extend({
+  	Card.Item = Backbone.View.extend({
     	tagName: "div",
 
     	_isMobile: null,
@@ -370,7 +369,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			           				var droppedCardId = null;
 
 			       					if (ui.draggable.find('#card-body').length > 0) droppedCardId = ui.draggable.find('#card-body').attr("element-id");
-									else if (ui.draggable.find('#clustered-card-body').length > 0) { droppedCardId = ui.draggable.find('#clustered-card-body').attr("element-id");
+									else if (ui.draggable.find('#clustered-card-body').length > 0) droppedCardId = ui.draggable.find('#clustered-card-body').attr("element-id");
 			       					
 			       					if ((droppedCardId) && ((!$(ui.draggable).attr("is-resized")) || ($(ui.draggable).attr("is-resized") == "false"))) that._workspace.createClusterFromCard(droppedCardId, that.model.id);
 					           	}
@@ -395,27 +394,27 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 	    // {{ Getters }}
 
-	    public getId: function() {
+	    getId: function() {
 	    	return this.model.id;
 	    },
 
-	    public getXPos: function() {
+	    getXPos: function() {
 	    	return this.model.xPos;
 	    },
 
-	    public getYPos: function() {
+	    getYPos: function() {
 	    	return this.model.yPos;
 	    },
 
-	    public getWidth: function() {
+	    getWidth: function() {
 	    	return this.model.width;
 	    },
 
-	    public getHeight: function() {
+	    getHeight: function() {
 	    	return this.model.height;
 	    },
 
-	    public getType: function() {
+	    getType: function() {
 	    	return "card";
 	    },
 
@@ -642,7 +641,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	        	var isStartSize = false;
 
 				if (this.model.type.trim().toLowerCase() != "text") {
-					if ((this.$el.width() + "px") == this.$el.css("min-width")) && ((this.$el.height() + "px") == this.$el.css("min-height"))) isStartSize = true;
+					if (((this.$el.width() + "px") == this.$el.css("min-width")) && ((this.$el.height() + "px") == this.$el.css("min-height"))) isStartSize = true;
 				}
 				else {
 					if (((this.$el.width() + "px") == this.$el.css("min-width")) && ((this.$el.height() + "px") == this.$el.css("min-height"))) isStartSize = true;
@@ -821,7 +820,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			this.model.isLocked = true;
 
 			try {
-				.$el.draggable("destroy");
+				this.$el.draggable("destroy");
 			}
 			catch(err) {}
 
@@ -915,13 +914,13 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		// ---------- Actions to set the card z index
 
 		setZIndex: function(zIndex) {
-    		this.model.zPos = zIndex);
+    		this.model.zPos = zIndex;
 			
 			this.$el.zIndex(zIndex);
 		}
   	});
 
-	Card.Views.AddText = Backbone.View.extend({
+	Card.AddText = Backbone.View.extend({
     	el: "<div>",
 
     	_isMobile: null,
@@ -1025,7 +1024,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					color: this.$("#card-color-select").spectrum("get").toString()
 				};
 				
-				Card.InsertTextCard = function(boardId, newCard, function(response) {
+				Card_Services.InsertTextCard(boardId, newCard, function(response) {
 					that._workspace.cardAdded(response.card);
 				});
 			}
@@ -1042,11 +1041,11 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		}
 	});
 
-	Card.Views.AddImage = Backbone.View.extend({
+	Card.AddImage = Backbone.View.extend({
     	el: "<div>",
     	_isMobile: null,
     	_workspace: null,
-    	_cardsAdded = false,
+    	_cardsAdded: false,
 
 		initialize: function(options) {
     		this.el.id = "add-image-container";
@@ -1178,7 +1177,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			this.$("#photo-url-title").unbind("keyup");
 			this.$("#photo-upload-title").unbind("keyup");
 			this.$("#upload-image-button").unbind("click");
-		}
+		},
 
 		bind: function() {
 			var that = this;
@@ -1303,7 +1302,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		}
 	});
 
-	Card.Views.EditText = Backbone.View.extend({
+	Card.EditText = Backbone.View.extend({
     	el: "<div>",
 
     	_isMobile: null,
@@ -1352,7 +1351,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"]
 			});
 
-			var data = this.$("#edit-card-content_" + this..model.id).val();
+			var data = this.$("#edit-card-content_" + this.model.id).val();
 
 			if (this._isMobile) this.$el.addClass("mobile");
 	    	else this.$el.addClass("desktop");
@@ -1363,7 +1362,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 			this.$("#card-content_" + this.model.id).unbind("keypress");
 			this.$("#update-card").unbind("click");
-	    }
+	    },
 
 	    bind: function() {
 			var that = this;
@@ -1426,7 +1425,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		},
 	});
 
-	Card.Views.EditImage = Backbone.View.extend({
+	Card.EditImage = Backbone.View.extend({
 		el: "<div>",
 
     	_isMobile: null,

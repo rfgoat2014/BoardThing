@@ -6,8 +6,7 @@ define([
 	"modules/utils",
 	"modules/workspace.services",
 	"modules/card.services",
-	"modules/cluster.services",
-	"raphael"
+	"modules/cluster.services"
 ],
 
 function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Services, Cluster_Services) {
@@ -21,7 +20,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 		el: "<div>",
 
 		_editing: false,
-		
+
 		_selectedBoard: null,
 		_boardEntities: [],
 		_dropPosition: null,
@@ -126,15 +125,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 		},
 
 		drawBoardItems: function() {
-			// Clear out the paper if it's already defined
-			if (this._paper) {
-				this._paper.remove();
-				this._paper = null;
-			}
-
-			// Create the SVG paper object
-			this._paper = Raphael(document.getElementById("board"), this._selectedBoard.width, this._selectedBoard.height);
-
 			//Clear out the board entities array. Being really rigorous to stop memory leaks
 			if (this._boardEntities.length > 0) {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
@@ -148,7 +138,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			if (this._selectedBoard.cards) {
 				for (var i=0, boardCardsLength=this._selectedBoard.cards.length; i<boardCardsLength; i+=1) {
 					if (this._selectedBoard.cards[i].cards.length == 0) {
-						var newCard = new Card.Item(this, null, this._paper, Card.GenerateModel(this._selectedBoard.cards[i], null));
+						var newCard = new Card.Item({ model: Card.GenerateModel(this._selectedBoard.cards[i], null), isMobile: this._isMobile, parent: this });
 						newCard.draw();
 
 						this._boardEntities.push(newCard);
@@ -249,8 +239,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			}
 		},
 
-		addCardToBoard: function(newCard) {
-			var card = new Card.Item(this, null, this._paper, Card.GenerateModel(newCard, null));
+		addCardToBoard: function(cardModel) {
+			var card = new Card.Item(Card.GenerateModel(cardModel, null));
 			card.draw();
 
 			this._boardEntities.push(card);
@@ -258,10 +248,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			return card;
 		},
 
-		addClusterToBoard: function(cluster, parentId) {
-			var clusterModel = Cluster.GenerateModel(cluster, parentId);
-
-			var cluster = new Cluster.Item(this, null, this._paper, clusterModel);
+		addClusterToBoard: function(clusterModel, parentId) {
+			var cluster = new Cluster.Item({ model: Cluster.GenerateModel(cluster, parentId), isMobile: this._isMobile, parent: this });
 			cluster.generateEntities();
 
 			this._boardEntities.push(cluster);

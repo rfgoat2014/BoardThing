@@ -119,7 +119,7 @@ function() {
     	});
 	};
 
-	Card.AddVote = function(boardId, cardId, callback) {
+	Cluster.AddVote = function(boardId, cardId, callback) {
         $.ajax({
             url: "/workspace/boards/clusters/addVote/" + boardId + "/" + cardId,
             type: "POST",

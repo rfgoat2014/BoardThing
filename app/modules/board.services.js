@@ -5,7 +5,7 @@ define([
 function() {
 	var Board = {};
 
-	Card.GetCards = function(id, callback) {
+	Board.GetCards = function(id, callback) {
 		$.ajax({
 			type: "GET",
 			url: "/workspace/boards/cards/" + id,

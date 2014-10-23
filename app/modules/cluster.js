@@ -1,9 +1,10 @@
 define([
 	"modules/card",
-	"raphael"
+	"modules/card.services",
+	"modules/cluster.services",
 ],
 
-function(Card) {
+function(Card, Card_Services, Cluster_Services) {
 	var Cluster = {};
 
 	Cluster.GenerateModel = function(model, parentId) {
@@ -42,7 +43,7 @@ function(Card) {
 		else clusterModel.cards = [];
 
 		return clusterModel;
-	}
+	};
 
   	Cluster.Item = Backbone.View.extend({
     	tagName: "div",
@@ -55,7 +56,7 @@ function(Card) {
     	_editable: true,
 		_clusterClickCount: 0,
 
-		_childViews = [],
+		_childViews: [],
 
     	// {{ Contructor }}
 
@@ -492,27 +493,27 @@ function(Card) {
 
 	    // {{ Getters }}
 
-	    public getId: function() {
+	    getId: function() {
 	    	return this.model.id;
 	    },
 
-	    public getXPos: function() {
+	    getXPos: function() {
 	    	return this.model.xPos;
 	    },
 
-	    public getYPos: function() {
+	    getYPos: function() {
 	    	return this.model.yPos;
 	    },
 
-	    public getWidth: function() {
+	    getWidth: function() {
 	    	return this.model.width;
 	    },
 
-	    public getHeight: function() {
+	    getHeight: function() {
 	    	return this.model.height;
 	    },
 
-	    public getType: function() {
+	    getType: function() {
 	    	return "cluster";
 	    },
 
@@ -570,8 +571,8 @@ function(Card) {
 
 		setClusterPosition: function(clusterId,left,top) { 
 			if (this.model.id == clusterId) {
-				this.model.xPos = left);
-				this.model.yPos = top);
+				this.model.xPos = left;
+				this.model.yPos = top;
 
 				this.render();
 			}	
@@ -870,7 +871,7 @@ function(Card) {
 			if (clusterValid) {
 				// Update styles
 				if (this.model.type.trim().toLowerCase() == "text") this.model.content = this.$("#editable-title_" + this.model.id).val();
-				else this.model.title = this.$("#editable-title_" + this.model.id).val());
+				else this.model.title = this.$("#editable-title_" + this.model.id).val();
 
 				this.$("#cluster-title_" + this.model.id).html(this.$("#editable-title_" + this.model.id).val());
 				
@@ -1188,7 +1189,7 @@ function(Card) {
 			if ((this._childViews) && (this._childViews.length > 0)) {
 				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 					if (this._childViews[i].getType() == "cluster") {
-						if (this._childViews[i].getId() == clusterId)) {
+						if (this._childViews[i].getId() == clusterId) {
 							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
 								if ((this.model.clusters[j]) && (this.model.clusters[j].id == clusterId)) that.model.clusters.splice(j,1);
 							}
@@ -1205,6 +1206,7 @@ function(Card) {
 						else {
 							var detachedCluster = this._childViews[i].detachAndReturnCluster(clusterId);
 							if (detachedCluster) return detachedCluster;
+						}
 					}
 				}
 			}
