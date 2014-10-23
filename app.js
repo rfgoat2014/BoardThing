@@ -752,18 +752,18 @@
 	
 // Actions for manipulating cards and clusters on a board
 
-	app.get("/workspace/boards/cards/:boardId", boardCards.get);
-	app.post("/workspace/boards/cards/:boardId", boardCards.insert);
-	app.put("/workspace/boards/cards/:boardId/:cardId", boardCards.update);
-	app.delete("/workspace/boards/cards/:boardId/:cardId", boardCards.delete);
+	app.get("/workspace/boards/cards/text/:boardId", boardCards.get);
 
-	app.post("/workspace/boards/cards/downloadImage/:boardId", boardCards.downloadImage);
+	app.post("/workspace/boards/cards/text/:boardId", boardCards.insert);
+	app.put("/workspace/boards/cards/text/:boardId/:cardId", boardCards.update);
 
 	app.get("/workspace/boards/cards/image/:boardId/:cardId", boardCards.getImage);
 	app.post("/workspace/boards/cards/image/:boardId", boardCards.insertImage);
 	app.put("/workspace/boards/cards/image/:boardId/:cardId", boardCards.updateImage);
+	app.post("/workspace/boards/cards/downloadImage/:boardId", boardCards.downloadImage);
 
 	app.post("/workspace/boards/cards/duplicate/:boardId/:cardId", boardCards.duplicate);
+	app.delete("/workspace/boards/cards/:boardId/:cardId", boardCards.delete);
 	
 	app.put("/workspace/boards/cards/lock/:boardId/:cardId", boardCards.lock);
 	app.put("/workspace/boards/cards/unlock/:boardId/:cardId", boardCards.unlock);
@@ -790,8 +790,8 @@
 
 	app.put("/workspace/boards/clusters/startVoting/:boardId/:clusterId", boardClusters.startDotVoting);
 	app.put("/workspace/boards/clusters/stopVoting/:boardId/:clusterId", boardClusters.stopDotVoting);
-	app.post("/workspace/boards/clusters/castVote/:boardId/:cardId", boardCards.addVote);
-	app.delete("/workspace/boards/clusters/clearVotes/:boardId/:cardId", boardCards.removeVotes);
+	app.post("/workspace/boards/clusters/addVote/:boardId/:cardId", boardCards.addVote);
+	app.delete("/workspace/boards/clusters/removeVotes/:boardId/:cardId", boardCards.removeVotes);
 
 	// Catch any occuring client errors
 

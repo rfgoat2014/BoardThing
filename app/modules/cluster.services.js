@@ -5,14 +5,11 @@ define([
 function() {
 	var Cluster = {};
 
-	Cluster.Insert = function(boardId, clusterId, cardId, callback) {
+	Cluster.Insert = function(boardId, clusterId, cluster, callback) {
 		$.ajax({
 			type: "PUT",
 			url: "/workspace/boards/clusters/" + boardId + "/" + clusterId,
-			data: {
-  				action: "create",
-  				cards: [{ id: cardId }]
-			},
+			data: cluster,
 			success: function(response) {
 				if (callback) callback(response);
 			}
@@ -30,9 +27,31 @@ function() {
     	});
 	};
 
-	Cluster.DetachCardFromcluster = function(boardId, clusterId, cardId, callback) {
+	Cluster.DetachCard = function(boardId, clusterId, cardId, callback) {
         $.ajax({
             url: "/workspace/boards/clusters/cards/" + boardId + "/" + clusterId + "/" + cardId,
+            type: 'DELETE',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
+	Cluster.AttachCluster = function(boardId, targetClusterId, sourceClusterId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/clusters/" + boardId + "/" + targetClusterId + "/" + sourceClusterId,
+            type: 'POST',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
+	Cluster.DetachCluster = function(boardId, targetClusterId, sourceClusterId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/clusters/" + boardId + "/" + targetClusterId + "/" + sourceClusterId,
             type: 'DELETE',
             dataType: "json",
 			success: function(response) {
@@ -71,6 +90,39 @@ function() {
         $.ajax({
             url: "/workspace/boards/clusters/collapse/" + boardId + "/" + clusterId,
             type: 'PUT',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
+	Cluster.StartDotVoting = function(boardId, clusterId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/startVoting/" + boardId + "/" + clusterId,
+            type: 'PUT',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
+	Cluster.StopDotVoting = function(boardId, clusterId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/stopVoting/" + boardId + "/" + clusterId,
+            type: 'PUT',
+            dataType: "json",
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
+	Card.AddVote = function(boardId, cardId, callback) {
+        $.ajax({
+            url: "/workspace/boards/clusters/addVote/" + boardId + "/" + cardId,
+            type: "POST",
             dataType: "json",
 			success: function(response) {
 				if (callback) callback(response);

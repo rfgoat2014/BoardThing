@@ -125,7 +125,7 @@ exports.get = function (req, res) {
 			});
 		}
 	});
-}
+};
 
 // ===== A recursive method which builds up the cluster structure
 function attachChildCards(currentNode,childNodes) {
@@ -138,7 +138,7 @@ function attachChildCards(currentNode,childNodes) {
 			}
 		}
 	}
-}
+};
 
 // ===== Retrieve a cards image from it's amazon bucket
 exports.getImage = function (req, res) {
@@ -190,10 +190,10 @@ exports.getImage = function (req, res) {
 			}
 		}
 	});
-}
+};
 
 // ===== Actions for inserting a new board cards
-exports.insert = function (req, res) {
+exports.insertText = function (req, res) {
 	var cookies = parseCookies(req);;
 	
 	Board
@@ -283,7 +283,7 @@ exports.insert = function (req, res) {
 			}
 		}
 	});
-}
+};
 
 // ===== Actions to insert a new image card uploaded from a users computer to the database and amazon bucket
 exports.insertImage = function (req, res) {
@@ -418,7 +418,7 @@ exports.insertImage = function (req, res) {
 			}
 		}
 	});
-}
+};
 
 // ===== Actions to insert a new image card downloaded from a specified URL to the database and amazon bucket
 exports.downloadImage = function (req, res) {
@@ -537,7 +537,268 @@ exports.downloadImage = function (req, res) {
 			}
 		}
 	});
-}
+};
+
+// ====== Update the details of a text card
+exports.updateText = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) {
+			dataError.log({
+				model: __filename,
+				action: "update",
+				msg: "Error getting board: " + req.params.boardId,
+				err: err,
+				res: res
+			});
+        }
+		else if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				// Retrieve the selected card
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					// Update the cards details, being a text card this could either be the content or color
+					card.content = req.body.content;
+					
+					if ((req.body.color) && (req.body.color.trim().length > 0)) card.color = req.body.color;
+
+					// save the updates
+					card.save(function(err, savedIdea) {
+						if (err) {
+							dataError.log({
+								model: __filename,
+								action: "update",
+								msg: "Error saving card: " + req.params.cardId,
+								err: err
+							});
+
+				  			res.send({ status: "failed" });
+						}
+						else {
+							// update the timestamp of when the board was last modified
+							board.lastModified = new Date();
+							board.save();
+
+				  			res.send({ status: "success" });
+			  			}
+					});
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "update",
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "update",
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};
+
+// ===== Update the details of an image card
+exports.updateImage = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "updateImage",
+				msg: "Error retrieving board",
+				err: err,
+				res: res
+			});
+		}
+		else if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				// retrieve the image card to be updated
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					if (card) {
+						// the actual image can't be updated, just the card color and associated text
+
+						var cardColor = "#FFFFFF";
+						if ((req.body.color) && (req.body.color.trim().length > 0)) cardColor = req.body.color;
+
+						card.color = cardColor;
+						card.title = req.body.title;
+
+						// save the udated card
+						card.save(function(err, savedIdea) {
+							if (err) {
+								dataError.log({
+									model: __filename,
+									action: "updateImage",
+									msg: "Error saving card: " + req.params.cardId,
+									err: err,
+									res: res
+								});
+
+					  			res.send({ status: "failed" });
+							}
+							else {
+								board.lastModified = new Date();
+								board.save();
+
+					  			res.send({ status: "success" }); 
+				  			}
+				  		});
+					}
+					else {
+						dataError.log({
+							model: __filename,
+							action: "updateImage",
+							msg: "Error finding card: " + req.params.cardId,
+							res: res
+						});
+					}
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "removeVotes",
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "updateImage",
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};
+
+// Actions for deleting a card from a baord
+exports.delete = function (req, res) {
+	var cookies = parseCookies(req);
+
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) {
+			dataError.log({
+				model: __filename,
+				action: "delete",
+				msg: "Error retrieving board " + req.params.boardId,
+				err: err,
+				res: res
+			});
+        }
+		else {
+			if (board) {
+				// Check if this board is private and if so check this user has access
+        		if ((!board.isPrivate)||
+        			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+        			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+					// retreive the card to be deleted
+					Card
+					.findById(req.params.cardId)
+					.exec(function(err, card) {
+						// if this is an image card then we're going to need to delete it from the amazon bucket toos
+						if (card.type.trim().toLowerCase() != "text") {
+							var amazonClient = authenticateAmazonS3();
+
+							amazonClient.deleteFile(req.params.boardId + "/" +  card.content, function(err, res){
+								if (err) {
+									dataError.log({
+										model: __filename,
+										action: "updateZIndex",
+										msg: "delete: Error deleting image " + card.content,
+										err: err
+									});
+								}
+							});
+						}
+
+						// we need to check if this card is part of a cluster. if so, we need to delete the reference from the parent card
+						if (card.parentId) {
+							Card
+							.find({ board: board._id })
+							.exec(function(err, cards) {
+								for (var i=0; i<cards.length; i++) {
+									if ((cards[i]) && (cards[i]._id == card.parentId)) {
+										for (var j=0; j<cards[i].children.length; j++) {
+											if (cards[i].children[j] == req.params.cardId) {
+												cards[i].children.splice(j,1);
+											}
+										}
+
+										cards[i].save();
+									}
+								}
+							});
+						}
+
+						// remove the card and save
+						card.remove();
+						card.save(function(err, savedIdea) {
+							if (err) {
+								dataError.log({
+									model: __filename,
+									action: "delete",
+									msg: "Error saving card on " + req.params.boardId,
+									err: err,
+									res: res
+								});
+							}
+							else {
+								// update the timestamp of last updated on the board
+								board.lastModified = new Date();
+								board.save();
+
+					  			res.send({ status: "success" }); 
+				  			}
+				  		});
+					});
+				}
+				else {
+					dataError.log({
+						model: __filename,
+						action: "delete",
+						msg: "Invalid board authentication",
+						res: res
+					});
+				}
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "delete",
+					msg: "Error finding board " + req.params.boardId,
+					res: res
+				});
+			}
+		}
+	});
+};
 
 // ===== Allows the duplication of a board card
 exports.duplicate = function (req, res) {
@@ -709,560 +970,7 @@ exports.duplicate = function (req, res) {
 			});
 		}
 	});
-}
-
-// ====== Update the details of a text card
-exports.update = function (req, res) {
-	var cookies = parseCookies(req);;
-	
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-        if (err) {
-			dataError.log({
-				model: __filename,
-				action: "update",
-				msg: "Error getting board: " + req.params.boardId,
-				err: err,
-				res: res
-			});
-        }
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// Retrieve the selected card
-				Card
-				.findById(req.params.cardId)
-				.exec(function(err, card) {
-					// Update the cards details, being a text card this could either be the content or color
-					card.content = req.body.content;
-					
-					if ((req.body.color) && (req.body.color.trim().length > 0)) card.color = req.body.color;
-
-					// save the updates
-					card.save(function(err, savedIdea) {
-						if (err) {
-							dataError.log({
-								model: __filename,
-								action: "update",
-								msg: "Error saving card: " + req.params.cardId,
-								err: err
-							});
-
-				  			res.send({ status: "failed" });
-						}
-						else {
-							// update the timestamp of when the board was last modified
-							board.lastModified = new Date();
-							board.save();
-
-				  			res.send({ status: "success" });
-			  			}
-					});
-				});
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "update",
-					msg: "Invalid board authentication",
-					res: res
-				});
-			}
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "update",
-				msg: "Error finding board " + req.params.boardId,
-				res: res
-			});
-		}
-	});
-}
-
-// ===== Update the details of an image card
-exports.updateImage = function (req, res) {
-	var cookies = parseCookies(req);;
-	
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-		if (err) {
-			dataError.log({
-				model: __filename,
-				action: "updateImage",
-				msg: "Error retrieving board",
-				err: err,
-				res: res
-			});
-		}
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve the image card to be updated
-				Card
-				.findById(req.params.cardId)
-				.exec(function(err, card) {
-					if (card) {
-						// the actual image can't be updated, just the card color and associated text
-
-						var cardColor = "#FFFFFF";
-						if ((req.body.color) && (req.body.color.trim().length > 0)) cardColor = req.body.color;
-
-						card.color = cardColor;
-						card.title = req.body.title;
-
-						// save the udated card
-						card.save(function(err, savedIdea) {
-							if (err) {
-								dataError.log({
-									model: __filename,
-									action: "updateImage",
-									msg: "Error saving card: " + req.params.cardId,
-									err: err,
-									res: res
-								});
-
-					  			res.send({ status: "failed" });
-							}
-							else {
-								board.lastModified = new Date();
-								board.save();
-
-					  			res.send({ status: "success" }); 
-				  			}
-				  		});
-					}
-					else {
-						dataError.log({
-							model: __filename,
-							action: "updateImage",
-							msg: "Error finding card: " + req.params.cardId,
-							res: res
-						});
-					}
-				});
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "removeVotes",
-					msg: "Invalid board authentication",
-					res: res
-				});
-			}
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "updateImage",
-				msg: "Error finding board " + req.params.boardId,
-				res: res
-			});
-		}
-	});
-}
-
-// Actions for deleting a card from a baord
-exports.delete = function (req, res) {
-	var cookies = parseCookies(req);
-
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-        if (err) {
-			dataError.log({
-				model: __filename,
-				action: "delete",
-				msg: "Error retrieving board " + req.params.boardId,
-				err: err,
-				res: res
-			});
-        }
-		else {
-			if (board) {
-				// Check if this board is private and if so check this user has access
-        		if ((!board.isPrivate)||
-        			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-        			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-					// retreive the card to be deleted
-					Card
-					.findById(req.params.cardId)
-					.exec(function(err, card) {
-						// if this is an image card then we're going to need to delete it from the amazon bucket toos
-						if (card.type.trim().toLowerCase() != "text") {
-							var amazonClient = authenticateAmazonS3();
-
-							amazonClient.deleteFile(req.params.boardId + "/" +  card.content, function(err, res){
-								if (err) {
-									dataError.log({
-										model: __filename,
-										action: "updateZIndex",
-										msg: "delete: Error deleting image " + card.content,
-										err: err
-									});
-								}
-							});
-						}
-
-						// we need to check if this card is part of a cluster. if so, we need to delete the reference from the parent card
-						if (card.parentId) {
-							Card
-							.find({ board: board._id })
-							.exec(function(err, cards) {
-								for (var i=0; i<cards.length; i++) {
-									if ((cards[i]) && (cards[i]._id == card.parentId)) {
-										for (var j=0; j<cards[i].children.length; j++) {
-											if (cards[i].children[j] == req.params.cardId) {
-												cards[i].children.splice(j,1);
-											}
-										}
-
-										cards[i].save();
-									}
-								}
-							});
-						}
-
-						// remove the card and save
-						card.remove();
-						card.save(function(err, savedIdea) {
-							if (err) {
-								dataError.log({
-									model: __filename,
-									action: "delete",
-									msg: "Error saving card on " + req.params.boardId,
-									err: err,
-									res: res
-								});
-							}
-							else {
-								// update the timestamp of last updated on the board
-								board.lastModified = new Date();
-								board.save();
-
-					  			res.send({ status: "success" }); 
-				  			}
-				  		});
-					});
-				}
-				else {
-					dataError.log({
-						model: __filename,
-						action: "delete",
-						msg: "Invalid board authentication",
-						res: res
-					});
-				}
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "delete",
-					msg: "Error finding board " + req.params.boardId,
-					res: res
-				});
-			}
-		}
-	});
-}
-
-// ===== Actions for adding a vote to a card while dot voting
-exports.addVote = function (req, res) {
-	var cookies = parseCookies(req);;
-	
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-        if (err) {
-			dataError.log({
-				model: __filename,
-				action: "addVote",
-				msg: "Error getting board: " + req.params.boardId,
-				err: err,
-				res: res
-			});
-        }
-		else  if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// Retrieve the card voted on
-				Card
-				.findById(req.params.cardId)
-				.exec(function(err, card) {
-					if (card) {
-						// add a vote to the selected card
-						if (card.votesReceived) card.votesReceived++;
-						else card.votesReceived = 1;
-
-						// save the card
-						card.save(function(err, savedIdea) {
-							if (err) {
-								dataError.log({
-									model: __filename,
-									action: "addVote",
-									msg: "Error saving card: " + req.params.cardId,
-									err: err,
-									res: res
-								});
-							}
-							else {
-								// update the timestamp of when the board was last modified
-								board.lastModified = new Date();
-								board.save();
-
-					  			res.send({ status: "success" }); 
-							}
-				  		});
-			  		}
-			  		else {
-						dataError.log({
-							model: __filename,
-							action: "addVote",
-							msg: "Error finding card: " + req.params.cardId,
-							res: res
-						});
-			  		}
-				});
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "addVote",
-					msg: "Invalid board authentication",
-					res: res
-				});
-			}
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "addVote",
-				msg: "Error finding board " + req.params.boardId,
-				res: res
-			});
-		}
-	});
-}
-
-// ===== Actions for removing all votes from a card
-exports.removeVotes = function (req, res) {
-	var cookies = parseCookies(req);;
-	
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-        if (err) {
-			dataError.log({
-				model: __filename,
-				action: "removeVotes",
-				msg: "Error getting board: " + req.params.boardId,
-				err: err,
-				res: res
-			});
-        }
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve the selected card
-				Card
-				.findById(req.params.cardId)
-				.exec(function(err, card) {
-					if (card) {
-						// set the votes received to 0
-						card.votesReceived = 0;
-
-						card.save(function(err, savedIdea) {
-							if (err) {
-								dataError.log({
-									model: __filename,
-									action: "removeVotes",
-									msg: "Error saving card: " + req.params.cardId,
-									err: err,
-									res: res
-								});
-							}
-							else {
-								// update the timestamp of when the board was last modified
-								board.lastModified = new Date();
-								board.save();
-
-					  			res.send({ status: "success" }); 
-				  			}
-				  		});
-					}
-					else {
-						dataError.log({
-							model: __filename,
-							action: "removeVotes",
-							msg: "Error finding card: " + req.params.cardId,
-							res: res
-						});
-					}
-				});
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "removeVotes",
-					msg: "Invalid board authentication",
-					res: res
-				});
-			}
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "removeVotes",
-				msg: "Error finding board " + req.params.boardId,
-				res: res
-			});
-		}
-	});
-}
-
-// ===== Action for locking a board card
-exports.lock = function (req, res) {
-	var cookies = parseCookies(req);;
-	
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-        if (err) {
-	        dataError.log({
-				model: __filename,
-				action: "lock",
-				msg: "Error getting board",
-				err: err,
-				res: res
-			});	
-        } 
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve the selected card
-				Card
-				.findById(req.params.cardId)
-				.exec(function(err, card) {
-					// set the cards locked property to true
-					card.isLocked = true;
-
-					card.save(function(err) {
-						if (err) {
-							dataError.log({
-								model: __filename,
-								action: "lock",
-								msg: "Error saving card: " + req.params.cardId,
-								err: err,
-								res: res
-							});
-						}
-						else {
-							// update the last modified timestamp for the board
-							board.lastModified = new Date();
-							board.save();
-
-				  			res.send({ status: "success" });
-			  			} 
-			  		});
-				});
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "lock",
-					msg: "Invalid board authentication",
-					res: res
-				});
-			}
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "lock",
-				msg: "Error finding board " + req.params.boardId,
-				res: res
-			});
-		}
-	});
-}
-
-// ====== Action for unlocking a board card
-exports.unlock = function (req, res) {
-	var cookies = parseCookies(req);;
-	
-	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "unlock",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve the specified card
-				Card
-				.findById(req.params.cardId)
-				.exec(function(err, card) {
-					// set the cards locked property to false
-					card.isLocked = false;
-
-					card.save(function(err) {
-						if (err) {
-							dataError.log({
-								model: __filename,
-								action: "unlock",
-								msg: "Error saving card: " + req.params.cardId,
-								err: err,
-								res: res
-							});
-						}
-						else {
-							// update the last modified timestamp for the board
-							board.lastModified = new Date();
-							board.save();
-
-				  			res.send({ status: "success" }); 
-				  		}
-			  		});
-				});
-			}
-			else {
-				dataError.log({
-					model: __filename,
-					action: "lock",
-					msg: "Invalid board authentication",
-					res: res
-				});
-			}
-		}
-		else {
-			dataError.log({
-				model: __filename,
-				action: "unlock",
-				msg: "Error finding board " + req.params.boardId,
-				res: res
-			});
-		}
-	});
-}
+};
 
 // ===== Update the dimensions of a selected card (width/height)
 exports.updateDimensions = function (req, res) {
@@ -1341,7 +1049,7 @@ exports.updateDimensions = function (req, res) {
 			});
 		}
 	});
-}
+};
 
 // ===== Update the position of the card on a board
 exports.updatePosition = function (req, res) {
@@ -1420,7 +1128,7 @@ exports.updatePosition = function (req, res) {
 			});
 		}
 	});
-}
+};
 
 // ===== Update the z position of the card on the board
 exports.updateZIndex = function (req, res) {
@@ -1504,4 +1212,296 @@ exports.updateZIndex = function (req, res) {
 			});
 		}
 	});
-}
+};
+
+// ===== Actions for adding a vote to a card while dot voting
+exports.addVote = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) {
+			dataError.log({
+				model: __filename,
+				action: "addVote",
+				msg: "Error getting board: " + req.params.boardId,
+				err: err,
+				res: res
+			});
+        }
+		else  if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				// Retrieve the card voted on
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					if (card) {
+						// add a vote to the selected card
+						if (card.votesReceived) card.votesReceived++;
+						else card.votesReceived = 1;
+
+						// save the card
+						card.save(function(err, savedIdea) {
+							if (err) {
+								dataError.log({
+									model: __filename,
+									action: "addVote",
+									msg: "Error saving card: " + req.params.cardId,
+									err: err,
+									res: res
+								});
+							}
+							else {
+								// update the timestamp of when the board was last modified
+								board.lastModified = new Date();
+								board.save();
+
+					  			res.send({ status: "success" }); 
+							}
+				  		});
+			  		}
+			  		else {
+						dataError.log({
+							model: __filename,
+							action: "addVote",
+							msg: "Error finding card: " + req.params.cardId,
+							res: res
+						});
+			  		}
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "addVote",
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "addVote",
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};
+
+// ===== Actions for removing all votes from a card
+exports.removeVotes = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) {
+			dataError.log({
+				model: __filename,
+				action: "removeVotes",
+				msg: "Error getting board: " + req.params.boardId,
+				err: err,
+				res: res
+			});
+        }
+		else if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				// retrieve the selected card
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					if (card) {
+						// set the votes received to 0
+						card.votesReceived = 0;
+
+						card.save(function(err, savedIdea) {
+							if (err) {
+								dataError.log({
+									model: __filename,
+									action: "removeVotes",
+									msg: "Error saving card: " + req.params.cardId,
+									err: err,
+									res: res
+								});
+							}
+							else {
+								// update the timestamp of when the board was last modified
+								board.lastModified = new Date();
+								board.save();
+
+					  			res.send({ status: "success" }); 
+				  			}
+				  		});
+					}
+					else {
+						dataError.log({
+							model: __filename,
+							action: "removeVotes",
+							msg: "Error finding card: " + req.params.cardId,
+							res: res
+						});
+					}
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "removeVotes",
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "removeVotes",
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};
+
+// ===== Action for locking a board card
+exports.lock = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) {
+	        dataError.log({
+				model: __filename,
+				action: "lock",
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});	
+        } 
+		else if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				// retrieve the selected card
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					// set the cards locked property to true
+					card.isLocked = true;
+
+					card.save(function(err) {
+						if (err) {
+							dataError.log({
+								model: __filename,
+								action: "lock",
+								msg: "Error saving card: " + req.params.cardId,
+								err: err,
+								res: res
+							});
+						}
+						else {
+							// update the last modified timestamp for the board
+							board.lastModified = new Date();
+							board.save();
+
+				  			res.send({ status: "success" });
+			  			} 
+			  		});
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "lock",
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "lock",
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};
+
+// ====== Action for unlocking a board card
+exports.unlock = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) dataError.log({
+			model: __filename,
+			action: "unlock",
+			msg: "Error getting board",
+			err: err,
+			res: res
+		});
+		else if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				// retrieve the specified card
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					// set the cards locked property to false
+					card.isLocked = false;
+
+					card.save(function(err) {
+						if (err) {
+							dataError.log({
+								model: __filename,
+								action: "unlock",
+								msg: "Error saving card: " + req.params.cardId,
+								err: err,
+								res: res
+							});
+						}
+						else {
+							// update the last modified timestamp for the board
+							board.lastModified = new Date();
+							board.save();
+
+				  			res.send({ status: "success" }); 
+				  		}
+			  		});
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "lock",
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "unlock",
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};

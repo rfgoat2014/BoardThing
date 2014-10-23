@@ -9,6 +9,7 @@ function(Card) {
 	Cluster.GenerateModel = function(model, parentId) {
 		var clusterModel = {
 			id: model.id, 
+			boardId: model.boardId,
 			type: model.type, 
 			parentId: parentId,
 			parentIsVoting: false, 
@@ -43,576 +44,1412 @@ function(Card) {
 		return clusterModel;
 	}
 
-	Cluster.Item = function(workspace, parent, paper, model) {
-		var that = this;
+  	Cluster.Item = Backbone.View.extend({
+    	tagName: "div",
 
-		this._workspace = workspace;
-		this._paper = paper;
-		that._parent = parent;
+    	_isMobile: null,
+    	_workspace: null,
+    	_parent: null,
+    	
+    	_editing: false,
+    	_editable: true,
+		_clusterClickCount: 0,
 
-		this._model = model;
+		initialize: function(options) {
+			this.el.id = "cluster-content-container_" + this.model.id;
 
-		this._shapeAttributes = {
-			padding: 10,
-			fontSize: 14, 
-			fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif"
+			this._isMobile = this.options.isMobile;
+			this._workspace = this.options.workspace;
+			this._parent = this._parent;
 		},
 
-		this._entities = [];
+		render: function() {
+			var that = this;
+			
+			var template = null;
 
-		this._isDragging = false;
+    		if (this.model.parentId != null) {
+	    		if (this.model.collapsed) template = "/app/templates/cluster/clusteredCollapsed";
+	    		else template = "/app/templates/cluster/clusteredItem";
+    		}
+    		else {
+	    		if (model.collapsed) template = "/app/templates/cluster/collapsed";
+	    		else template = "/app/templates/cluster/item";
+    		}
 
-		this._model.cards.sort(function (a, b) { return a.zPos > b.zPos ? 1 : a.zPos < b.zPos ? -1 : 0; });
+			$.get(template, function(contents) {
+				that.$el.html(_.template(contents, that.model));
 
-		// {{ Getters }}
+				that.afterRender();				
 
-		this.getId = function() {
-			return that._model.id;
-		};
+				that.unbind();
+				that.bind();
+			}, "text");
+		},
 
-		this.getModel = function() {
-			return that._model;
-		};
+		afterRender: function() {
+			var that = this;
 
-		this.getChildModel = function(modelId) {
-			if (this._model.id == modelId) return that._model;
-			else {
-				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-					if (that._entities[i].getType() == "cluster") {
-						childModel = that._entities[i].getChildModel(modelId);
+			if (!this._isMobile) that.$("#editable-title_" + this.model.id).autosize();
 
-						if (childModel) return childModel;
-					}
+			if ((!this.model.parentId) && this.model.xPos && this.model.yPos) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
+			
+			if ((!this.model.parentId) && (this.model.zPos != null)) this.$el.zIndex(this.model.zPos);
+
+			if ((that.model.color) && (that.model.color.trim().toLowerCase() != "#ffffff")) that.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(that.model.color) + ",0.20);" });
+			
+      		this._cardViews = [];
+      		this._clusterViews = [];
+
+      		var allViews = [];
+
+			var cards = this.model.cards;
+
+			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
+        		cards[i].cluster = that;
+
+				var cardView = new Card.Item({ model: cards[i], workspace: that._workspace, parent: that });
+				cardView.render();
+
+				allViews.push(cardView);
+
+    			that._cardViews.push(cardView);
+        	}
+
+			var clusters = this.model.clusters;
+
+			for (var i=0, clustersLength=cards.length; i<clustersLength; i+=1) {
+        		clusters[i].cluster = that;
+
+				var clusterView = new Cluster.Item({ model: clusters[i], workspace: that._workspace, parent: that });
+				clusterView.render();
+
+				allViews.push(clusterView);
+
+    			that._clusterViews.push(clusterView);
+        	}
+
+			if (!this.model.collapsed) {
+				allViews.sort(function (a, b) { return a.model.zPos > b.model.zPos ? 1 : a.model.zPos < b.model.zPos ? -1 : 0; });
+
+				for (var i=0; i<allViews.length; i++) {
+	    			that.$("#cards-container_" + this.model.id).append(allViews[i].el);
 				}
 			}
 
-			return null;
-		};
+    		if (this.model.parentId != null) {
+	    		if (this.model.collapsed) this.el.className = "box clustered-cluster-content-container-collapsed";
+	    		else this.el.className = "box clustered-cluster-content-container";
+    		}
+    		else {
+	    		if (model.collapsed) this.el.className = "box cluster-content-container-collapsed";
+	    		else this.el.className = "box cluster-content-container";
+    		}		
+    	},
 
-		this.getType = function() {
-			return "cluster";
-		};
+	    unbind: function() {
+			if (!this._isMobile) {
+				this.$el.unbind("click");
+				this.$el.unbind("mouseup");
+				this.$el.unbind("dblclick");
+				this.$el.unbind("mouseover");
+				this.$el.unbind("mouseout");
 
-		this.getParentId = function() {
-			return this._model.parentId;
-		};
+				this.$("#cluster-settings-button_" + this.model.id).unbind("click");
+			}
 
-		this.getIsDragging = function() {
-			return that._isDragging;
-		};
+			this.$el.unbind("keypress");
+			this.$el.unbind("draggable");
+			this.$el.unbind("droppable");
 
-		this.getChildSVGShape = function(id) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-				if (that._entities[i].getId() == id) return { x: that._entities[i].getSVGShapeX(), y: that._entities[i].getSVGShapeY() };
+			this.$("#edit-title_" + this.model.id).unbind("click");
+			this.$("#start-dot-vote").unbind("click");
+			this.$("#stop-dot-vote").unbind("click");
+	        this.$("#editable-title_" + this.model.id).unbind("blur");
+			this.$("#add-vote").unbind("click");
+	    },
+
+	    bind: function() {
+	    	var that = this;
+
+			if (this._isMobile) {
+				if (!this._mobileEventsBound) {
+					var touchComplete = null;
+
+	      			this.$el.click(function(e) {
+	   					e.stopPropagation();
+	   					e.preventDefault();
+	      			});
+
+					this.$el.on("touchstart touchend taphold", function(e) {
+	   					e.preventDefault();
+	   					e.stopPropagation();
+	   					
+	   					if (e.type.toString() == "touchstart") {
+							touchComplete = function() {
+		   						if (that._showSettingsIcon) that.clearSettingsmenu(e);
+
+					        	that.touchTapped();
+							}
+	   					}
+	   					else if (e.type.toString() == "taphold") {
+							if ((!that.model.parentId) && (!that._dragging)) {
+								touchComplete = function() {
+									that.$("#cluster-action-container_" + that.model.id).show();
+									
+									that.showSettingsMenu(e);
+								}
+							}
+							else {
+								touchComplete = null;
+							}
+	   					}
+	   					else if (e.type.toString() == "touchend") {
+	   						if ((!that._dragging) && (touchComplete != null)) touchComplete();
+							else that._dragging = false;
+
+							touchComplete = null;
+
+			    			if ((that._workspace.selectedPageTool == "pen") || (that._workspace.selectedPageTool == "eraser")) that._workspace.stopDrawing();
+	   					}
+					});
+				}
+			}
+			else {
+	  			this.$el.click(function(e) {
+		        	that.clearSettingsmenu();
+	  			});
+
+				this.$el.mouseup(function(e) {
+			    	if ((that._workspace.selectedPageTool == "pen") || (that._workspace.selectedPageTool == "eraser")) that._workspace.stopDrawing();
+				});
+
+	  			this.$el.dblclick(function(e) {
+					e.stopPropagation();
+
+					that.toggleCollapsed();
+				});
+
+	  			this.$("#cluster-settings-button_" + this.model.id).click(function(e) {
+		        	that.showSettingsMenu(e);
+	  			});
+
+	        	this.$el.mouseover(function() {
+	        		if ((that._parent != undefined) && (that._parent._editable != undefined)) that._parent._editable = false;
+	        		
+	        		if (that._parent.hideHoverIcons) that._parent.hideHoverIcons();
+
+	        		that.showHoverIcons();
+	        	});
+
+	        	this.$el.mouseout(function() {
+	        		if ((that._parent != undefined) && (that._parent._editable != undefined)) that._parent._editable = true;
+	    			
+	        		that.hideHoverIcons();
+	        	});
+	        }
+
+        	this.$el.keypress(function(e) {
+			  	if (e) {
+				  	var charCode = e.charCode || e.keyCode;
+
+			        if (charCode == 13) {
+			        	e.preventDefault();
+
+			        	that.updateCluster();
+
+						that.$("#editable-title_" + that.model.id).blur();
+			        }
+			    }
+        	});
+
+        	this.$("#edit-title_" + this.model.id).click(function(e) {
+	        	that.clearSettingsmenu();
+
+        		that.editCluster(e);
 				
-				if (that._entities[i].getType() == "cluster") {
-					var childShape = that._entities[i].getChildSVGShape(id);
-					if (childShape) return childShape;
-				}
-			}
+				that.$("#editable-title_" + that.model.id).focus().val('').val(that.$("#cluster-title_" + that.model.id).html());
+        	});
 
-			return null;
-		};
+        	this.$("#start-dot-vote").click(function(e) {
+	        	that.clearSettingsmenu();
 
-		this.getSVGShapeX = function() {
-			return that._svgShape.attr("x");
-		};
+        		that.startDotVoting(e);
+        	});
 
-		this.getSVGShapeY = function() {
-			return that._svgShape.attr("y");
-		};
+        	this.$("#stop-dot-vote").click(function(e) {
+	        	that.clearSettingsmenu();
 
-		this.getWidth = function() {
-			return that._svgShape.attr("width");
-		};
+        		that.stopDotVoting(e);
+        	});
 
-		this.getHeight = function() {
-			return that._svgShape.attr("height");
-		};
+        	this.$("#editable-title_" + this.model.id).blur(function(e) {
+        		that.updateCluster();
+        	});
 
-		this.getCollapsed = function() {
-			return that._model.collapsed;
-		};
+        	this.$("#add-vote").click(function(e) {
+        		that.addVote(e);
+        	});
 
-		this.getIsValidCluster = function() {
-			if (that._model.cards.length > 0) return true;
-			else return false
-		};
+        	var startDragX = null,
+        		startDragY = null;
 
-		this.getEntity = function(id) {
-			for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i+=1) {
-				if (that._model.cards[i].id == id) {
-					var card = that._model.cards[i];
+        	this.$el.draggable({
+				start: function( e, ui ) {
+					startDragX = e.clientX;
+        			startDragY = e.clientY;
 
-					that._model.cards.splice(i,1);
+					if (!that._isMobile) that._dragging = true;
 
-					return { parentId: that._model.id, card: card};
-				}
-			}
+					that.$el.zIndex(999999999999999);
+				},
+				drag: function( e, ui ) {
+					if (that._isMobile) {
+						var distanceFromStartX = e.clientX - startDragX,
+							distanceFromStartY = e.clientY - startDragY;
 
-			// Check if this the selected entity is the child of this cluster
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-				if (that._entities[i].getType() == "cluster") {
-					var entity = that._entities[i].getEntity(id);
-
-					if (entity) return entity;
-				}
-			}
-
-			return null;
-		};
-
-		this.getIsChildEntity = function(id) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-				if (that._entities[i].getId() == id) return true;
-				else if ((that._entities[i].getType() == "cluster") && (that._entities[i].getIsChildEntity(id))) return true;
-			}
-
-			return false;
-		};
-
-		// {{ Setters }}
-
-		this.setParentId = function(parentId) {
-			this._model.parentId = parentId;
-		};
-
-		this.setX = function (xPos) {
-			that._model.xPos = xPos;
-		};
-
-		this.setY = function (yPos) {
-			that._model.yPos = yPos;
-		};
-
-		// {{ Public Methods}}
-
-		// ---- Check if a specified X/Y position touches the current shape
-		this.isHitting = function(x, y) {
-			if ((that._svgShape) && (!that._model.collapsed)) {
-				var bounds = {
-					startX: that._svgShape.attr("x"),
-					endX: that._svgShape.attr("x")+that._svgShape.attr("width"),
-					startY: that._svgShape.attr("y"),
-					endY: that._svgShape.attr("y")+that._svgShape.attr("height"),
-				}
-
-				if ((x > bounds.startX) && (x < bounds.endX) && (y > bounds.startY) && (y < bounds.endY)) return true;
-				else return false;
-			}
-			else return false;
-		};
-
-		this.bringToFront = function() {
-			that._paper.set(that._svgDropShadowGlow, that._svgDropShadowCover, that._svgShape, that._svgText).toFront();
-
-			if (that._svgCardCount) that._paper.set(that._svgCardCount).toFront();
-
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-				that._entities[i].bringToFront();
-			}
-		};
-
-		this.sendToBack = function() {
-			that._paper.set(that._svgDropShadow, that._svgDropShadowCover, that._svgShape, that._svgText).toBack();
-		};
-
-		this.expandCollapse = function() {
-			if (that._model.collapsed) {
-				that._model.collapsed = false;
-        		if (that._parent == null) that._workspace.trigger("updateClusterExpanded", that._model.id);
-			}
-			else {
-				that._model.collapsed = true;
-				if (that._parent == null) that._workspace.trigger("updateClusterCollapsed", that._model.id);
-			}
-
-			that.parentGenerateEntities();
-		};
-
-		this.closeChildren = function() {
-			for (var i=(that._model.cards.length-1); i>=0; i-=1) {
-				that._model.cards[i].collapsed = true;
-			}
-		};
-
-		this.addCard = function(x, y, cardModel) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				if ((that._entities[i].getId() != cardModel.id) && (that._entities[i].getType() == "cluster") && (!that._entities[i].getCollapsed())) { 
-					var svgShapeX = that._entities[i].getSVGShapeX(),
-						svgShapeY = that._entities[i].getSVGShapeY();
-
-					if ((that._entities[i].getId() != cardModel.id) &&
-						((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
-						((y >= svgShapeY) && (y <= (svgShapeY + that._entities[i].getHeight())))) {
-						var cardId = that._entities[i].addCard(x, y, cardModel);
-						
-						if (cardId) return cardId;
-					} 
-				}
-			}
-
-			var insertPostion = that._model.cards.length;
-
-			for (var i=(that._model.cards.length-1); i>=0; i-=1) {
-				if (cardModel.yPos < that._model.cards[i].yPos) insertPostion = i;
-			}
-
-			that._model.cards.splice(insertPostion, 0, cardModel);
-
-			return that._model.id;
-		};
-
-		this.addCluster = function(x, y, clusterModel) {
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				if ((that._entities[i].getId() != clusterModel.id) && (that._entities[i].getType() == "cluster") && (!that._entities[i].getCollapsed())) { 
-					var svgShapeX = that._entities[i].getSVGShapeX(),
-						svgShapeY = that._entities[i].getSVGShapeY();
-
-					if ((that._entities[i].getId() != clusterModel.id) &&
-						((x >= svgShapeX) && (x < (svgShapeX + that._entities[i].getWidth()))) && 
-						((y >= svgShapeY) && (y <= (svgShapeY + that._entities[i].getHeight())))) {
-						var clusterId = that._entities[i].addCluster(x, y, clusterModel);
-						
-						if (clusterId) return clusterId;
-					} 
-				}
-			}
-
-			clusterModel.collapsed = true;
-
-			var insertPostion = that._model.cards.length;
-
-			for (var i=(that._model.cards.length-1); i>=0; i-=1) {
-				if (clusterModel.yPos < that._model.cards[i].yPos) insertPostion = i;
-			}
-
-			that._model.cards.splice(insertPostion, 0, clusterModel);
-
-			return that._model.id;
-		};
-
-		this.parentGenerateEntities = function() {
-			if (that._parent == null) that.generateEntities();
-			else that._parent.parentGenerateEntities();
-		}
-
-		this.generateEntities = function() {
-			if (that._svgCardCount) {
-				that._svgCardCount.remove();
-				that._svgCardCount = null;
-			}
-
-			for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i++) {
-				that._entities[i].undraw();
-				that._entities[i] = null;
-			}
-
-			that._entities = [];
-
-			if (!that._model.collapsed) {
-				for (var i=0, cardsLength=that._model.cards.length; i<cardsLength; i++) {
-					if (that._model.cards[i]) {
-						if ((that._model.cards[i].cards == null) || (that._model.cards[i].cards.length == 0)) that._entities.push(new Card.Item(that._workspace, that, that._paper, that._model.cards[i]));
-						else that._entities.push(new Cluster.Item(that._workspace, that, that._paper, that._model.cards[i]));
+						if (((distanceFromStartX > 5) || (distanceFromStartX < -5)) || ((distanceFromStartY > 5) || (distanceFromStartY < -5))) that._dragging = true;
 					}
+				},
+				stop: function( e, ui ) {
+					e.stopPropagation();
+
+					var elementId = that._workspace.checkPositionTaken(that.model.id);
+
+					if (elementId == -1) {
+						if (that.model.parentId) {
+							var updateDetail = {
+								clusterId: that.model.id,
+								xPos: that._workspace._currentMousePosition.x,
+								yPos: that._workspace._currentMousePosition.y
+							};
+
+							Cluster_Services.Insert(that.model.boardId, updateDetail.clusterId, updateDetail, function(response) {
+				            	if (response.status == "success") {
+									that._workspace.sendSocket(JSON.stringify({ 
+										action:"removeClusterFromCluster", 
+										board: that.model.boardId, 
+										updateDetail: updateDetail
+									}));
+								}
+							});
+
+					    	that._workspace.removeClusterFromCluster(updateDetail);
+
+					    	that._parent.saveSortPosition();
+						}
+						else if (!that.model.parentId) {
+							var currentPosition = that.$el.position().
+								newXPos = that._workspace.$("#board-cards").scrollLeft()+currentPosition.left,
+								newYPos = that._workspace.$("#board-cards").scrollTop()+currentPosition.top;
+
+							that.model.xPos = newXPos;
+							that.model.yPos = newYPos;
+
+				        	that.updateClusterPosition(newXPos, newYPos);
+			        	}
+			        	
+				    	that._workspace.sortZIndexes(that.model.id,true);
+		        	}
+		        	else {
+		        		if (that.model.parentId == elementId) that.$el.css({ top: 0, left: 0, position: 'relative' });
+		        	}
 				}
+			});
+
+			if (!that.model.collapsed) {
+	        	this.$el.droppable({
+	        		accept: ".new-card,.item-content-container,.clustered-item-content-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
+	        		tolerance: "pointer",
+	            	greedy:true,
+	           		drop: function(e, ui) {
+						e.stopPropagation();
+
+	 					if (!that.model.collapsed) {
+		   					var isChild = false;
+
+		       				if (ui.draggable.context.id.trim().toLowerCase().indexOf("item-content-container") == 0) {
+		       					var updateDetail = null;
+
+		       					if (ui.draggable.find('#card-body').length > 0) {
+									updateDetail = {
+										clusterId: that.model.id,
+										cardId: ui.draggable.find('#card-body').attr("element-id")
+									};
+								}
+		       					else if (ui.draggable.find('#clustered-card-body').length > 0) {
+									updateDetail = {
+										clusterId: that.model.id,
+										cardId: ui.draggable.find('#clustered-card-body').attr("element-id")
+									};
+		       					}
+
+		       					if (updateDetail) {
+		       						if ((!$(ui.draggable.context).attr("is-resized")) || ($(ui.draggable.context).attr("is-resized") == "false")) {
+				       					for (var i=0; i<that._cardViews.length; i++) {
+				       						if (that._cardViews[i].model.id.toString()== updateDetail.cardId.toString()) {
+				       							isChild = true;
+				       						}
+				       					}
+
+				       					if (!isChild) {	
+											Cluster.AttachCard(that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
+												that._workspace.sendSocket(JSON.stringify({ 
+													action:"addCardToCluster", 
+													board: that.model.boardId, 
+													updateDetail: updateDetail
+												}));
+											});
+
+											that._workspace.addCardToCluster(updateDetail);
+										}
+									}
+								}
+		       				}
+		       				else if (ui.draggable.context.id.trim().toLowerCase().indexOf("cluster-content-container") == 0) {
+		       					if (ui.draggable.find('#cluster-body').length > 0) {
+									var updateDetail = {
+										targetClusterId: that.model.id,
+										sourceClusterId: ui.draggable.find('#cluster-body').attr("element-id")
+									};
+		       					}
+		       					else if (ui.draggable.find('#cluster-body-collapsed').length > 0) {
+									var updateDetail = {
+										targetClusterId: that.model.id,
+										sourceClusterId: ui.draggable.find('#cluster-body-collapsed').attr("element-id")
+									};
+		       					}
+		       					else if (ui.draggable.find('#clustered-cluster-body').length > 0) {
+									var updateDetail = {
+										targetClusterId: that.model.id,
+										sourceClusterId: ui.draggable.find('#clustered-cluster-body').attr("element-id")
+									};
+		       					}
+
+		       					for (var i=0; i<that._clusterViews.length; i++) {
+		       						if (that._clusterViews[i].model.id == updateDetail.sourceClusterId) {
+		       							isChild = true;
+		       						}
+		       					}
+
+		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
+		       						Cluster.AttachCluster(boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
+		       							that._workspace.sendSocket(JSON.stringify({ 
+		       								action:"addClusterToCluster", 
+		       								board: that.model.boardId, 
+		       								updateDetail: updateDetail 
+		       							}));
+		       						});
+										
+									that._workspace.addClusterToCluster(updateDetail);
+								}
+		       				}
+
+		       				if (isChild) {
+		       					var elementId = null;
+
+			       				if (ui.draggable.context.id.trim().toLowerCase().indexOf("item-content-container") == 0) {
+			       					if (ui.draggable.find('#card-body').length > 0) elementId = ui.draggable.find('#card-body').attr("element-id");
+									else if (ui.draggable.find('#clustered-card-body').length > 0) elementId = ui.draggable.find('#clustered-card-body').attr("element-id");
+			       				}
+			       				else if (ui.draggable.context.id.trim().toLowerCase().indexOf("cluster-content-container") == 0) {
+			       					if (ui.draggable.find('#cluster-body').length > 0) elementId = ui.draggable.find('#cluster-body').attr("element-id");
+			       					else if (ui.draggable.find('#cluster-body-collapsed').length > 0) elementId = ui.draggable.find('#cluster-body-collapsed').attr("element-id");
+			       					else if (ui.draggable.find('#clustered-cluster-body').length > 0)  elementId = ui.draggable.find('#clustered-cluster-body').attr("element-id");
+			       				}
+
+		       					if (elementId) {
+			       					var selectedElement = null;
+
+			       					for (var i=0; i<that._cardViews.length; i++) {
+			       						if (that._cardViews[i].model.id == elementId) {
+			       							selectedElement = that._cardViews[i];
+			       							break;
+			       						}
+
+			       					}
+
+			       					if (!selectedElement) {
+				       					for (var i=0; i<that._clusterViews.length; i++) {
+				       						if (that._clusterViews[i].model.id == elementId) {
+				       							selectedElement = that._clusterViews[i];	
+			       								break;
+				       						}
+				       					}
+				       				}
+
+				       				that.changeSortPosition(selectedElement);
+		       					}
+		       				}
+		           		}
+	        		}
+	        	});
 			}
 
-			that.draw();
+			this._mobileEventsBound = true;
 		},
 
-		// {{ Drawing methods }}
+		touchTapped: function() {
+			var that = this;
+ 
+			this._clusterClickCount++;
 
-		this.draw = function() {
-			if (!that._isDragging) {
-				that.undraw();
+		    if (this._clusterClickCount === 1) {
+		        singleClickTimer = setTimeout(function() { 
+		            that._clusterClickCount = 0;
+		        }, 250);
+		    } else if (this._clusterClickCount === 2) {
+		        clearTimeout(singleClickTimer);
+		
+		        this._clusterClickCount = 0;
 
-				that._svgText = that._paper.text((that._model.xPos+that._shapeAttributes.padding), (that._model.yPos+that._shapeAttributes.padding));
-				that._svgText.attr({ 
-					"text-anchor": "start",
-					"font-size": that._shapeAttributes.fontSize, 
-					"font-family": that._shapeAttributes.fontFamily,
-					"font-weight": "bold"
-				});
+		        this.toggleCollapsed();
+		    }
+		},
 
-				// there is no word wrapping in svg text so we need to manually wrap it
-				var words = that._model.content.split(" "),
-					maxWidth = 180,
-					tempText = "";
+		toggleCollapsed: function() {
+	        if (this.model.parentId) {
+				if (this.model.collapsed) this.expandCluster();
+				else this.collapseCluster();
+			}
+			else {
+				if (this.model.collapsed) this.saveAndExpandCluster();
+				else this.saveAndCollapseCluster();
+			}
+		},
 
-				for (var i=0, wordsLength = words.length; i<wordsLength; i++) {
-					that._svgText.attr("text", tempText + " " + words[i]);
+		// ---------- Actions for displaying edit icons
 
-					if (that._svgText.getBBox().width > maxWidth) tempText = tempText + "\n" + words[i];
-					else tempText = tempText + " " + words[i];
+		showHoverIcons: function () {
+			if ((this._editable) && (!this._editing)) this.$("#cluster-action-container_" + this.model.id).show();
+		},
 
-					that._svgText.attr("text", tempText);
-				}
+	    hideHoverIcons: function() {
+	    	if (!this._showSettingsIcon) this.$("#cluster-action-container_" + this.model.id).hide();
+	    },
 
-				that._svgText.attr({
-					y: ((that._model.yPos+that._shapeAttributes.padding)+(that._svgText.getBBox().height/2))
-				})
+		// ---------- Actions for showing the settings menu
 
-				// figure out what size the cluster should be
-				var width = that._svgText.getBBox().width+(that._shapeAttributes.padding*2);
-				if (width < 180) width = 180;
+		showSettingsMenu: function(e) {
+			e.stopPropagation();
 
-				var height = that._svgText.getBBox().height+(that._shapeAttributes.padding*2);
+			if (!this.$("#cluster-settings-menu_" + this.model.id).is(':visible')) {
+				this.$("#cluster-settings-menu_" + this.model.id).show();
 
-				// We don't actually need this if as collapsed clusters have no entities. Just there for sanity.
-				if (!that._model.collapsed) {
-					// set the position in the cluster and draw it out
-					for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-						that._entities[i].setX((that._model.xPos+that._shapeAttributes.padding));
-						that._entities[i].setY(that._model.yPos+height);
-						
-						if (that._entities[i].getType() == "cluster") that._entities[i].generateEntities();
-						else that._entities[i].draw();
+				this._showSettingsIcon = true;
+			}
+			else this.clearSettingsmenu();
+		},
 
-						if ((that._entities[i].getWidth()+(that._shapeAttributes.padding*2)) > width) width = (that._entities[i].getWidth()+(that._shapeAttributes.padding*2));
-						
-						height += that._entities[i].getHeight() + that._shapeAttributes.padding;
+		clearSettingsmenu: function() {
+			this.$("#cluster-settings-menu_" + this.model.id).hide();
+			this.$("#cluster-action-container_" + this.model.id).hide();
+
+			this._showSettingsIcon = false;
+
+			for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+				this._cardViews[i].clearSettingsmenu();
+			}
+
+			for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				this._clusterViews[i].clearSettingsmenu();
+			}
+		},
+
+		// ---------- Actions for setting cluster position
+
+		updateClusterPosition: function(left,top) {
+			Cluster_Services.UpdatePosition(that.model.boardId, that.model.id, left, top);
+
+			that._workspace.sendSocket(JSON.stringify({
+				action:"updateClusterPosition",
+				board: this.model.boardId,
+				position: {
+		        	id: this.model.id,
+		        	xPos: left,
+		        	yPos: top
+		        }
+			}));
+		},
+
+		setClusterPosition: function(clusterId,left,top) { 
+			if (this.model.id == clusterId) {
+				this.model.xPos = left);
+				this.model.yPos = top);
+
+				this.render();
+			}	
+		},
+
+		// ---------- Actions to update sort position
+
+		changeSortPosition: function(selectedElement) {
+			var that = this;
+
+			if (selectedElement) {
+				var orderedArray = new Array(),
+					tmpArray = new Array();
+
+				for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+					tmpArray[this._cardViews[i].model.zPos-1] = this._cardViews[i];
+        		}
+
+				for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+					tmpArray[this._clusterViews[i].model.zPos-1] = this._clusterViews[i];
+        		}
+
+	        	tmpArray.forEach(function(entry) {
+	        		orderedArray.push(entry);
+	        	});
+
+        		tmpArray = null;
+
+				for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+					var cardOrdered = false;
+
+					for (var j = 0, orderedArrayLength=orderedArray.length; j<orderedArrayLength; j+=1) {
+						if (this._cardViews[i].model.id == orderedArray[j].model.id) {
+							cardOrdered = true;
+							break;
+						}
+					};
+
+					if (!cardOrdered) orderedArray.push(this._cardViews[i]);
+        		}
+
+				for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+					var cardOrdered = false;
+
+					for (var j = 0, orderedArrayLength=orderedArray.length; j<orderedArrayLength; j+=1) {
+						if (this._clusterViews[i].model.id == orderedArray[j].model.id) {
+							cardOrdered = true;
+							break;
+						}
+					}
+
+					if (!cardOrdered) orderedArray.push(this._cardViews[i]);
+        		}
+
+				var newZPos = null;
+
+				for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i++) {
+					if (newZPos === null) {
+						if ((orderedArray[i]) && (selectedElement) && (orderedArray[i].model.id != selectedElement.model.id)) {
+							var cardViewCenter = $(orderedArray[i].el).position().top + Math.round($(orderedArray[i].el).height()/2);
+
+							if ((this._workspace._currentMousePosition.y-(this._workspace.$("#board-cards").scrollTop()+this.$el.position().top)) < cardViewCenter) newZPos = i;
+						}
 					}
 				}
-				else {
-					that._svgCardCount = that._paper.text((that._model.xPos+that._shapeAttributes.padding), (that._model.yPos+height), that._model.cards.length);
 
-					height += that._svgCardCount.getBBox().height;
-				}
+				if (newZPos === null) newZPos = orderedArray.length;
 
-				that._svgShape = that._paper.rect(that._model.xPos, that._model.yPos, width, height);
-				that._svgShape.attr({ 
-					fill: "#2B3534",
-					opacity: "0.1"
-				});
+				if (newZPos != selectedElement.model.zPos) {
+					var arrayPart1 = orderedArray.slice(0,newZPos),
+						arrayPart2 = orderedArray.slice(newZPos);
 
-				// we need to block the inner glow as the cluser is transparent
-				that._svgDropShadowCover = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
-				that._svgDropShadowCover.attr({ 
-					fill: "#ffffff",
-					stroke: "none"
-				});	
+					for (var i=0, arrayPartLength=arrayPart1.length; i<arrayPartLength; i+=1) {
+						if (arrayPart1[i].model.id == selectedElement.model.id) {
+							arrayPart1.splice(i,1);
+							break;
+						}
+					}
 
-				// this has the glow applied to it to give it a drop shadow
-				that._svgDropShadow = that._paper.rect(that._svgShape.attr("x"), that._svgShape.attr("y"), that._svgShape.attr("width"), that._svgShape.attr("height"));
-				that._svgDropShadow.attr({
-					stroke: "none"
-				});	
+					for (var i=0, arrayPartLength=arrayPart2.length; i<arrayPartLength; i+=1) {
+						if (arrayPart2[i].model.id == selectedElement.model.id) {
+							arrayPart2.splice(i,1);
+							break;
+						}
+					}
 
-				// create the drop shadow
-				if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
-				that._svgDropShadowGlow = that._svgDropShadow.glow({
-					offsetx: 0.5,
-					offsety: 0.5,
-					opacity: 0.6, 
-					color: "#bbbbbb", 
-					width: 3
-				});
+					orderedArray = arrayPart1.concat(selectedElement);
+					orderedArray = orderedArray.concat(arrayPart2);
 
-				// bring this cluster to the front of whatever shape it's sitting on
-				that.bringToFront();
+					var cardOrder = [];
 
-				// bring all the cards to the front
-				for (var i=0, entitiesLength=that._entities.length; i<entitiesLength; i+=1) {
-					that._entities[i].bringToFront();
-				}
+					for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i+=1) {
+						var elementFound = false;
 
-				// adding shape listeners
-				that._paper.set(that._svgShape, that._svgText).drag(that.move, that.start, that.up);
-				that._paper.set(that._svgShape, that._svgText).mouseover(that.mouseOver);
-				that._paper.set(that._svgShape, that._svgText).mouseout(that.mouseOut);
-			}
-		};
+						var cards = this.model.cards;
 
-        this.drawDropShadow = function() {
-			if (that._svgDropShadowGlow) that._svgDropShadowGlow.remove();
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+	   						if (cards[j].id == orderedArray[i].model.id) {
+								elementFound = true;
 
-			if (that._svgDropShadow) {
-				that._svgDropShadowGlow = that._svgDropShadow.glow({
-					offsetx: 0.5,
-					offsety: 0.5,
-					opacity: 0.6, 
-					color: "#bbbbbb", 
-					width: 3
-				});
-			}
-        };
+								cards[j].zPos = i+1;
 
-		this.undraw = function() {
-			// clear the current SVG shape  representing the board on the board map
-			if (that._svgShape) {
-				that._svgShape.remove();
-				that._svgShape = null;
-			}	
+	   							cardOrder.push(cards[j].id);
+	   						}
+			        	}
 
-			// clear the current SVG shape for the board title
-			if (that._svgText) {
-				that._svgText.remove();
-				that._svgText = null;
-			}
+	   					if (!elementFound) {
+							var clusters = this.model.clusters;
 
-			if (that._svgDropShadowCover) {
-				that._svgDropShadowCover.remove();
-				that._svgDropShadowCover = null;
-			}
+							for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
+	       						if ((orderedArray[i]) && (clusters[j].id == orderedArray[i].model.id)) {
+	   								clusters[j].zPos = i+1;
 
-			// clear the current SVG shape for the board title
-			if (that._svgDropShadow) {
-				that._svgDropShadow.remove();
-				that._svgDropShadow = null;
-			}
+	   								cardOrder.push(clusters[j].id);
+	       						}
+				        	}
+				        }
+					}
 
-			if (that._svgDropShadowGlow) {
-				that._svgDropShadowGlow.remove();
-				that._svgDropShadowGlow = null;
-			}
+					orderedArray = null;
 
-			if (that._svgCardCount) {
-				that._svgCardCount.remove();
-				that._svgCardCount = null;
-			}
-
-			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-				that._entities[i].undraw();
-			}
-		};
-
-		// {{ Event handlers }}
-
-		// ----- Handler for the start of a drag action for this board object
-		this.start = function(x, y, e) {
-			if (e) {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-
-			that._svgText.startX = that._svgText.attr("x");
-			that._svgText.startY = that._svgText.attr("y");
-
-			that._svgShape.startX = that._svgShape.attr("x");
-			that._svgShape.startY = that._svgShape.attr("y");
-
-			that._svgDropShadowCover.startX = that._svgDropShadowCover.attr("x");
-			that._svgDropShadowCover.startY = that._svgDropShadowCover.attr("y");
-
-			that._svgDropShadow.startX = that._svgDropShadow.attr("x");
-			that._svgDropShadow.startY = that._svgDropShadow.attr("y");
-
-			if (that._svgCardCount) {
-				that._svgCardCount.startX = that._svgCardCount.attr("x");
-				that._svgCardCount.startY = that._svgCardCount.attr("y");
-			}
-
-			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-				that._entities[i].start();
-			}
-		};
-
-		// ----- Handler for moving a board around the board map
-		this.move = function (dx, dy, x, y, e) {
-			if ((dx != 0) || (dy != 0)) {
-				that._isDragging = true;
-
-				that._svgText.attr({
-					x: that._svgText.startX+dx,
-					y: that._svgText.startY+dy
-				});
-
-				that._svgShape.attr({
-					x: that._svgShape.startX+dx,
-					y: that._svgShape.startY+dy
-				});
-
-				that._svgDropShadow.attr({
-					x: that._svgDropShadow.startX+dx,
-					y: that._svgDropShadow.startY+dy
-				});
-
-				that._svgDropShadowCover.attr({
-					x: that._svgDropShadowCover.startX+dx,
-					y: that._svgDropShadowCover.startY+dy
-				});
-
-				if (that._svgCardCount) {
-					that._svgCardCount.attr({
-						x: that._svgCardCount.startX+dx,
-						y: that._svgCardCount.startY+dy
+					Cluster_Services.Sort(this.model.boardId, updateDetail.clusterId, cardOrder, function(response) {
+						this._workspace.sendSocket(JSON.stringify({ 
+							action:"sortCluster", 
+							board: that.model.boardId, 
+							sortOrder: cardOrder 
+						}));
 					});
 				}
 
-				for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-					that._entities[i].move(dx, dy, x, y, e);
+				this.render();
+			}
+		},
+
+		saveSortPosition: function() {
+			var that=this,
+				orderedArray = new Array(),
+				tmpArray = new Array();
+
+			for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+				tmpArray[this._cardViews[i].model.zPos-1] = this._cardViews[i];
+        	}
+
+			for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				tmpArray[this._clusterViews[i].model.zPos-1] = this._clusterViews[i];
+        	};
+
+        	tmpArray.forEach(function(entry) {
+        		orderedArray.push(entry);
+        	});
+
+        	tmpArray = null;
+
+			var cardOrder = [];
+
+			for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i+=1) {
+				var elementFound = false,
+					cards = this.model.cards;
+
+				for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+					if (cards[j].id == orderedArray[i].model.id) {
+						elementFound = true;
+
+						cards[j].zPos = i+1;
+
+						cardOrder.push(cards[j].id);
+					}
+	        	}
+
+				if (!elementFound) {
+					var clusters = this.model.clusters;
+
+					for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
+						if (clusters[j].id == orderedArray[i].model.id) {
+							clusters[j].zPos = i+1;
+
+							cardOrder.push(clusters[j].id);
+						}
+		        	}
+		        }
+			}
+
+			Cluster_Services.Sort(this.model.boardId, updateDetail.clusterId, cardOrder, function(response) {
+				this._workspace.sendSocket(JSON.stringify({ 
+					action:"sortCluster", 
+					board: that.model.boardId, 
+					sortOrder: cardOrder 
+				}));
+			});
+
+	    	this.render();
+		},
+
+		updateSortPosition: function(cards) {
+			var that = this;
+
+			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
+				var elementFound = false,
+					existingCards = this.model.cards;
+
+				for (var j=0, existingCardsLength=existingCards.length; j<existingCardsLength; j+=1) {
+					if (existingCards[j].id == cards[i].id) {
+						elementFound = true;
+
+						existingCards[j].zPos = (i+1);
+					}
+	        	}
+
+				if (!elementFound) {
+					var clusters = this.model.clusters;
+
+					for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
+   						if (clusters[j].id == cards[i].id) clusters[j].zPos = i+1;
+		        	}
+		        }
+			}
+
+			this.render();
+		},
+
+		// ---------- Actions for collapse and expand clusters
+
+		saveAndCollapseCluster: function() {
+			var that = this;
+
+			Cluster_Services.Collapse(this.model.boardId, this.model.id, function(response) {
+				that._workspace.sendSocket(JSON.stringify({ 
+					action:"collapseCluster", 
+					board: that.model.boardId, 
+					cluster: { 
+						id:  that.model.id
+					}
+				}));
+			});
+
+			this.collapseCluster();
+		},
+
+		collapseCluster: function(clusterId) {
+			if (clusterId) {
+				if (this.model.id == clusterId) {
+					this.model.collapsed = true;
+
+					this.render();
 				}
 
-				that.drawDropShadow();
-
-				that.bringToFront();
+				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+					this._clusterViews[i].collapseCluster(clusterId);
+				}
 			}
-		};
+			else {
+				this.model.collapsed = true;
 
-		// ----- Handler for finishing the drag of a board around the board map
-    	this.up = function (e, fromCluster) {
-			that._svgText.startX = null;
-			that._svgText.startY = null;
+				this.render();
+			}
+		},
 
-			that._svgShape.startX = null;
-			that._svgShape.startY = null;
+		saveAndExpandCluster: function() {
+			var that = this;
 
-			that._svgDropShadowCover.startX = null;
-			that._svgDropShadowCover.startY = null;
+			Cluster_Services.Expand(this.model.boardId, this.model.id, function(response) {
+				that._workspace.sendSocket(JSON.stringify({ 
+					action:"expandCluster", 
+					board: that.model.boardId, 
+					cluster: { 
+						id:  that.model.id
+					}
+				}));
+			});
 
-			that._svgDropShadow.startX = null;
-			that._svgDropShadow.startY = null;
+			this.expandCluster();
+		},
 
-			that._model.xPos = that._svgShape.attr("x");
-			that._model.yPos = that._svgShape.attr("y");
+		expandCluster: function(clusterId) {
+			if (clusterId) {
+				if (this.model.id == clusterId) {
+					this.model.collapsed = false;
 
-			if (that._svgCardCount) {
-				that._svgCardCount.startX = null;
-				that._svgCardCount.startY = null;
+					this.render();
+				}
+
+				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+					this._clusterViews[i].expandCluster(clusterId);
+				}
+			}
+			else {
+				this.model.collapsed = false;
+
+				this.render();
+			}
+		},
+
+		// ---------- Actions for editing cluster
+
+		editCluster: function(e) {
+			e.stopPropagation();
+
+			var that = this;
+
+			this.$("#cluster-title_" + this.model.id).hide();
+			this.$("#cluster-editable-title_" + this.model.id).show();
+
+    		this._editing = true;
+			this._workspace.setEditing();
+
+    		this.hideHoverIcons();
+		},
+
+		updateCluster: function() {
+			var that = this,
+				clusterValid = true;
+
+			if (this.$("#editable-title_" + this.model.id).val().trim().length == 0) clusterValid = false;
+
+			if (clusterValid) {
+				// Update styles
+				if (this.model.type.trim().toLowerCase() == "text") this.model.content = this.$("#editable-title_" + this.model.id).val();
+				else this.model.title = this.$("#editable-title_" + this.model.id).val());
+
+				this.$("#cluster-title_" + this.model.id).html(this.$("#editable-title_" + this.model.id).val());
+				
+				this.$("#cluster-title_" + this.model.id).show();
+				this.$("#cluster-editable-title_" + this.model.id).hide();
+
+				// Save updates
+				var clusterModel = null;
+
+				if (this.model.type == "text") {
+		  			clusterModel = {
+						id: this.model.id, 
+						boardId: this.model.boardId,
+		  				action: "update",
+						content: this.model.content
+					};
+				}
+				else {
+		  			clusterModel = {
+						id: this.model.id, 
+						boardId: this.model.boardId,
+		  				action: "update",
+						title: this.model.title
+					};	
+				}
+
+				Cluster_Services.Insert(this.model.boardId, this.model.id, clusterModel, function(response) {
+					that._workspace.sendSocket(JSON.stringify({ 
+						action:"topicClusterUpdated", 
+						topic: that.model.boardId, 
+						cluster: clusterModel 
+					}));
+				});
+
+    			this._editing = false;
+				this._workspace.disableEditing();
+			}
+		},
+
+		updateClusterTitle: function(clusterId, title, content) {
+			if (this.model.id == clusterId) {
+				if (title) {
+					this.model.title = title;
+
+					this.$("#cluster-title_" + this.model.id).html(title);
+					this.$("#editable-title_" + this.model.id).val(title);
+				}
+				else if (content) {
+					this.model.content = content;
+
+					this.$("#cluster-title_" + this.model.id).html(content);
+					this.$("#editable-title_" + this.model.id).val(content);
+				}
 			}
 
-			for (var i=0, boardCardsLength=that._entities.length; i<boardCardsLength; i+=1) {
-				that._entities[i].up(e, true);
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				this._clusterViews[i].updateClusterTitle(clusterId, title, content);
+			}
+		},
+
+		// ---------- Actions for deleting cards
+
+		deleteCard: function(cardId) {
+			var that = this,
+				clusterUpdated = false.
+				cards = this.model.cards;
+
+			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
+				if ((cards[i] != null) && (cards[i].id == cardId)) {
+					that.model.cards.splice(i,1);
+					clusterUpdated = true;
+				}
 			}
 
-			that.drawDropShadow();
-
-			that.bringToFront();
-
-			// this movement was a result of a parents position being updated
-			if ((that._isDragging) && (!fromCluster)) that._workspace.trigger("cardPositionUpdated", that._model, e.layerX, e.layerY);
-
-    		that._isDragging = false;
-
-    		if (!fromCluster) {
-				// This is a greedy function so we have to manually build a double click event
-				if (that._singleClick) {
-		   			clearTimeout(that._clickTimer);
-					that._singleClick = false;
-
-					that.expandCollapse();
-		   		}
-		   		else {
-					that._singleClick = true;
-
-				    that._clickTimer = setTimeout(function() {
-				        clearTimeout(that._clickTimer);
-				        that._singleClick = false;
-				    }, 250);
-			    }
+			if (clusterUpdated) {
+				if (that.model.cards.length > 0) this.render();
+				else this._parent.makeClusterCard(this.model.id);
 			}
-        };
 
-        this.mouseOver = function() {
-        	that._workspace.$("#board").css('cursor','pointer');
-        };
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				this._clusterViews[i].deleteCard(cardId);
+			}
+		},
 
-        this.mouseOut = function() {
-        	that._workspace.$("#board").css('cursor','default');
-        };
-	};
+		removeCard: function(card) {
+			var that = this,
+				clusterUpdated = false,
+				cards = this.model.cards;
+
+			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
+				if ((cards[i] != null) && (cards[i].id == card.id)) {
+					that.model.cards.splice(i,1);
+
+					clusterUpdated = true;
+				}
+			}
+
+			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+				if (this._cardViews[i].model.id == card.id) {
+					this._cardViews[i].remove();
+	  				this._cardViews.splice(i, 1);
+
+					clusterUpdated = true;
+				}
+			}
+					
+			if (clusterUpdated) this._parent.checkIfClusterIsEmpty(this.model.id);
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				this._clusterViews[i].removeCard(card);
+			}
+		},
+
+		makeClusterCard: function(clusterId) {
+			var clusterUpdated = false,
+				clusters = this.model.clusters;
+
+			for (var i=0, clustersLength=clusters.length; i<clustersLength; i+=1) {
+				if ((clusters[i] != null) && (clusters[i].id == clusterId)) {
+					that.model.clusters.splice(i,1);
+
+					clusterUpdated = true;
+				}
+			}
+
+			if (clusterUpdated) this.render();
+		},
+
+		removeCluster: function(clusterId) {
+			var that = this,
+				clusters = this.model.clusters;
+
+			for (var i=0, clustersLength=clusters.length; i<clustersLength; i+=1) {
+				if ((clusters[i] != null) && (clusters[i].id == clusterId)) that.model.clusters.splice(i,1);
+			}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				if (this._clusterViews[i].model.id == clusterId) {
+					var clusterXpos = this._clusterViews[i].model.xPos.
+						clusterYpos = this._clusterViews[i].model.yPos,
+						cardCount = 0;
+
+					for (var j=0, clusterViewCardsLength=this._clusterViews[i]._cardViews.length; j<clusterViewCardsLength; j+=1) {
+						var cardModel = Card.GenerateModel(this._clusterViews[i]._cardViews[j].model, this._clusterViews[i].model.id);
+						cardModel.xPos = clusterXpos + (cardCount*10);
+						cardModel.yPos = clusterYpos + (cardCount*10);
+
+						that.model.cards.push(cardModel);
+
+						var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
+						cardView.storeIdeaPosition((clusterXpos + (i*10)), (clusterYpos + (i*10)));
+						cardView.render();
+
+		    			this.$("#cards-container_" + this.model.id).append(cardView.el);
+
+		    			this._cardViews.push(cardView);
+
+		    			cardCount++;
+					}
+
+					for (var j=0, clusterViewClustersLength=this._clusterViews[i]._clusterViews.length; j<clusterViewClustersLength; j+=1) {
+						var clusterModel = Cluster.GenerateModel(this._clusterViews[i]._clusterViews[j].model);
+						clusterModel.parentId = this.model.id;
+						clusterModel.collapsed = true;
+
+						that.model.clusters.push(clusterModel);
+
+						var clusterView = new Cluster.Item({ model: clusterModel, board: this._workspace, parent: this });
+						clusterView.updateClusterPosition((clusterXpos + (cardCount*10)), (clusterYpos + (cardCount*10)));
+						clusterView.render();
+
+		    			this.$("#cards-container_" + this.model.id).append(clusterView.el);
+
+		    			this._clusterViews.push(clusterView);
+
+		    			cardCount++;
+					}
+
+					this._clusterViews[i].remove();
+      				this._clusterViews.splice(i, 1);
+				
+					this._parent.checkIfClusterIsEmpty(this.model.id);
+				}
+			}
+		},
+
+		// ---------- Actions for managing attached cards
+
+		addCardToCluster: function(clusterId, cardModel) {
+			if (!this._cardViews) this._cardViews = [];
+
+			if (!this._clusterViews) this._clusterViews = [];
+
+			if (this.model.id == clusterId) {
+				if (this.model.isVoting) {
+					var existingVotes = 0,
+						voteCountMatches = [];
+
+	  				if (cardModel.type == "text") {
+	  					voteCountMatches = cardModel.content.match(/ \(\+(.*?)\)/g);
+
+	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cardModel.content.match(/\(\+(.*?)\)/g);
+	  				}
+	  				else {
+	  					voteCountMatches = cardModel.title.match(/ \(\+(.*?)\)/g);
+
+	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cardModel.title.match(/\(\+(.*?)\)/g);
+	  				}
+
+					if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
+						existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
+
+	  					if (cardModel.type == "text") cardModel.content = cardModel.content.replace(voteCountMatches[0],"");
+	  					else cardModel.title = cardModel.title.replace(voteCountMatches[0],"");
+					}
+
+	      			cardModel.votesReceived = parseInt(existingVotes);
+      			}
+
+				cardModel.parentIsVoting = this.model.isVoting;
+				cardModel.zPos = (this._cardViews.length + this._clusterViews.length + 1);
+
+				this.model.cards.push(cardModel);
+
+				var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
+				cardView.render();
+
+		    	this.$("#cards-container_" + this.model.id).first().append(cardView.el);
+
+				this._cardViews.push(cardView);
+			}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+	  			this._clusterViews[i].addCardToCluster(clusterId, cardModel);
+			}
+		},
+
+		detachAndReturnCard: function(cardId) {
+			var that = this;
+
+			if (this._cardViews.length > 0) {
+				for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+					if (this._cardViews[i].model.id == cardId) {
+						var cards = this.model.cards;
+
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							if ((cards[j]) && (cards[j].id == cardId)) that.model.cards.splice(j,1);
+						}
+
+						var returnCard = this._cardViews[i];
+
+						this._cardViews[i].remove();
+						this._cardViews.splice(i,1);
+
+						this._parent.checkIfClusterIsEmpty(this.model.id);
+						
+						return returnCard;
+					}
+				}
+			}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				var searchedCard = this._clusterViews[i].detachAndReturnCard(cardId);
+
+				if (searchedCard) return searchedCard;
+			}
+
+			return null;
+		},
+
+		updateCardContent: function(cardId,content,title,color) {
+			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+				this._cardViews[i].updateCardContent(cardId,content,title,color);
+			}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				this._clusterViews[i].updateCardContent(cardId,content,title,color);
+			}
+		},
+
+		// ---------- Actions for managing attached clusters
+
+		attachCluster: function(newModel) {
+			if (this.model.id == newmodel.parentId) {
+				if (!this._cardViews) this._cardViews = [];
+
+				if (!this._clusterViews) this._clusterViews = [];
+
+				if (this.model.isVoting) {
+					var existingVotes = 0,
+						voteCountMatches = [];
+
+	  				if (newModel.type == "text") {
+	  					voteCountMatches = newModel.content.match(/ \(\+(.*?)\)/g);
+
+	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = newModel.content.match(/\(\+(.*?)\)/g);
+	  				}
+	  				else {
+	  					voteCountMatches = newModel.title.match(/ \(\+(.*?)\)/g);
+
+	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = newModel.title.match(/\(\+(.*?)\)/g);
+	  				}
+
+					if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
+						existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
+
+	  					if (newModel.type.trim().toLowerCase() == "text") newModel.content = newModel.content.replace(voteCountMatches[0],"");
+	  					else newModel.title = newModel.title.replace(voteCountMatches[0],"");
+					}
+
+	      			newModel.votesReceived = parseInt(existingVotes);
+      			}
+
+				newModel.parentIsVoting = this.model.isVoting;
+				newModel.zPos = (this._cardViews.length + this._clusterViews.length + 1);
+
+				this.model.clusters.push(newModel);
+
+				var clusterView = new Cluster.Item({ model: newModel, board: this._workspace, parent: this });
+				clusterView.render();
+
+    			this.$("#cards-container_" + this.model.id).first().append(clusterView.el);
+    			this._clusterViews.push(clusterView);
+			}
+			else {
+				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+					this._clusterViews[i].attachCluster(newModel);
+				}
+			}
+		},
+
+		detachAndReturnCluster: function(clusterId) {
+			var that = this,
+				allClusterViews = [];
+
+			if ((this._clusterViews) && (this._clusterViews.length > 0)) {
+				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+					if (this._clusterViews[i].model.id == clusterId) {
+						var clusters = this.model.clusters;
+
+						for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
+							if ((clusters[j]) && (clusters[j].id == clusterId)) that.model.clusters.splice(j,1);
+						}
+
+						var returnCluster = this._clusterViews[i];
+
+						this._clusterViews[i].remove();
+						this._clusterViews.splice(i,1);
+
+						this._parent.checkIfClusterIsEmpty(this.model.id);
+						
+						return returnCluster;
+					}
+					else allClusterViews.push(this._clusterViews[i].detachAndReturnCluster(clusterId));
+				}
+
+				for (var i=0, allClusterViewsLength = allClusterViews.length; i<allClusterViewsLength; i++) {
+					if (allClusterViews[i]) return allClusterViews[i];
+				}
+
+				return null;
+			}
+			else return null;
+		},
+
+		checkIfClusterIsEmpty: function(clusterId) {
+			var that = this;
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				if (this._clusterViews[i].model.id == clusterId) {
+					// Check if this cluster still hard cards and if not turn it back into a card
+					if ((this._clusterViews[i]._cardViews.length == 0) && (this._clusterViews[i]._clusterViews.length == 0)) {
+						var clusters = this.model.clusters;
+
+						for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
+							if ((clusters[j]) && (clusters[j].id == clusterId))  that.model.clusters.splice(j,1);
+						}
+
+						this.model.isVoting = false;
+
+						this.model.cards.push(Card.GenerateModel(this._clusterViews[i].model,this.model.id));
+						
+						this.render();
+					}
+				}
+			}
+		},
+
+		// ---------- Actions for Dot Voting
+
+		startDotVoting: function(e) {
+			e.stopPropagation();
+
+			var that = this;
+
+			Cluster.StartDotVoting(this.model.boardId, this.model.id, function(response) {
+				that._workspace._socket.send(JSON.stringify({ 
+					action:"startDotVoting",
+					topic: this.model.boardId,
+					cluster: { 
+						id: this.model.id
+					} 
+				}));
+			});
+
+			this.displayStartDotVoting();
+		},
+
+		displayStartDotVoting: function() {
+        	this.model.isVoting = true;
+
+			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+				var existingVotes = 0,
+					voteCountMatches = [];
+
+  				if (this._cardViews[i].model.type == "text") {
+  					voteCountMatches = this._cardViews[i].model.content.match(/ \(\+(.*?)\)/g);
+
+  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._cardViews[i].model.content.match(/\(\+(.*?)\)/g);
+  				}
+  				else {
+  					voteCountMatches = this._cardViews[i].model.title.match(/ \(\+(.*?)\)/g);
+
+  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._cardViews[i].model.title.match(/\(\+(.*?)\)/g);
+  				}
+
+				if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
+					existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
+
+  					if (this._cardViews[i].model.type.trim().toLowerCase() == "text") this._cardViews[i].model.content = this._cardViews[i].model.content.replace(voteCountMatches[0],"");
+  					else this._cardViews[i].model.title = this._cardViews[i].model.title.replace(voteCountMatches[0],"");
+				}
+
+      			this._cardViews[i].model.parentIsVoting = true;
+      			this._cardViews[i].model.votesReceived = parseInt(existingVotes);
+      		}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+				var existingVotes = 0,
+					voteCountMatches = [];
+
+  				if (this._clusterViews[i].model.type == "text") {
+  					voteCountMatches = this._clusterViews[i].model.content.match(/ \(\+(.*?)\)/g);
+
+  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._clusterViews[i].model.content.match(/\(\+(.*?)\)/g);
+  				}
+  				else {
+  					voteCountMatches = this._clusterViews[i].model.title.match(/ \(\+(.*?)\)/g);
+
+  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._clusterViews[i].model.title.match(/\(\+(.*?)\)/g);
+  				}
+
+				if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
+					existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
+
+  					if (this._clusterViews[i].model.type.trim().toLowerCase() == "text") this._clusterViews[i].model.content = this._clusterViews[i].model.content.replace(voteCountMatches[0],"");
+  					else this._clusterViews[i].model.title = this._clusterViews[i].model.title.replace(voteCountMatches[0],"");
+				}
+
+      			this._clusterViews[i].model.parentIsVoting = true;
+      			this._clusterViews[i].model.votesReceived = parseInt(existingVotes);
+      		}
+
+        	this.render();
+		},
+
+		stopDotVoting: function(e) {
+			e.stopPropagation();
+
+			var that = this;
+
+			Cluster.StopDotVoting(this.model.boardId, this.model.id, function(response) {
+				that._workspace._socket.send(JSON.stringify({ 
+					action:"stopDotVoting",
+					topic: this.model.boardId,
+					cluster: { 
+						id: this.model.id
+					}
+				}));
+			});
+
+			this.displayStopDotVoting();
+		},
+
+		displayStopDotVoting: function() {
+        	this.model.isVoting = false;
+
+			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+      			if (this._cardViews[i].model.votesReceived > 0) {
+      				if (this._cardViews[i].model.type == "text") this._cardViews[i].model.content = this._cardViews[i].model.content + " (+" + this._cardViews[i].model.votesReceived + ")";
+      				else this._cardViews[i].model.title = this._cardViews[i].model.title + " (+" + this._cardViews[i].model.votesReceived + ")";
+      			}
+
+      			this._cardViews[i].model.parentIsVoting = false;
+      			this._cardViews[i].model.votesReceived = 0;
+      		}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+      			if (this._clusterViews[i].model.votesReceived > 0) {
+      				if (this._clusterViews[i].model.type.trim().toLowerCase() == "text") this._clusterViews[i].model.content = this._clusterViews[i].model.content + " (+" + this._clusterViews[i].model.votesReceived + ")";
+      				else this._clusterViews[i].model.title = this._clusterViews[i].model.title + " (+" + this._clusterViews[i].model.votesReceived + ")";
+      			}
+
+      			this._clusterViews[i].model.parentIsVoting = false;
+      			this._clusterViews[i].model.votesReceived = 0;
+      		}
+
+        	this.render();
+		},
+
+		addVote: function(e) {
+			e.stopPropagation();
+
+			Cluster_Services.AddVote(this.model.boardId, this.model.id, function(response) {
+				that._workspace.sendSocket(JSON.stringify({ 
+					action:"addVote", 
+					board: that.model.boardId,
+					vote: { 
+						cluster: that.model.parentId,
+						card: that.model.id
+					}
+				}));
+			});
+
+			this.increaseVoteCount();
+		},
+
+		increaseVoteCount: function() {
+			var updateIconToSelected = false;
+			if (this.model.votesReceived === 0) updateIconToSelected = true;
+
+			this.model.votesReceived = this.model.votesReceived+1;
+
+			this.$("#vote-count").html(this.model.votesReceived);
+
+			if (updateIconToSelected) this.$("#add-vote").attr("src","/img/voteSelected.png");
+		},
+
+		updateChildVotes: function(cardId) {
+			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+      			if (this._cardViews[i].model.id == cardId) this._cardViews[i].increaseVoteCount();
+      		}
+
+			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
+      			if (this._clusterViews[i].model.id == cardId)this._clusterViews[i].increaseVoteCount();
+      		}
+		},
+
+		// ---------- Actions for setting z-index
+
+		setZIndex: function(zIndex) {
+    		this.model.zPos = zIndex;
+			
+			this.$el.zIndex(zIndex);
+		}
+  	});
 
 	return Cluster;
 });
