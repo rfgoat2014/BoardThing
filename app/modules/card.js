@@ -44,10 +44,12 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
   	Card.Views.Item = Backbone.View.extend({
     	tagName: "div",
-    	
+
     	_isMobile: null,
     	_workspace: null,
     	_parent: null,
+
+    	// {{ Contructor }}
 
 		initialize: function(options) {
 			this.el.id = "item-content-container_" + this.model.id;
@@ -56,6 +58,8 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			this._workspace = this.options.workspace;
 			this._parent = this.options.parent;
 		},
+
+		// {{ Object Building }}
 
 		render: function() {
 			var that = this;
@@ -388,6 +392,14 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 			this._mobileEventsBound = true;
 	    },
+
+	    // {{ Getters }}
+
+	    public getType: function() {
+	    	return "card";
+	    },
+
+	    // {{ Methods }}
 
 		// ---------- Actions for displaying edit icons
 

@@ -50,10 +50,14 @@ function(Card) {
     	_isMobile: null,
     	_workspace: null,
     	_parent: null,
-    	
+
     	_editing: false,
     	_editable: true,
 		_clusterClickCount: 0,
+
+		_childViews = [],
+
+    	// {{ Contructor }}
 
 		initialize: function(options) {
 			this.el.id = "cluster-content-container_" + this.model.id;
@@ -62,6 +66,8 @@ function(Card) {
 			this._workspace = this.options.workspace;
 			this._parent = this._parent;
 		},
+
+		// {{ Object Building }}
 
 		render: function() {
 			var that = this;
@@ -98,42 +104,32 @@ function(Card) {
 
 			if ((that.model.color) && (that.model.color.trim().toLowerCase() != "#ffffff")) that.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(that.model.color) + ",0.20);" });
 			
-      		this._cardViews = [];
-      		this._clusterViews = [];
+			// Build up the clusters child cards and clusters
+      		this._childViews = [];
 
-      		var allViews = [];
+			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
+        		this.model.cards[i].cluster = that;
 
-			var cards = this.model.cards;
-
-			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
-        		cards[i].cluster = that;
-
-				var cardView = new Card.Item({ model: cards[i], workspace: that._workspace, parent: that });
+				var cardView = new Card.Item({ model: this.model.cards[i], workspace: that._workspace, parent: that });
 				cardView.render();
 
-				allViews.push(cardView);
-
-    			that._cardViews.push(cardView);
+    			that._childViews.push(cardView);
         	}
 
-			var clusters = this.model.clusters;
+			for (var i=0, clustersLength=this.model.clusters.length; i<clustersLength; i+=1) {
+        		this.model.clusters[i].cluster = that;
 
-			for (var i=0, clustersLength=cards.length; i<clustersLength; i+=1) {
-        		clusters[i].cluster = that;
-
-				var clusterView = new Cluster.Item({ model: clusters[i], workspace: that._workspace, parent: that });
+				var clusterView = new Cluster.Item({ model: this.model.clusters[i], workspace: that._workspace, parent: that });
 				clusterView.render();
 
-				allViews.push(clusterView);
-
-    			that._clusterViews.push(clusterView);
+    			that._childViews.push(clusterView);
         	}
 
 			if (!this.model.collapsed) {
-				allViews.sort(function (a, b) { return a.model.zPos > b.model.zPos ? 1 : a.model.zPos < b.model.zPos ? -1 : 0; });
+				that._childViews.sort(function (a, b) { return a.model.zPos > b.model.zPos ? 1 : a.model.zPos < b.model.zPos ? -1 : 0; });
 
 				for (var i=0; i<allViews.length; i++) {
-	    			that.$("#cards-container_" + this.model.id).append(allViews[i].el);
+	    			that.$("#cards-container_" + this.model.id).append(that._childViews[i].el);
 				}
 			}
 
@@ -386,10 +382,8 @@ function(Card) {
 
 		       					if (updateDetail) {
 		       						if ((!$(ui.draggable.context).attr("is-resized")) || ($(ui.draggable.context).attr("is-resized") == "false")) {
-				       					for (var i=0; i<that._cardViews.length; i++) {
-				       						if (that._cardViews[i].model.id.toString()== updateDetail.cardId.toString()) {
-				       							isChild = true;
-				       						}
+				       					for (var i=0; i<that._childViews.length; i++) {
+				       						if ((that._childViews[i].getType() == "card") && (that._childViews[i].model.id.toString()== updateDetail.cardId.toString())) isChild = true;
 				       					}
 
 				       					if (!isChild) {	
@@ -426,10 +420,8 @@ function(Card) {
 									};
 		       					}
 
-		       					for (var i=0; i<that._clusterViews.length; i++) {
-		       						if (that._clusterViews[i].model.id == updateDetail.sourceClusterId) {
-		       							isChild = true;
-		       						}
+		       					for (var i=0; i<that._childViews.length; i++) {
+		       						if ((that._childViews[i].getType() == "cluster") && (that._childViews[i].model.id == updateDetail.sourceClusterId)) isChild = true;
 		       					}
 
 		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
@@ -461,24 +453,15 @@ function(Card) {
 		       					if (elementId) {
 			       					var selectedElement = null;
 
-			       					for (var i=0; i<that._cardViews.length; i++) {
-			       						if (that._cardViews[i].model.id == elementId) {
-			       							selectedElement = that._cardViews[i];
+			       					for (var i=0; i<that._childViews.length; i++) {
+			       						if (that._childViews[i].model.id == elementId) {
+			       							selectedElement = that._childViews[i];
 			       							break;
 			       						}
 
 			       					}
 
-			       					if (!selectedElement) {
-				       					for (var i=0; i<that._clusterViews.length; i++) {
-				       						if (that._clusterViews[i].model.id == elementId) {
-				       							selectedElement = that._clusterViews[i];	
-			       								break;
-				       						}
-				       					}
-				       				}
-
-				       				that.changeSortPosition(selectedElement);
+				       				if (selectedElement) that.changeSortPosition(selectedElement);
 		       					}
 		       				}
 		           		}
@@ -507,16 +490,13 @@ function(Card) {
 		    }
 		},
 
-		toggleCollapsed: function() {
-	        if (this.model.parentId) {
-				if (this.model.collapsed) this.expandCluster();
-				else this.collapseCluster();
-			}
-			else {
-				if (this.model.collapsed) this.saveAndExpandCluster();
-				else this.saveAndCollapseCluster();
-			}
-		},
+	    // {{ Getters }}
+
+	    public getType: function() {
+	    	return "cluster";
+	    },
+
+	    // {{ Methods }}
 
 		// ---------- Actions for displaying edit icons
 
@@ -547,12 +527,8 @@ function(Card) {
 
 			this._showSettingsIcon = false;
 
-			for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-				this._cardViews[i].clearSettingsmenu();
-			}
-
-			for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				this._clusterViews[i].clearSettingsmenu();
+			for (var i = 0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				this._childViews[i].clearSettingsmenu();
 			}
 		},
 
@@ -581,6 +557,19 @@ function(Card) {
 			}	
 		},
 
+		// ----- Set switch the clusters collapsed position
+
+		toggleCollapsed: function() {
+	        if (this.model.parentId) {
+				if (this.model.collapsed) this.expandCluster();
+				else this.collapseCluster();
+			}
+			else {
+				if (this.model.collapsed) this.saveAndExpandCluster();
+				else this.saveAndCollapseCluster();
+			}
+		},
+
 		// ---------- Actions to update sort position
 
 		changeSortPosition: function(selectedElement) {
@@ -590,12 +579,8 @@ function(Card) {
 				var orderedArray = new Array(),
 					tmpArray = new Array();
 
-				for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-					tmpArray[this._cardViews[i].model.zPos-1] = this._cardViews[i];
-        		}
-
-				for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-					tmpArray[this._clusterViews[i].model.zPos-1] = this._clusterViews[i];
+				for (var i = 0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					tmpArray[this._childViews[i].model.zPos-1] = this._childViews[i];
         		}
 
 	        	tmpArray.forEach(function(entry) {
@@ -604,30 +589,17 @@ function(Card) {
 
         		tmpArray = null;
 
-				for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+				for (var i = 0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 					var cardOrdered = false;
 
 					for (var j = 0, orderedArrayLength=orderedArray.length; j<orderedArrayLength; j+=1) {
-						if (this._cardViews[i].model.id == orderedArray[j].model.id) {
+						if (this._childViews[i].model.id == orderedArray[j].model.id) {
 							cardOrdered = true;
 							break;
 						}
 					};
 
-					if (!cardOrdered) orderedArray.push(this._cardViews[i]);
-        		}
-
-				for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-					var cardOrdered = false;
-
-					for (var j = 0, orderedArrayLength=orderedArray.length; j<orderedArrayLength; j+=1) {
-						if (this._clusterViews[i].model.id == orderedArray[j].model.id) {
-							cardOrdered = true;
-							break;
-						}
-					}
-
-					if (!cardOrdered) orderedArray.push(this._cardViews[i]);
+					if (!cardOrdered) orderedArray.push(this._childViews[i]);
         		}
 
 				var newZPos = null;
@@ -670,26 +642,22 @@ function(Card) {
 					for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i+=1) {
 						var elementFound = false;
 
-						var cards = this.model.cards;
-
-						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
-	   						if (cards[j].id == orderedArray[i].model.id) {
+						for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
+	   						if (this.model.cards[j].id == orderedArray[i].model.id) {
 								elementFound = true;
 
-								cards[j].zPos = i+1;
+								this.model.cards[j].zPos = i+1;
 
-	   							cardOrder.push(cards[j].id);
+	   							cardOrder.push(this.model.cards[j].id);
 	   						}
 			        	}
 
 	   					if (!elementFound) {
-							var clusters = this.model.clusters;
+							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
+	       						if ((orderedArray[i]) && (this.model.clusters[j].id == orderedArray[i].model.id)) {
+	   								this.model.clusters[j].zPos = i+1;
 
-							for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
-	       						if ((orderedArray[i]) && (clusters[j].id == orderedArray[i].model.id)) {
-	   								clusters[j].zPos = i+1;
-
-	   								cardOrder.push(clusters[j].id);
+	   								cardOrder.push(this.model.clusters[j].id);
 	       						}
 				        	}
 				        }
@@ -713,15 +681,12 @@ function(Card) {
 		saveSortPosition: function() {
 			var that=this,
 				orderedArray = new Array(),
-				tmpArray = new Array();
+				tmpArray = new Array(),
+				cardOrder = [];
 
-			for (var i = 0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-				tmpArray[this._cardViews[i].model.zPos-1] = this._cardViews[i];
+			for (var i=0, childViewsLength=this._childViews.length; i<cardViewsLength; i+=1) {
+				tmpArray[this._childViews[i].model.zPos-1] = this._childViews[i];
         	}
-
-			for (var i = 0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				tmpArray[this._clusterViews[i].model.zPos-1] = this._clusterViews[i];
-        	};
 
         	tmpArray.forEach(function(entry) {
         		orderedArray.push(entry);
@@ -729,30 +694,25 @@ function(Card) {
 
         	tmpArray = null;
 
-			var cardOrder = [];
-
 			for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i+=1) {
-				var elementFound = false,
-					cards = this.model.cards;
+				var elementFound = false;
 
-				for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
-					if (cards[j].id == orderedArray[i].model.id) {
+				for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
+					if (this.model.cards[j].id == orderedArray[i].model.id) {
 						elementFound = true;
 
-						cards[j].zPos = i+1;
+						this.model.cards[j].zPos = i+1;
 
-						cardOrder.push(cards[j].id);
+						cardOrder.push(this.model.cards[j].id);
 					}
 	        	}
 
 				if (!elementFound) {
-					var clusters = this.model.clusters;
+					for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
+						if (this.model.clusters[j].id == orderedArray[i].model.id) {
+							this.model.clusters[j].zPos = i+1;
 
-					for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
-						if (clusters[j].id == orderedArray[i].model.id) {
-							clusters[j].zPos = i+1;
-
-							cardOrder.push(clusters[j].id);
+							cardOrder.push(this.model.clusters[j].id);
 						}
 		        	}
 		        }
@@ -773,22 +733,19 @@ function(Card) {
 			var that = this;
 
 			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
-				var elementFound = false,
-					existingCards = this.model.cards;
+				var elementFound = false;
 
-				for (var j=0, existingCardsLength=existingCards.length; j<existingCardsLength; j+=1) {
-					if (existingCards[j].id == cards[i].id) {
+				for (var j=0, existingCardsLength=this.model.cards.length; j<existingCardsLength; j+=1) {
+					if (this.model.cards[j].id == cards[i].id) {
 						elementFound = true;
 
-						existingCards[j].zPos = (i+1);
+						this.model.cards[j].zPos = (i+1);
 					}
 	        	}
 
 				if (!elementFound) {
-					var clusters = this.model.clusters;
-
-					for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
-   						if (clusters[j].id == cards[i].id) clusters[j].zPos = i+1;
+					for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
+   						if (this.model.clusters[j].id == cards[i].id) this.model.clusters[j].zPos = i+1;
 		        	}
 		        }
 			}
@@ -822,8 +779,8 @@ function(Card) {
 					this.render();
 				}
 
-				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-					this._clusterViews[i].collapseCluster(clusterId);
+				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					if (this._childViews[i].getType() == "cluster") this._childViews[i].collapseCluster(clusterId);
 				}
 			}
 			else {
@@ -857,8 +814,8 @@ function(Card) {
 					this.render();
 				}
 
-				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-					this._clusterViews[i].expandCluster(clusterId);
+				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					if (this._childViews[i].getType() == "cluster") this._childViews[i].expandCluster(clusterId);
 				}
 			}
 			else {
@@ -949,8 +906,8 @@ function(Card) {
 				}
 			}
 
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				this._clusterViews[i].updateClusterTitle(clusterId, title, content);
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				if (this._childViews[i].getType() == "cluster") this._childViews[i].updateClusterTitle(clusterId, title, content);
 			}
 		},
 
@@ -958,12 +915,11 @@ function(Card) {
 
 		deleteCard: function(cardId) {
 			var that = this,
-				clusterUpdated = false.
-				cards = this.model.cards;
+				clusterUpdated = false;
 
-			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
-				if ((cards[i] != null) && (cards[i].id == cardId)) {
-					that.model.cards.splice(i,1);
+			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
+				if ((this.model.cards[i] != null) && (this.model.cards[i].id == cardId)) {
+					that.model.this.model.cards.splice(i,1);
 					clusterUpdated = true;
 				}
 			}
@@ -973,38 +929,34 @@ function(Card) {
 				else this._parent.makeClusterCard(this.model.id);
 			}
 
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				this._clusterViews[i].deleteCard(cardId);
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				if (this._childViews[i].getType() == "cluster") this._childViews[i].deleteCard(cardId);
 			}
 		},
 
 		removeCard: function(card) {
 			var that = this,
-				clusterUpdated = false,
-				cards = this.model.cards;
+				clusterUpdated = false;
 
-			for (var i=0, cardsLength=cards.length; i<cardsLength; i+=1) {
-				if ((cards[i] != null) && (cards[i].id == card.id)) {
-					that.model.cards.splice(i,1);
+			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
+				if ((this.model.cards[i] != null) && (this.model.cards[i].id == card.id)) {
+					that.model.this.model.cards.splice(i,1);
 
 					clusterUpdated = true;
 				}
 			}
 
-			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-				if (this._cardViews[i].model.id == card.id) {
-					this._cardViews[i].remove();
-	  				this._cardViews.splice(i, 1);
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				if ((this._childViews[i].getType() == "card") && (this._childViews[i].model.id == card.id)) {
+					this._childViews[i].remove();
+	  				this._childViews.splice(i, 1);
 
 					clusterUpdated = true;
 				}
+				else if (this._childViews[i].getType() == "cluster") this._childViews[i].removeCard(card);
 			}
 					
 			if (clusterUpdated) this._parent.checkIfClusterIsEmpty(this.model.id);
-
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				this._clusterViews[i].removeCard(card);
-			}
 		},
 
 		makeClusterCard: function(clusterId) {
@@ -1030,50 +982,47 @@ function(Card) {
 				if ((clusters[i] != null) && (clusters[i].id == clusterId)) that.model.clusters.splice(i,1);
 			}
 
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				if (this._clusterViews[i].model.id == clusterId) {
-					var clusterXpos = this._clusterViews[i].model.xPos.
-						clusterYpos = this._clusterViews[i].model.yPos,
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].model.id == clusterId)) {
+					var clusterXpos = this._childViews[i].model.xPos.
+						clusterYpos = this._childViews[i].model.yPos,
 						cardCount = 0;
 
-					for (var j=0, clusterViewCardsLength=this._clusterViews[i]._cardViews.length; j<clusterViewCardsLength; j+=1) {
-						var cardModel = Card.GenerateModel(this._clusterViews[i]._cardViews[j].model, this._clusterViews[i].model.id);
-						cardModel.xPos = clusterXpos + (cardCount*10);
-						cardModel.yPos = clusterYpos + (cardCount*10);
+					for (var j=0, clusterViewCardsLength=this._childViews[i]._childViews.length; j<clusterViewCardsLength; j+=1) {
+						if (this._childViews[i]._childViews.getType() == "card") {
+							var cardModel = Card.GenerateModel(this._childViews[i]._childViews[j].model, this._childViews[i].model.id);
+								cardModel.xPos = clusterXpos + (cardCount*10);
+								cardModel.yPos = clusterYpos + (cardCount*10);
 
-						that.model.cards.push(cardModel);
+							that.model.cards.push(cardModel);
 
-						var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
-						cardView.storeIdeaPosition((clusterXpos + (i*10)), (clusterYpos + (i*10)));
-						cardView.render();
+							var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
+							cardView.storeIdeaPosition((clusterXpos + (i*10)), (clusterYpos + (i*10)));
+							cardView.render();
 
-		    			this.$("#cards-container_" + this.model.id).append(cardView.el);
+			    			this.$("#cards-container_" + this.model.id).append(cardView.el);
 
-		    			this._cardViews.push(cardView);
+		    				this._childViews.push(cardView);
+						}
+						else if (this._childViews[i]._childViews.getType() == "cluster") {
+							var clusterModel = Cluster.GenerateModel(this._childViews[i]._childViews[j].model);
+							clusterModel.parentId = this.model.id;
+							clusterModel.collapsed = true;
 
-		    			cardCount++;
-					}
+							that.model.clusters.push(clusterModel);
 
-					for (var j=0, clusterViewClustersLength=this._clusterViews[i]._clusterViews.length; j<clusterViewClustersLength; j+=1) {
-						var clusterModel = Cluster.GenerateModel(this._clusterViews[i]._clusterViews[j].model);
-						clusterModel.parentId = this.model.id;
-						clusterModel.collapsed = true;
+							var clusterView = new Cluster.Item({ model: clusterModel, board: this._workspace, parent: this });
+							clusterView.updateClusterPosition((clusterXpos + (cardCount*10)), (clusterYpos + (cardCount*10)));
+							clusterView.render();
 
-						that.model.clusters.push(clusterModel);
-
-						var clusterView = new Cluster.Item({ model: clusterModel, board: this._workspace, parent: this });
-						clusterView.updateClusterPosition((clusterXpos + (cardCount*10)), (clusterYpos + (cardCount*10)));
-						clusterView.render();
-
-		    			this.$("#cards-container_" + this.model.id).append(clusterView.el);
-
-		    			this._clusterViews.push(clusterView);
+		    				this._childViews.push(clusterView);
+						}
 
 		    			cardCount++;
 					}
 
-					this._clusterViews[i].remove();
-      				this._clusterViews.splice(i, 1);
+					this._childViews[i].remove();
+      				this._childViews.splice(i, 1);
 				
 					this._parent.checkIfClusterIsEmpty(this.model.id);
 				}
@@ -1083,10 +1032,6 @@ function(Card) {
 		// ---------- Actions for managing attached cards
 
 		addCardToCluster: function(clusterId, cardModel) {
-			if (!this._cardViews) this._cardViews = [];
-
-			if (!this._clusterViews) this._clusterViews = [];
-
 			if (this.model.id == clusterId) {
 				if (this.model.isVoting) {
 					var existingVotes = 0,
@@ -1114,7 +1059,7 @@ function(Card) {
       			}
 
 				cardModel.parentIsVoting = this.model.isVoting;
-				cardModel.zPos = (this._cardViews.length + this._clusterViews.length + 1);
+				cardModel.zPos = (this._childViews.length + 1);
 
 				this.model.cards.push(cardModel);
 
@@ -1123,30 +1068,28 @@ function(Card) {
 
 		    	this.$("#cards-container_" + this.model.id).first().append(cardView.el);
 
-				this._cardViews.push(cardView);
+				this._childViews.push(cardView);
 			}
 
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-	  			this._clusterViews[i].addCardToCluster(clusterId, cardModel);
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+	  			if (this._childViews[i].getType() == "cluster") this._childViews[i].addCardToCluster(clusterId, cardModel);
 			}
 		},
 
 		detachAndReturnCard: function(cardId) {
 			var that = this;
 
-			if (this._cardViews.length > 0) {
-				for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-					if (this._cardViews[i].model.id == cardId) {
-						var cards = this.model.cards;
-
-						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
-							if ((cards[j]) && (cards[j].id == cardId)) that.model.cards.splice(j,1);
+			if (this._childViews.length > 0) {
+				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					if ((this._childViews[i].getType() == "card") && (this._childViews[i].model.id == cardId)) {
+						for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
+							if ((this.model.cards[j]) && (this.model.cards[j].id == cardId)) that.model.cards.splice(j,1);
 						}
 
-						var returnCard = this._cardViews[i];
+						var returnCard = this._childViews[i];
 
-						this._cardViews[i].remove();
-						this._cardViews.splice(i,1);
+						this._childViews[i].remove();
+						this._childViews.splice(i,1);
 
 						this._parent.checkIfClusterIsEmpty(this.model.id);
 						
@@ -1155,22 +1098,20 @@ function(Card) {
 				}
 			}
 
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				var searchedCard = this._clusterViews[i].detachAndReturnCard(cardId);
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				if (this._childViews[i].getType() == "cluster") {
+					var searchedCard = this._childViews[i].detachAndReturnCard(cardId);
 
-				if (searchedCard) return searchedCard;
+					if (searchedCard) return searchedCard;
+				}
 			}
 
 			return null;
 		},
 
 		updateCardContent: function(cardId,content,title,color) {
-			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-				this._cardViews[i].updateCardContent(cardId,content,title,color);
-			}
-
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				this._clusterViews[i].updateCardContent(cardId,content,title,color);
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				this._childViews[i].updateCardContent(cardId,content,title,color);
 			}
 		},
 
@@ -1178,10 +1119,6 @@ function(Card) {
 
 		attachCluster: function(newModel) {
 			if (this.model.id == newmodel.parentId) {
-				if (!this._cardViews) this._cardViews = [];
-
-				if (!this._clusterViews) this._clusterViews = [];
-
 				if (this.model.isVoting) {
 					var existingVotes = 0,
 						voteCountMatches = [];
@@ -1208,7 +1145,7 @@ function(Card) {
       			}
 
 				newModel.parentIsVoting = this.model.isVoting;
-				newModel.zPos = (this._cardViews.length + this._clusterViews.length + 1);
+				newModel.zPos = (this._childViews.length + 1);
 
 				this.model.clusters.push(newModel);
 
@@ -1216,65 +1153,59 @@ function(Card) {
 				clusterView.render();
 
     			this.$("#cards-container_" + this.model.id).first().append(clusterView.el);
-    			this._clusterViews.push(clusterView);
+    			this._childViews.push(clusterView);
 			}
 			else {
-				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-					this._clusterViews[i].attachCluster(newModel);
+				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					if (this._childViews[i].getType() == "cluster") this._childViews[i].attachCluster(newModel);
 				}
 			}
 		},
 
 		detachAndReturnCluster: function(clusterId) {
-			var that = this,
-				allClusterViews = [];
+			var that = this;
 
-			if ((this._clusterViews) && (this._clusterViews.length > 0)) {
-				for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-					if (this._clusterViews[i].model.id == clusterId) {
-						var clusters = this.model.clusters;
+			if ((this._childViews) && (this._childViews.length > 0)) {
+				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					if (this._childViews[i].getType() == "cluster") {
+						if (this._childViews[i].model.id == clusterId)) {
+							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
+								if ((this.model.clusters[j]) && (this.model.clusters[j].id == clusterId)) that.model.clusters.splice(j,1);
+							}
 
-						for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
-							if ((clusters[j]) && (clusters[j].id == clusterId)) that.model.clusters.splice(j,1);
+							var returnCluster = this._childViews[i];
+
+							this._childViews[i].remove();
+							this._childViews.splice(i,1);
+
+							this._parent.checkIfClusterIsEmpty(this.model.id);
+							
+							return returnCluster;
 						}
-
-						var returnCluster = this._clusterViews[i];
-
-						this._clusterViews[i].remove();
-						this._clusterViews.splice(i,1);
-
-						this._parent.checkIfClusterIsEmpty(this.model.id);
-						
-						return returnCluster;
+						else {
+							var detachedCluster = this._childViews[i].detachAndReturnCluster(clusterId);
+							if (detachedCluster) return detachedCluster;
 					}
-					else allClusterViews.push(this._clusterViews[i].detachAndReturnCluster(clusterId));
 				}
-
-				for (var i=0, allClusterViewsLength = allClusterViews.length; i<allClusterViewsLength; i++) {
-					if (allClusterViews[i]) return allClusterViews[i];
-				}
-
-				return null;
 			}
-			else return null;
+
+			return null;
 		},
 
 		checkIfClusterIsEmpty: function(clusterId) {
 			var that = this;
 
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				if (this._clusterViews[i].model.id == clusterId) {
+			for (var i=0, clusterViewsLength=this._childViews.length; i<clusterViewsLength; i+=1) {
+				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].model.id == clusterId)) {
 					// Check if this cluster still hard cards and if not turn it back into a card
-					if ((this._clusterViews[i]._cardViews.length == 0) && (this._clusterViews[i]._clusterViews.length == 0)) {
-						var clusters = this.model.clusters;
-
-						for (var j=0, clustersLength=clusters.length; j<clustersLength; j+=1) {
-							if ((clusters[j]) && (clusters[j].id == clusterId))  that.model.clusters.splice(j,1);
+					if (this._childViews[i]._childViews.length == 0) {
+						for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
+							if ((this.model.clusters[j]) && (this.model.clusters[j].id == clusterId))  that.model.clusters.splice(j,1);
 						}
 
 						this.model.isVoting = false;
 
-						this.model.cards.push(Card.GenerateModel(this._clusterViews[i].model,this.model.id));
+						this.model.cards.push(Card.GenerateModel(this._childViews[i].model,this.model.id));
 						
 						this.render();
 					}
@@ -1305,56 +1236,30 @@ function(Card) {
 		displayStartDotVoting: function() {
         	this.model.isVoting = true;
 
-			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 				var existingVotes = 0,
 					voteCountMatches = [];
 
-  				if (this._cardViews[i].model.type == "text") {
-  					voteCountMatches = this._cardViews[i].model.content.match(/ \(\+(.*?)\)/g);
+  				if (this._childViews[i].model.type == "text") {
+  					voteCountMatches = this._childViews[i].model.content.match(/ \(\+(.*?)\)/g);
 
-  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._cardViews[i].model.content.match(/\(\+(.*?)\)/g);
+  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._childViews[i].model.content.match(/\(\+(.*?)\)/g);
   				}
   				else {
-  					voteCountMatches = this._cardViews[i].model.title.match(/ \(\+(.*?)\)/g);
+  					voteCountMatches = this._childViews[i].model.title.match(/ \(\+(.*?)\)/g);
 
-  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._cardViews[i].model.title.match(/\(\+(.*?)\)/g);
+  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._childViews[i].model.title.match(/\(\+(.*?)\)/g);
   				}
 
 				if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
 					existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
 
-  					if (this._cardViews[i].model.type.trim().toLowerCase() == "text") this._cardViews[i].model.content = this._cardViews[i].model.content.replace(voteCountMatches[0],"");
-  					else this._cardViews[i].model.title = this._cardViews[i].model.title.replace(voteCountMatches[0],"");
+  					if (this._childViews[i].model.type.trim().toLowerCase() == "text") this._childViews[i].model.content = this._childViews[i].model.content.replace(voteCountMatches[0],"");
+  					else this._childViews[i].model.title = this._childViews[i].model.title.replace(voteCountMatches[0],"");
 				}
 
-      			this._cardViews[i].model.parentIsVoting = true;
-      			this._cardViews[i].model.votesReceived = parseInt(existingVotes);
-      		}
-
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-				var existingVotes = 0,
-					voteCountMatches = [];
-
-  				if (this._clusterViews[i].model.type == "text") {
-  					voteCountMatches = this._clusterViews[i].model.content.match(/ \(\+(.*?)\)/g);
-
-  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._clusterViews[i].model.content.match(/\(\+(.*?)\)/g);
-  				}
-  				else {
-  					voteCountMatches = this._clusterViews[i].model.title.match(/ \(\+(.*?)\)/g);
-
-  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = this._clusterViews[i].model.title.match(/\(\+(.*?)\)/g);
-  				}
-
-				if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
-					existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
-
-  					if (this._clusterViews[i].model.type.trim().toLowerCase() == "text") this._clusterViews[i].model.content = this._clusterViews[i].model.content.replace(voteCountMatches[0],"");
-  					else this._clusterViews[i].model.title = this._clusterViews[i].model.title.replace(voteCountMatches[0],"");
-				}
-
-      			this._clusterViews[i].model.parentIsVoting = true;
-      			this._clusterViews[i].model.votesReceived = parseInt(existingVotes);
+      			this._childViews[i].model.parentIsVoting = true;
+      			this._childViews[i].model.votesReceived = parseInt(existingVotes);
       		}
 
         	this.render();
@@ -1381,24 +1286,14 @@ function(Card) {
 		displayStopDotVoting: function() {
         	this.model.isVoting = false;
 
-			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-      			if (this._cardViews[i].model.votesReceived > 0) {
-      				if (this._cardViews[i].model.type == "text") this._cardViews[i].model.content = this._cardViews[i].model.content + " (+" + this._cardViews[i].model.votesReceived + ")";
-      				else this._cardViews[i].model.title = this._cardViews[i].model.title + " (+" + this._cardViews[i].model.votesReceived + ")";
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+      			if (this._childViews[i].model.votesReceived > 0) {
+      				if (this._childViews[i].model.type == "text") this._childViews[i].model.content = this._childViews[i].model.content + " (+" + this._childViews[i].model.votesReceived + ")";
+      				else this._childViews[i].model.title = this._childViews[i].model.title + " (+" + this._childViews[i].model.votesReceived + ")";
       			}
 
-      			this._cardViews[i].model.parentIsVoting = false;
-      			this._cardViews[i].model.votesReceived = 0;
-      		}
-
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-      			if (this._clusterViews[i].model.votesReceived > 0) {
-      				if (this._clusterViews[i].model.type.trim().toLowerCase() == "text") this._clusterViews[i].model.content = this._clusterViews[i].model.content + " (+" + this._clusterViews[i].model.votesReceived + ")";
-      				else this._clusterViews[i].model.title = this._clusterViews[i].model.title + " (+" + this._clusterViews[i].model.votesReceived + ")";
-      			}
-
-      			this._clusterViews[i].model.parentIsVoting = false;
-      			this._clusterViews[i].model.votesReceived = 0;
+      			this._childViews[i].model.parentIsVoting = false;
+      			this._childViews[i].model.votesReceived = 0;
       		}
 
         	this.render();
@@ -1433,12 +1328,8 @@ function(Card) {
 		},
 
 		updateChildVotes: function(cardId) {
-			for (var i=0, cardViewsLength=this._cardViews.length; i<cardViewsLength; i+=1) {
-      			if (this._cardViews[i].model.id == cardId) this._cardViews[i].increaseVoteCount();
-      		}
-
-			for (var i=0, clusterViewsLength=this._clusterViews.length; i<clusterViewsLength; i+=1) {
-      			if (this._clusterViews[i].model.id == cardId)this._clusterViews[i].increaseVoteCount();
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+      			if (this._childViews[i].model.id == cardId) this._childViews[i].increaseVoteCount();
       		}
 		},
 
