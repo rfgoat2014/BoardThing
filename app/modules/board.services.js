@@ -14,6 +14,20 @@ function() {
 			}
 		});
 	};
+
+	Board.UpdateCardZIndexes = function(boardId, sortedCards, callback) {
+        $.ajax({
+            url: "/workspace/boards/cards/zindex/" + boardId,
+            type: 'PUT',
+            dataType: "json",
+            data: { 
+            	cards: sortedCards 
+            },
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	}
 	
 	Board.Insert = function(id, title, callback) {
 		$.ajax({

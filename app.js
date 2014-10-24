@@ -752,10 +752,10 @@
 	
 // Actions for manipulating cards and clusters on a board
 
-	app.get("/workspace/boards/cards/text/:boardId", boardCards.get);
+	app.get("/workspace/boards/cards/:boardId", boardCards.get);
 
-	app.post("/workspace/boards/cards/text/:boardId", boardCards.insert);
-	app.put("/workspace/boards/cards/text/:boardId/:cardId", boardCards.update);
+	app.post("/workspace/boards/cards/text/:boardId", boardCards.insertText);
+	app.put("/workspace/boards/cards/text/:boardId/:cardId", boardCards.updateText);
 
 	app.get("/workspace/boards/cards/image/:boardId/:cardId", boardCards.getImage);
 	app.post("/workspace/boards/cards/image/:boardId", boardCards.insertImage);
@@ -835,29 +835,29 @@
 					console.log("Application: Error receiving package: " + ex.toString());
 				}
 
-				if ((packageData) && (packageData.topic)) {
+				if ((packageData) && (packageData.board)) {
 					packageData.sendingClientId = client.id;
 
 					data = JSON.stringify(packageData);
 
-					if (!(packageData.topic in global.boardConnections)) global.boardConnections[packageData.topic] = {
+					if (!(packageData.board in global.boardConnections)) global.boardConnections[packageData.board] = {
 						lastAccessed: new Date,
 						connections: []
 					};
 
 					var connectionRecorded = false;
 
-					for (var i=0; i<global.boardConnections[packageData.topic].connections.length; i++) {
-						if (global.boardConnections[packageData.topic].connections[i] == client.id) {
+					for (var i=0; i<global.boardConnections[packageData.board].connections.length; i++) {
+						if (global.boardConnections[packageData.board].connections[i] == client.id) {
 							connectionRecorded = true;
-							global.boardConnections[packageData.topic].lastAccessed = new Date;
+							global.boardConnections[packageData.board].lastAccessed = new Date;
 							break;
 						}
 					}
 
 					if (!connectionRecorded) {
-						global.boardConnections[packageData.topic].lastAccessed = new Date;
-						global.boardConnections[packageData.topic].connections.push(client.id);
+						global.boardConnections[packageData.board].lastAccessed = new Date;
+						global.boardConnections[packageData.board].connections.push(client.id);
 					}
 
 					try {
@@ -934,18 +934,18 @@
 						console.log("Application: Error receiving messages: " + ex.toString());
 					}
 
-					if ((packageData) && (packageData.topic)) {
-						if (packageData.topic in global.boardConnections) {
-							for (var i=0; i<global.boardConnections[packageData.topic].connections.length; i++) {   
+					if ((packageData) && (packageData.board)) {
+						if (packageData.board in global.boardConnections) {
+							for (var i=0; i<global.boardConnections[packageData.board].connections.length; i++) {   
 								if(typeof packageData.sendingClientId !== "undefined") {
 									// Don't broadcast to sending client
-									if(global.boardConnections[packageData.topic].connections[i] == packageData.sendingClientId ) {
+									if(global.boardConnections[packageData.board].connections[i] == packageData.sendingClientId ) {
 										continue;
 									}
 								}
 
-								if (socket.clients[global.boardConnections[packageData.topic].connections[i]]) {
-									socket.clients[global.boardConnections[packageData.topic].connections[i]].send(message);
+								if (socket.clients[global.boardConnections[packageData.board].connections[i]]) {
+									socket.clients[global.boardConnections[packageData.board].connections[i]].send(message);
 								}
 							}
 						}

@@ -53,9 +53,9 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		initialize: function(options) {
 			this.el.id = "item-content-container_" + this.model.id;
 
-			this._isMobile = this.options.isMobile;
-			this._workspace = this.options.workspace;
-			this._parent = this.options.parent;
+			this._isMobile = options.isMobile;
+			this._workspace = options.workspace;
+			this._parent = options.parent;
 		},
 
 		// {{ Object Building }}
@@ -63,8 +63,8 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		render: function() {
 			var that = this;
 			
-			var template = "/app/templates/card/item";
-			if (this.model.parentId) template = "/app/templates/card/clusteredItem";
+			var template = "/app/templates/card/item.html";
+			if (this.model.parentId) template = "/app/templates/card/clusteredItem.html";
 
 			$.get(template, function(contents) {
 				that.$el.html(_.template(contents, that.model));
@@ -292,7 +292,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					start: function(e,ui) {
 						that.$el.zIndex(999999999);
 
-						if (!that._workspace.workspace._isMobile) {
+						if (!that._isMobile) {
 							that._isDragging = true;
 						}
 						else {
@@ -301,7 +301,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 						}
 					},
 					drag: function(e,ui) {
-						if (that._workspace.workspace._isMobile) {
+						if (that._isMobile) {
 							var distanceFromStartX = e.clientX - startDragX;
 							var distanceFromStartY = e.clientY - startDragY;
 
@@ -315,21 +315,23 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 						if (elementId == -1) {
 							if (that.model.parentId) {
-								var clusterId = that.model.parentId.
+								var clusterId = that.model.parentId,
 									cardId = that.model.id,
 									currentMousePosition = that._workspace.getCurrentMousePosition();
-								
+
+								var updateDetail = {
+									clusterId: clusterId,
+									cardId: cardId,
+									xPos: currentMousePosition.x,
+									yPos: currentMousePosition.y
+								};
+
 								Cluster_Services.DetachCard(that.model.boardId, clusterId, cardId, function(response) {
 					            	if (response.status == "success") {
 										that._workspace.sendSocket(JSON.stringify({ 
 											action:"removeCardFromCluster", 
 											board: that.model.boardId, 
-											updateDetail: {
-												clusterId: clusterId,
-												cardId: cardId,
-												xPos: currentMousePosition.x,
-												yPos: currentMousePosition.y
-											} 
+											updateDetail: updateDetail
 										}));
 									}
 								});
@@ -341,7 +343,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 							else {
 								var currentPosition = that.$el.position();
 
-								Card_Services.UpdatePosition(that.model.boardId, that.model.id, (currentPosition.left + that._workspace.$("#board-cards").scrollLeft()), (currentPosition.top + that._workspace.$("#board-cards").scrollTop()));
+								Card_Services.UpdatePosition(that.model.boardId, that.model.id, (currentPosition.left + that._workspace.$("#board-container").scrollLeft()), (currentPosition.top + that._workspace.$("#board-container").scrollTop()));
 					        }
 
 					    	that._workspace.sortZIndexes(that.model.id,true);
@@ -353,7 +355,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				        	else {
 								var currentPosition = that.$el.position();
 
-								Card_Services.UpdatePosition(that.model.boardId, that.model.id, (currentPosition.left + that._workspace.$("#board-cards").scrollLeft()), (currentPosition.top + that._workspace.$("#board-cards").scrollTop()));
+								Card_Services.UpdatePosition(that.model.boardId, that.model.id, (currentPosition.left + that._workspace.$("#board-container").scrollLeft()), (currentPosition.top + that._workspace.$("#board-container").scrollTop()));
 					        }
 			        	}
 					}
@@ -394,6 +396,10 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 	    // {{ Getters }}
 
+	    getModel: function() {
+	    	return this.model;
+	    },
+
 	    getId: function() {
 	    	return this.model.id;
 	    },
@@ -406,6 +412,10 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	    	return this.model.yPos;
 	    },
 
+	    getZPos: function() {
+	    	return this.model.zPos;
+	    },
+
 	    getWidth: function() {
 	    	return this.model.width;
 	    },
@@ -414,8 +424,18 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	    	return this.model.height;
 	    },
 
+	    getIsLocked: function() {
+	    	return this.model.isLocked;
+	    },
+
 	    getType: function() {
 	    	return "card";
+	    },
+
+	    // {{ Setters }}
+
+	    setZPos: function(value) {
+	    	this.model.zPos = value;
 	    },
 
 	    // {{ Methods }}
@@ -872,7 +892,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			Card_Services.Delete(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"boardCardDeleted", 
-					topic: this.model.boardId, 
+					board: this.model.boardId, 
 					card: cardToDelete 
 				}));
 			});
@@ -929,15 +949,15 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		initialize: function(options) {
     		this.el.id = "card-create-container";
 
-    		this._isMobile = this.options.isMobile;
-    		this._workspace = this.options.workspace;
+    		this._isMobile = options.isMobile;
+    		this._workspace = options.workspace;
 		},
 
 		render: function() {
 			var that = this;
 
-			var template = "/app/templates/card/addText";
-			if (this._isMobile) template = "/app/templates/card/addText.mobile";
+			var template = "/app/templates/card/addText.html";
+			if (this._isMobile) template = "/app/templates/card/addText.mobile.html";
 
 			$.get(template, function(contents) {
 				that.$el.html(_.template(contents, that.model));
@@ -1050,15 +1070,15 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		initialize: function(options) {
     		this.el.id = "add-image-container";
 
-    		this._isMobile = this.options.isMobile;
-    		this._workspace = this.options.workspace;
+    		this._isMobile = options.isMobile;
+    		this._workspace = options.workspace;
 		},
 
 		render: function() {
 			var that = this;
 
-			var template = "/app/templates/card/addImage";
-			if (this._isMobile) template = "/app/templates/card/addImage.mobile";
+			var template = "/app/templates/card/addImage.html";
+			if (this._isMobile) template = "/app/templates/card/addImage.mobile.html";
 
 			$.get(template, function(contents) {
 				that.$el.html(_.template(contents, that.model));
@@ -1311,15 +1331,15 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		initialize: function(options) {
     		this.el.id = "edit-card-container";
 
-    		this._isMobile = this.options.isMobile;
-    		this._workspace = this.options.workspace;
+    		this._isMobile = options.isMobile;
+    		this._workspace = options.workspace;
 		},
 
 		render: function() {
 			var that = this;
 
-			var template = "/app/templates/card/editText";
-			if (this._isMobile) template = "/app/templates/card/editText.mobile";
+			var template = "/app/templates/card/editText.html";
+			if (this._isMobile) template = "/app/templates/card/editText.mobile.html";
 
 			$.get(template, function(contents) {
 				that.$el.html(_.template(contents, that.model));
@@ -1409,7 +1429,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					_workspace.editCardComplete(updateIdeaModel);
 
 					that._workspace.sendSocket(JSON.stringify({ 
-						action:"topicCardUpdated", 
+						action:"boardCardUpdated", 
 						board: that._model.boardId, 
 						card: updateTextModel 
 					}));
@@ -1434,15 +1454,15 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		initialize: function(options) {
     		this.el.id = "edit-image-container";
 
-    		this._isMobile = this.options.isMobile;
-    		this._workspace = this.options.workspace;
+    		this._isMobile = options.isMobile;
+    		this._workspace = options.workspace;
 		},
 
 		render: function() {
 			var that = this;
 
-			var template = "/app/templates/card/editImage";
-			if (this._isMobile) template = "/app/templates/card/editImage.mobile";
+			var template = "/app/templates/card/editImage.html";
+			if (this._isMobile) template = "/app/templates/card/editImage.mobile.html";
 
 			$.get(template, function(contents) {
 				that.$el.html(_.template(contents, that.model));
@@ -1525,7 +1545,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				that._workspace.editCardComplete(updateImageModel);
 
 				that._workspace.sendSocket(JSON.stringify({ 
-					action:"topicCardUpdated", 
+					action:"boardCardUpdated", 
 					board: that._model.boardId, 
 					card: updateImageModel 
 				}));

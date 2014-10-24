@@ -5,11 +5,12 @@ define([
 	"modules/boardMap",
 	"modules/utils",
 	"modules/workspace.services",
+	"modules/board.services",
 	"modules/card.services",
 	"modules/cluster.services"
 ],
 
-function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Services, Cluster_Services) {
+function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
@@ -20,6 +21,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 		el: "<div>",
 
 		_editing: false,
+
+		_currentMousePosition: { x: -1, y: -1 },
 
 		_selectedBoard: null,
 		_boardEntities: [],
@@ -48,6 +51,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
       		"click #view-board-map": "viewBoardMap"
       	},
 
+      	// {{ Build Workspace }}
+
 		render: function() {
 			var that = this;
 
@@ -70,15 +75,16 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 				that.setupBoard();
 
-				that.bindEvents();
+				that.unbind();
+				that.bind();
 			}, "text");
 		},
 
 		setupBoard: function() {
-			this.$("#board").empty();
+			this.$("#board-cards").empty();
 
-			this.$("#board").width(this._selectedBoard.width);
-			this.$("#board").height(this._selectedBoard.height);
+			this.$("#board-cards").width(this._selectedBoard.width);
+			this.$("#board-cards").height(this._selectedBoard.height);
 
 			var overflowWidth = this._selectedBoard.width - $(window).width(),
 				overflowHeight = this._selectedBoard.height - $(window).height();
@@ -87,10 +93,18 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			if (overflowHeight > 0) this.$("#board-container").scrollTop(overflowHeight/2);
 		},
 
-		bindEvents: function() {
+		unbind: function() {
+			this.$("#board-cards").unbind("mousemove");
+			this.$("#card-create-overlay").unbind("click");
+		},
+
+		bind: function() {
 			var that = this;
 			
-			this.$("#card-create-overlay").unbind("click");
+		    this.$("#board-cards").mousemove(function(event) {
+		        that._currentMousePosition.x = that.$("#topic-cards").scrollLeft() + event.pageX;
+		        that._currentMousePosition.y = that.$("#topic-cards").scrollTop() + event.pageY;
+		    });
 
 			this.$("#card-create-overlay").click(function(event) {
 				that.hideAddCard();
@@ -103,7 +117,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			var boards = this.model.boards;
 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
-				Card_Services.Get(boards[i].id, function(response) {
+				Board_Services.GetCards(boards[i].id, function(response) {
 					if (response.status == "success") {
 						for (var j=0, boardsLength=boards.length; j<boardsLength; j+=1) {
 							if (response.board.id.toString() == boards[j].id.toString()) {
@@ -137,23 +151,49 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			// Get all the cards the exist in the selected board and draw them;
 			if (this._selectedBoard.cards) {
 				for (var i=0, boardCardsLength=this._selectedBoard.cards.length; i<boardCardsLength; i+=1) {
-					if (this._selectedBoard.cards[i].cards.length == 0) {
-						var newCard = new Card.Item({ model: Card.GenerateModel(this._selectedBoard.cards[i], null), isMobile: this._isMobile, parent: this });
-						newCard.draw();
-
-						this._boardEntities.push(newCard);
-					}
-					else {
-						this.addClusterToBoard(this._selectedBoard.cards[i], null);
-					}
+					if (this._selectedBoard.cards[i].cards.length == 0) this.addCardToBoard(this._selectedBoard.cards[i]);
+					else this.addClusterToBoard(this._selectedBoard.cards[i]);
 				}
 			}
 		},
 
+		// {{ Getters }}
+
+		getWorkspaceId: function() {
+			return this.model.id;
+		},
+
+		getSelectedBoardId: function() {
+			return this._selectedBoard.id;
+		},
+
+		getSelectedColor: function() {
+			return "#ffffff";
+		},
+
+		getCurrentMousePosition: function() {
+			return this._currentMousePosition;
+		},
+
+		// {{ Board Map }}
+
+		viewBoardMap: function() {
+			this._boardMap = new BoardMap.Index({ model: this.model});
+
+			this.$("#overlay").html(this._boardMap.el);
+			this.$("#overlay").show();
+		},
+
+		// {{ Adding Cards }}
+
 		createAddCardDialog: function() {
 			var that = this;
 
-			this._addCard = new Card.Add({ parent: this, isMobile: this._isMobile });
+			this._addCard = new Card.AddText({ 
+				workspace: this, 
+				parent: null, 
+				isMobile: this._isMobile 
+			});
 			this._addCard.render();
 
 			this.$("#card-create-overlay").html(this._addCard.el);
@@ -175,7 +215,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 
 				if (this._addCard) {
 					this.$("#card-create-overlay").show();
+
 					this._addCard.setSelectedColor(this.getSelectedColor);
+					
 					this._addCard.focusCardText();
 				}	
 			}
@@ -190,6 +232,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				
 				if (this._addCard) {
 					this.$("#card-create-overlay").hide();
+
 					this._addCard.clearCardText();
 				}
 			}
@@ -197,7 +240,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				Utils.sendClientError("hideAddCard", err);
 			}
 		},
-
 
 		cardAdded: function(card) {
     		try {
@@ -239,18 +281,36 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			}
 		},
 
+		// {{ Managing board cards }}
+
 		addCardToBoard: function(cardModel) {
-			var card = new Card.Item(Card.GenerateModel(cardModel, null));
-			card.draw();
+			var card = new Card.Item({ 
+				model: Card.GenerateModel(cardModel), 
+				isMobile: this._isMobile, 
+				workspace: this, 
+				parent: null 
+			});
+
+			card.render();
+
+			this.$("#board-cards").append(card.el);
 
 			this._boardEntities.push(card);
 
 			return card;
 		},
 
-		addClusterToBoard: function(clusterModel, parentId) {
-			var cluster = new Cluster.Item({ model: Cluster.GenerateModel(cluster, parentId), isMobile: this._isMobile, parent: this });
-			cluster.generateEntities();
+		addClusterToBoard: function(clusterModel) {
+			var cluster = new Cluster.Item({ 
+				model: Cluster.GenerateModel(clusterModel), 
+				isMobile: this._isMobile, 
+				workspace: this, 
+				parent: null 
+			});
+
+			cluster.render();
+
+			this.$("#board-cards").append(cluster.el);
 
 			this._boardEntities.push(cluster);
 
@@ -278,23 +338,146 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 			}
 		},
 
-		getWorkspaceId: function() {
-			return this.model.id;
+		removeCardFromCluster: function(updateDetail) {
+			//try {
+				var sourceCard = null;
+
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
+					if (this._boardEntities[i].getType() == "cluster") {
+						sourceCard = this._boardEntities[i].detachAndReturnCard(updateDetail.cardId);
+						if (sourceCard) break;
+					}
+				}
+
+				if (sourceCard) {
+		  			var cardModel = Card.GenerateModel(sourceCard.model);
+					cardModel.width =  null;
+					cardModel.height = null;
+					cardModel.xPos = updateDetail.xPos;
+					cardModel.yPos = updateDetail.yPos;
+
+					var cardView = new Card.Item({ model: cardModel, isMobile: this._isMobile, workspace: this, parent: null });
+					cardView.render();
+
+					this.$("#board-cards").append(cardView.el);
+
+					this._boardEntities.push(cardView);
+				}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("removeCardFromCluster", err);
+			//}
 		},
 
-		getSelectedBoardId: function() {
-			return this._selectedBoard.id;
+		//  ---- Check if an element exists at the specified position
+		checkPositionTaken: function(elementId) {
+			try {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
+					if (this._boardEntities[i].getId() != elementId) {
+						var xposStart = this._boardEntities[i].getXPos();
+						var xposEnd = xposStart + $(this._boardEntities[i].el).width();
+
+						var yposStart = this._boardEntities[i].getYPos();
+						var yposEnd = yposStart + $(this._boardEntities[i].el).height();
+
+	 					if (((this._currentMousePosition.x > xposStart) && (this._currentMousePosition.x < xposEnd)) && 
+	 						((this._currentMousePosition.y > yposStart) && (this._currentMousePosition.y < yposEnd))) {
+	 						if ((!this._boardEntities[i].model.getWidth()) && (!this._boardEntities[i].model.getHeight())) return this._boardEntities[i].model.getId();
+	 					}
+					}
+				}
+				
+				return -1;
+			}
+			catch (err) {
+				this.sendClientError("checkPositionTaken", err);
+			}
 		},
 
-		getSelectedColor: function() {
-			return "#ffffff";
+		checkIfClusterIsEmpty: function(clusterId) {
+			try {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
+					if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == clusterId)) {
+						// Check if this cluster still hard cards and if not turn it back into a card
+						if (this._boardEntities[i].getChildCardCount() == 0) {
+							var cardView = new Card.Item({ model: Card.GenerateModel(this._boardEntities[i].getModel()), workspace: this, parent: null });
+							cardView.render();
+
+							this.$("#board-cards").append(cardView.el);
+							this._boardEntities.push(cardView);
+
+							this._boardEntities[i].remove();
+		      				this._boardEntities.splice(i, 1);
+						}
+					}
+				}
+			}
+			catch (err) {
+				this.sendClientError("checkIfClusterIsEmpty", err);
+			}
 		},
 
-		viewBoardMap: function() {
-			this._boardMap = new BoardMap.Index({ model: this.model});
+		sortZIndexes: function(elementId, publish) {
+			//try {
+				var that = this,
+					lockedElements = new Array(),
+					unlockedElements = new Array();
 
-			this.$("#overlay").html(this._boardMap.el);
-			this.$("#overlay").show();
+				for (var i=0; i<(this._boardEntities.length); i++) {
+					if ((elementId) && (this._boardEntities[i].getId() == elementId)) this._boardEntities[i].setZPos(999999999999999);
+
+					if (this._boardEntities[i].getIsLocked())_boardEntitieslockedElements.push(this._boardEntities[i]);
+					else unlockedElements.push(this._boardEntities[i]);
+	    		}
+
+				lockedElements.sort(function (a, b) { 
+					return a.getZPos() > b.getZPos() ? 1 : a.getZPos() < b.getZPos() ? -1 : 0;
+				});
+				unlockedElements.sort(function (a, b) { 
+					return a.getZPos() > b.getZPos() ? 1 : a.getZPos() < b.getZPos() ? -1 : 0; 
+				});
+
+				var sortedCards = new Array();
+
+				for (var i=0; i<lockedElements.length; i++) {
+					sortedCards.push({
+						cardId: lockedElements[i].getId(),
+						zPos: i
+					});
+
+					lockedElements[i].setZIndex(i);
+				}
+
+				$("#page-canvas").zIndex(lockedElements.length);
+
+				for (var i=0; i<unlockedElements.length; i++) {
+					sortedCards.push({
+						cardId: unlockedElements[i].getId(),
+						zPos: (i+(lockedElements.length+1))
+					});
+
+					unlockedElements[i].setZIndex((i+(lockedElements.length+1)));
+				}
+
+				if ((elementId) && (publish)) {
+					Board_Services.UpdateCardZIndexes(this._selectedBoard.id, sortedCards, function(response) {
+		            	that._socket.send(JSON.stringify({ 
+		            		action:"sortZIndexes", 
+		            		board: that._selectedBoard.id, 
+		            		card: { id: elementId } 
+		            	}));
+	            	});
+	        	}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("sortZIndexes", err);
+			//}
+		},
+
+		// {{ Managing web sockets }}
+
+		sendSocket: function(package) {
+			this._socket.send(package);
 		},
 
 		connectSockets: function() {
@@ -322,7 +505,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Card_Service
 				}
 				catch (er) {}
 
-				that._socket.send(JSON.stringify({ topic: that.model.id, action: "Establishing connection" }));
+				that._socket.send(JSON.stringify({ board: that.model.id, action: "Establishing connection" }));
 
 			    that._socket.on("message", function(package) {
 			  		that._connectionAttempts = 0;

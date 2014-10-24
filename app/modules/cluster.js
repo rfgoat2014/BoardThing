@@ -2,9 +2,10 @@ define([
 	"modules/card",
 	"modules/card.services",
 	"modules/cluster.services",
+	"modules/utils",
 ],
 
-function(Card, Card_Services, Cluster_Services) {
+function(Card, Card_Services, Cluster_Services, Utils) {
 	var Cluster = {};
 
 	Cluster.GenerateModel = function(model, parentId) {
@@ -63,25 +64,24 @@ function(Card, Card_Services, Cluster_Services) {
 		initialize: function(options) {
 			this.el.id = "cluster-content-container_" + this.model.id;
 
-			this._isMobile = this.options.isMobile;
-			this._workspace = this.options.workspace;
-			this._parent = this._parent;
+			this._isMobile = options.isMobile;
+			this._workspace = options.workspace;
+			this._parent = options.parent;
 		},
 
 		// {{ Object Building }}
 
 		render: function() {
-			var that = this;
-			
-			var template = null;
+			var that = this,
+				template = null;
 
     		if (this.model.parentId != null) {
-	    		if (this.model.collapsed) template = "/app/templates/cluster/clusteredCollapsed";
-	    		else template = "/app/templates/cluster/clusteredItem";
+	    		if (this.model.collapsed) template = "/app/templates/cluster/clusteredCollapsed.html";
+	    		else template = "/app/templates/cluster/clusteredItem.html";
     		}
     		else {
-	    		if (model.collapsed) template = "/app/templates/cluster/collapsed";
-	    		else template = "/app/templates/cluster/item";
+	    		if (this.model.collapsed) template = "/app/templates/cluster/collapsed.html";
+	    		else template = "/app/templates/cluster/item.html";
     		}
 
 			$.get(template, function(contents) {
@@ -95,42 +95,38 @@ function(Card, Card_Services, Cluster_Services) {
 		},
 
 		afterRender: function() {
-			var that = this;
-
-			if (!this._isMobile) that.$("#editable-title_" + this.model.id).autosize();
-
 			if ((!this.model.parentId) && this.model.xPos && this.model.yPos) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
 			
 			if ((!this.model.parentId) && (this.model.zPos != null)) this.$el.zIndex(this.model.zPos);
 
-			if ((that.model.color) && (that.model.color.trim().toLowerCase() != "#ffffff")) that.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(that.model.color) + ",0.20);" });
+			if ((this.model.color) && (this.model.color.trim().toLowerCase() != "#ffffff")) this.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(that.model.color) + ",0.20);" });
 			
 			// Build up the clusters child cards and clusters
       		this._childViews = [];
 
 			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
-        		this.model.cards[i].cluster = that;
+        		this.model.cards[i].cluster = this;
+        		this.model.cards[i].parentIsVoting = this.model.isVoting;
 
-				var cardView = new Card.Item({ model: this.model.cards[i], workspace: that._workspace, parent: that });
-				cardView.render();
+				if ((this.model.cards[i].cards == null) || (this.model.cards[i].cards.length === 0)) {
+					var cardView = new Card.Item({ model: this.model.cards[i], workspace: this._workspace, parent: this });
+					cardView.render();
 
-    			that._childViews.push(cardView);
-        	}
+	    			this._childViews.push(cardView);
+	    		}
+	    		else {
+					var clusterView = new Cluster.Item({ model: this.model.cards[i], workspace: this._workspace, parent: this });
+					clusterView.render();
 
-			for (var i=0, clustersLength=this.model.clusters.length; i<clustersLength; i+=1) {
-        		this.model.clusters[i].cluster = that;
-
-				var clusterView = new Cluster.Item({ model: this.model.clusters[i], workspace: that._workspace, parent: that });
-				clusterView.render();
-
-    			that._childViews.push(clusterView);
+	    			this._childViews.push(clusterView);
+	    		}
         	}
 
 			if (!this.model.collapsed) {
-				that._childViews.sort(function (a, b) { return a.model.zPos > b.model.zPos ? 1 : a.model.zPos < b.model.zPos ? -1 : 0; });
+				this._childViews.sort(function (a, b) { return a.model.zPos > b.model.zPos ? 1 : a.model.zPos < b.model.zPos ? -1 : 0; });
 
-				for (var i=0; i<allViews.length; i++) {
-	    			that.$("#cards-container_" + this.model.id).append(that._childViews[i].el);
+				for (var i=0; i<this._childViews.length; i++) {
+	    			this.$("#cards-container_" + this.model.id).append(this._childViews[i].el);
 				}
 			}
 
@@ -139,7 +135,7 @@ function(Card, Card_Services, Cluster_Services) {
 	    		else this.el.className = "box clustered-cluster-content-container";
     		}
     		else {
-	    		if (model.collapsed) this.el.className = "box cluster-content-container-collapsed";
+	    		if (this.model.collapsed) this.el.className = "box cluster-content-container-collapsed";
 	    		else this.el.className = "box cluster-content-container";
     		}		
     	},
@@ -232,9 +228,11 @@ function(Card, Card_Services, Cluster_Services) {
 	  			});
 
 	        	this.$el.mouseover(function() {
-	        		if ((that._parent != undefined) && (that._parent._editable != undefined)) that._parent._editable = false;
-	        		
-	        		if (that._parent.hideHoverIcons) that._parent.hideHoverIcons();
+	        		if (that._parent) { 
+	        			if (that._parent._editable) that._parent._editable = false;
+
+	        			if (that._parent.hideHoverIcons) that._parent.hideHoverIcons();
+	        		}
 
 	        		that.showHoverIcons();
 	        	});
@@ -493,6 +491,12 @@ function(Card, Card_Services, Cluster_Services) {
 
 	    // {{ Getters }}
 
+	    // ----- Global card view getters
+
+	    getModel: function() {
+	    	return this.model;
+	    },
+
 	    getId: function() {
 	    	return this.model.id;
 	    },
@@ -505,6 +509,10 @@ function(Card, Card_Services, Cluster_Services) {
 	    	return this.model.yPos;
 	    },
 
+	    getZPos: function() {
+	    	return this.model.zPos;
+	    },
+
 	    getWidth: function() {
 	    	return this.model.width;
 	    },
@@ -513,8 +521,24 @@ function(Card, Card_Services, Cluster_Services) {
 	    	return this.model.height;
 	    },
 
+	    getIsLocked: function() {
+	    	return this.model.isLocked;
+	    },
+
 	    getType: function() {
 	    	return "cluster";
+	    },
+
+	    // ----- Cluster specific getters
+
+	    getChildCardCount: function() {
+	    	return this.model.cards.length;
+	    },
+
+	    // {{ Setters }}
+
+	    setZPos: function(value) {
+	    	this.model.zPos = value;
 	    },
 
 	    // {{ Methods }}
@@ -705,7 +729,7 @@ function(Card, Card_Services, Cluster_Services) {
 				tmpArray = new Array(),
 				cardOrder = [];
 
-			for (var i=0, childViewsLength=this._childViews.length; i<cardViewsLength; i+=1) {
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 				tmpArray[this._childViews[i].model.zPos-1] = this._childViews[i];
         	}
 
@@ -727,20 +751,10 @@ function(Card, Card_Services, Cluster_Services) {
 						cardOrder.push(this.model.cards[j].id);
 					}
 	        	}
-
-				if (!elementFound) {
-					for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-						if (this.model.clusters[j].id == orderedArray[i].getId()) {
-							this.model.clusters[j].zPos = i+1;
-
-							cardOrder.push(this.model.clusters[j].id);
-						}
-		        	}
-		        }
 			}
 
-			Cluster_Services.Sort(this.model.boardId, updateDetail.clusterId, cardOrder, function(response) {
-				this._workspace.sendSocket(JSON.stringify({ 
+			Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
+				that._workspace.sendSocket(JSON.stringify({ 
 					action:"sortCluster", 
 					board: that.model.boardId, 
 					sortOrder: cardOrder 
@@ -900,8 +914,8 @@ function(Card, Card_Services, Cluster_Services) {
 
 				Cluster_Services.Insert(this.model.boardId, this.model.id, clusterModel, function(response) {
 					that._workspace.sendSocket(JSON.stringify({ 
-						action:"topicClusterUpdated", 
-						topic: that.model.boardId, 
+						action:"boardClusterUpdated", 
+						board: that.model.boardId, 
 						cluster: clusterModel 
 					}));
 				});
@@ -1109,11 +1123,12 @@ function(Card, Card_Services, Cluster_Services) {
 
 						var returnCard = this._childViews[i];
 
-						this._childViews[i].remove();
-						this._childViews.splice(i,1);
+						if (this.model.cards.length === 0) {
+							if (this._parent) this._parent.render();
+							else this._workspace.clusterToCard(returnCard.getId());
+						}
+						else this.render();
 
-						this._parent.checkIfClusterIsEmpty(this.model.id);
-						
 						return returnCard;
 					}
 				}
@@ -1245,7 +1260,7 @@ function(Card, Card_Services, Cluster_Services) {
 			Cluster.StartDotVoting(this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"startDotVoting",
-					topic: this.model.boardId,
+					board: this.model.boardId,
 					cluster: { 
 						id: this.model.id
 					} 
@@ -1295,7 +1310,7 @@ function(Card, Card_Services, Cluster_Services) {
 			Cluster.StopDotVoting(this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"stopDotVoting",
-					topic: this.model.boardId,
+					board: this.model.boardId,
 					cluster: { 
 						id: this.model.id
 					}

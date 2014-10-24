@@ -29,7 +29,7 @@ exports.get = function (req, res) {
 				var returnCards = [],
 					childCards = [];
 
-				// Retrieve alll the cards associated to the board
+				// Retrieve all the cards associated to the board
 				Card
 				.find({ board: req.params.boardId })
 				.exec(function(err, cards) {
@@ -42,12 +42,13 @@ exports.get = function (req, res) {
 							if (cards[i].width) width = cards[i].width;
 							if (cards[i].height) height = cards[i].height;
 
-							var returnCard = null
+							var returnCard = null;
 
 							// First pass through only capture root cards (those not part of a cluster)
 							if (cards[i].parentId) {
 								childCards.push({
 							        id: cards[i]._id,
+							        boardId: req.params.boardId,
 									parentId: cards[i].parentId,
 						        	title: cards[i].title,
 							        content: cards[i].content,
@@ -72,6 +73,7 @@ exports.get = function (req, res) {
 								// Capture all the cards part of clusters
 								returnCards.push({
 							        id: cards[i]._id,
+							        boardId: req.params.boardId,
 						        	title: cards[i].title,
 							        content: cards[i].content,
 							        type: cards[i].type,
