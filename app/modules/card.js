@@ -100,9 +100,9 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 				// Set the defined position and height/width
 
-				if ((!that.model.parentId) && (that.model.xPos && that.model.yPos)) that.$el.css({top: that.model.yPos, left: that.model.xPos, position: 'absolute'});
+				if ((!that._parent) && (that.model.xPos && that.model.yPos)) that.$el.css({top: that.model.yPos, left: that.model.xPos, position: 'absolute'});
 					
-				if ((!that.model.parentId) && (that.model.zPos != null)) that.$el.zIndex(that.model.zPos);
+				if ((!that._parent) && (that.model.zPos != null)) that.$el.zIndex(that.model.zPos);
 
 				if (that.model.width) {
 		    		that.$el.attr("is-resized", "true");

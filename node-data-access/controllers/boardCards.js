@@ -36,7 +36,7 @@ exports.get = function (req, res) {
 					for (var i = 0, cardLength = cards.length; i < cardLength; i += 1) {
 						// Sanity check that there is a card specified in the position
 						if (cards[i]) {
-							var width = 180,
+							var width = "",
 								height = "";
 
 							if (cards[i].width) width = cards[i].width;

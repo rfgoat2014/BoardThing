@@ -95,9 +95,11 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		afterRender: function() {
-			if ((!this.model.parentId) && this.model.xPos && this.model.yPos) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
-			
-			if ((!this.model.parentId) && (this.model.zPos != null)) this.$el.zIndex(this.model.zPos);
+			if (!this._parent) {
+				if ((this.model.xPos) && (this.model.yPos)) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
+				
+				if (this.model.zPos != null) this.$el.zIndex(this.model.zPos);
+			}
 
 			if ((this.model.color) && (this.model.color.trim().toLowerCase() != "#ffffff")) this.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(that.model.color) + ",0.20);" });
 			
@@ -334,9 +336,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					    	that._parent.saveSortPosition();
 						}
 						else if (!that.model.parentId) {
-							var currentPosition = that.$el.position().
-								newXPos = that._workspace.$("#board-cards").scrollLeft()+currentPosition.left,
-								newYPos = that._workspace.$("#board-cards").scrollTop()+currentPosition.top;
+							var currentPosition = that.$el.position(),
+								newXPos = that._workspace.$("#board-container").scrollLeft()+currentPosition.left,
+								newYPos = that._workspace.$("#board-container").scrollTop()+currentPosition.top;
 
 							that.model.xPos = newXPos;
 							that.model.yPos = newYPos;
@@ -394,7 +396,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 												}));
 											});
 
-											that._workspace.addCardToCluster(updateDetail);
+											that.addCardToCluster(updateDetail);
 										}
 									}
 								}
@@ -541,6 +543,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	this.model.zPos = value;
 	    },
 
+	    addCard: function(cardModel) {
+	    	this.model.cards.push(cardModel);
+	    },
+
 	    // {{ Methods }}
 
 		// ---------- Actions for displaying edit icons
@@ -580,9 +586,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		// ---------- Actions for setting cluster position
 
 		updateClusterPosition: function(left,top) {
-			Cluster_Services.UpdatePosition(that.model.boardId, that.model.id, left, top);
+			Cluster_Services.UpdatePosition(this.model.boardId, this.model.id, left, top);
 
-			that._workspace.sendSocket(JSON.stringify({
+			this._workspace.sendSocket(JSON.stringify({
 				action:"updateClusterPosition",
 				board: this.model.boardId,
 				position: {
@@ -1096,8 +1102,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				cardModel.parentIsVoting = this.model.isVoting;
 				cardModel.zPos = (this._childViews.length + 1);
 
-				this.model.cards.push(cardModel);
-
 				var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
 				cardView.render();
 
@@ -1125,7 +1129,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 						if (this.model.cards.length === 0) {
 							if (this._parent) this._parent.render();
-							else this._workspace.clusterToCard(returnCard.getId());
+							else this._workspace.setClusterToCard(returnCard.getId());
 						}
 						else this.render();
 
