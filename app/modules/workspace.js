@@ -102,8 +102,8 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			var that = this;
 			
 		    this.$("#board-cards").mousemove(function(event) {
-		        that._currentMousePosition.x = that.$("#topic-cards").scrollLeft() + event.pageX;
-		        that._currentMousePosition.y = that.$("#topic-cards").scrollTop() + event.pageY;
+		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
+		        that._currentMousePosition.y = that.$("#board-container").scrollTop() + event.pageY;
 		    });
 
 			this.$("#card-create-overlay").click(function(event) {
@@ -319,7 +319,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return cluster;
 		},
 
-
 		createClusterFromCard: function(sourceCardId, targetCardId) {
 			try {
 				var that = this,
@@ -392,7 +391,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 
 						var cardModel = this._boardEntities[i].getModel();
 
-						this._boardEntities[i].undraw();
+						this._boardEntities[i].remove();
 						this._boardEntities[i] = null;
 						this._boardEntities.splice(i, 1);
 
@@ -403,64 +402,33 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			}
 		},
 
-		removeCardFromCluster: function(updateDetail) {
-			//try {
-				var sourceCard = null;
-
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
-					if (this._boardEntities[i].getType() == "cluster") {
-						sourceCard = this._boardEntities[i].detachAndReturnCard(updateDetail.cardId);
-						if (sourceCard) break;
-					}
-				}
-
-				if (sourceCard) {
-		  			var cardModel = Card.GenerateModel(sourceCard.model);
-					cardModel.width =  null;
-					cardModel.height = null;
-					cardModel.xPos = updateDetail.xPos;
-					cardModel.yPos = updateDetail.yPos;
-
-					var cardView = new Card.Item({ model: cardModel, isMobile: this._isMobile, workspace: this, parent: null });
-					cardView.render();
-
-					this.$("#board-cards").append(cardView.el);
-
-					this._boardEntities.push(cardView);
-				}
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("removeCardFromCluster", err);
-			//}
-		},
-
 		//  ---- Check if an element exists at the specified position
 		checkPositionTaken: function(elementId) {
-			try {
+			//try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
 					if (this._boardEntities[i].getId() != elementId) {
 						var xposStart = this._boardEntities[i].getXPos();
-						var xposEnd = xposStart + $(this._boardEntities[i].el).width();
+						var xposEnd = xposStart + this._boardEntities[i].$el.width();
 
 						var yposStart = this._boardEntities[i].getYPos();
-						var yposEnd = yposStart + $(this._boardEntities[i].el).height();
+						var yposEnd = yposStart + this._boardEntities[i].$el.height();
 
 	 					if (((this._currentMousePosition.x > xposStart) && (this._currentMousePosition.x < xposEnd)) && 
 	 						((this._currentMousePosition.y > yposStart) && (this._currentMousePosition.y < yposEnd))) {
-	 						if ((!this._boardEntities[i].model.getWidth()) && (!this._boardEntities[i].model.getHeight())) return this._boardEntities[i].model.getId();
+							if ((!this._boardEntities[i].getWidth()) && (!this._boardEntities[i].getHeight())) return this._boardEntities[i].getId();
 	 					}
 					}
 				}
 				
 				return -1;
-			}
-			catch (err) {
-				this.sendClientError("checkPositionTaken", err);
-			}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("checkPositionTaken", err);
+			//}
 		},
 
 		checkIfClusterIsEmpty: function(clusterId) {
-			try {
+			//try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
 					if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == clusterId)) {
 						// Check if this cluster still hard cards and if not turn it back into a card
@@ -476,10 +444,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 						}
 					}
 				}
-			}
-			catch (err) {
-				this.sendClientError("checkIfClusterIsEmpty", err);
-			}
+			//}
+			//catch (err) {
+			//	this.sendClientError("checkIfClusterIsEmpty", err);
+			//}
 		},
 
 		sortZIndexes: function(elementId, publish) {

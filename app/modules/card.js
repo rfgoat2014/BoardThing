@@ -315,30 +315,14 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 						if (elementId == -1) {
 							if (that.model.parentId) {
-								var clusterId = that.model.parentId,
-									cardId = that.model.id,
-									currentMousePosition = that._workspace.getCurrentMousePosition();
+								that.model.xPos = (that._parent.$el.position().left + that.$el.position().left + that._workspace.$("#board-container").scrollLeft());
+								that.model.yPos = (that._parent.$el.position().top + that.$el.position().top + that._workspace.$("#board-container").scrollTop());
 
-								var updateDetail = {
-									clusterId: clusterId,
-									cardId: cardId,
-									xPos: currentMousePosition.x,
-									yPos: currentMousePosition.y
-								};
+								that._parent.removeCard(that.model);
 
-								Cluster_Services.DetachCard(that.model.boardId, clusterId, cardId, function(response) {
-					            	if (response.status == "success") {
-										that._workspace.sendSocket(JSON.stringify({ 
-											action:"removeCardFromCluster", 
-											board: that.model.boardId, 
-											updateDetail: updateDetail
-										}));
-									}
-								});
+						    	that._workspace.addCardToBoard(that.model);
 
-						    	that._workspace.removeCardFromCluster(updateDetail);
-
-						    	that._parent.saveSortPosition();
+								Card_Services.UpdatePosition(that.model.boardId, that.model.id, that.model.xPos, that.model.yPos);
 							}
 							else {
 								var currentPosition = that.$el.position();

@@ -62,7 +62,7 @@ function() {
 
 	Cluster.UpdatePosition = function(boardId, clusterId, xPos, yPos, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/position/" + boardId + "/" + clusterId,
+            url: "/workspace/boards/cards/position/" + boardId + "/" + clusterId,
             type: 'PUT',
             dataType: "json",
 			data: {

@@ -716,8 +716,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					orderedArray = null;
 
-					Cluster_Services.Sort(this.model.boardId, updateDetail.clusterId, cardOrder, function(response) {
-						this._workspace.sendSocket(JSON.stringify({ 
+					Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
+						that._workspace.sendSocket(JSON.stringify({ 
 							action:"sortCluster", 
 							board: that.model.boardId, 
 							sortOrder: cardOrder 
@@ -981,23 +981,39 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
 				if ((this.model.cards[i] != null) && (this.model.cards[i].id == card.id)) {
-					that.model.this.model.cards.splice(i,1);
+					this.model.cards.splice(i,1);
+
+					Cluster_Services.DetachCard(that.model.boardId, that.model.id, card.id, function(response) {
+		            	if (response.status == "success") {
+							that._workspace.sendSocket(JSON.stringify({ 
+								action:"removeCardFromCluster", 
+								board: that.model.boardId, 
+								updateDetail: {
+									clusterId: that.model.id,
+									cardId: card.id
+								}
+							}));
+						}
+					});
 
 					clusterUpdated = true;
+					
+					break;
 				}
-			}
-
-			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if ((this._childViews[i].getType() == "card") && (this._childViews[i].getId() == card.id)) {
-					this._childViews[i].remove();
-	  				this._childViews.splice(i, 1);
-
-					clusterUpdated = true;
-				}
-				else if (this._childViews[i].getType() == "cluster") this._childViews[i].removeCard(card);
 			}
 					
-			if (clusterUpdated) this._parent.checkIfClusterIsEmpty(this.model.id);
+			if (clusterUpdated) {
+				if (this.model.cards.length === 0) {
+					if (this._parent) this._parent.render();
+					else this._workspace.setClusterToCard(this.model.id);
+				}
+				else this.render();
+			}
+			else {
+				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+					if (this._childViews[i].getType() == "cluster") this._childViews[i].removeCard(card);
+				}
+			}
 		},
 
 		makeClusterCard: function(clusterId) {
