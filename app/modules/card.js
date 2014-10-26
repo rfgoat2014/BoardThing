@@ -83,8 +83,10 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			else this.el.className = "box item-content-container";
 
 			_.defer(function() { 
-		    	// Figure out the the default card height and width is
+	    		that.$el.attr("element-id", that.model.id);
+	    		that.$el.attr("object-type", "card");
 
+		    	// Figure out the the default card height and width is
 				if (that.model.type.trim().toLowerCase() != "text") {
 					if ((!that.$el.css("min-width")) && (!that.$el.css("min-height"))) {
 						that.$el.css({ minWidth: that.$el.width() });
@@ -98,23 +100,20 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					}
 				}
 
-				// Set the defined position and height/width
-
+				// Set the defined position
 				if ((!that._parent) && (that.model.xPos && that.model.yPos)) that.$el.css({top: that.model.yPos, left: that.model.xPos, position: 'absolute'});
 					
 				if ((!that._parent) && (that.model.zPos != null)) that.$el.zIndex(that.model.zPos);
 
-				if (that.model.width) {
+				if ((that.model.width) || (that.model.height)) {
 		    		that.$el.attr("is-resized", "true");
-					that.$el.css({ width: that.model.width });
-				}
-				else that.$el.css({ width: "" });
 
-				if (that.model.height) {
-		    		that.$el.attr("is-resized", "true");
-					that.$el.css({ height: that.model.height });
+		    		if (that.model.width) that.$el.css({ width: that.model.width });
+		    		else that.$el.css({ width: "" });
+
+		    		if (that.model.height) that.$el.css({ height: that.model.height });
+		    		else that.$el.css({ height: "" });
 				}
-				else that.$el.css({ height: "" });
 
 				if (that.model.color) that.$el.css({ backgroundColor: that.model.color });
 
@@ -318,17 +317,16 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 								that.model.xPos = (that._parent.$el.position().left + that.$el.position().left + that._workspace.$("#board-container").scrollLeft());
 								that.model.yPos = (that._parent.$el.position().top + that.$el.position().top + that._workspace.$("#board-container").scrollTop());
 
-								that._parent.removeCard(that.model);
+								that._parent.removeCard(that.model.id);
 
 						    	that._workspace.addCardToBoard(that.model);
-
-								Card_Services.UpdatePosition(that.model.boardId, that.model.id, that.model.xPos, that.model.yPos);
 							}
 							else {
-								var currentPosition = that.$el.position();
+								that.model.xPos = (that.$el.position().left + that._workspace.$("#board-container").scrollLeft());
+								that.model.yPos = (that.$el.position().top + that._workspace.$("#board-container").scrollTop());
+							}
 
-								Card_Services.UpdatePosition(that.model.boardId, that.model.id, (currentPosition.left + that._workspace.$("#board-container").scrollLeft()), (currentPosition.top + that._workspace.$("#board-container").scrollTop()));
-					        }
+							Card_Services.UpdatePosition(that.model.boardId, that.model.id, that.model.xPos, that.model.yPos);
 
 					    	that._workspace.sortZIndexes(that.model.id,true);
 		        		}
@@ -336,11 +334,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
     						if ((that.$el.attr("is-resized") == undefined) || (that.$el.attr("is-resized") != "true")) {
 				        		if (that.model.parentId == elementId) that.$el.css({ top: 0, left: 0, position: 'relative' });
 				        	}
-				        	else {
-								var currentPosition = that.$el.position();
-
-								Card_Services.UpdatePosition(that.model.boardId, that.model.id, (currentPosition.left + that._workspace.$("#board-container").scrollLeft()), (currentPosition.top + that._workspace.$("#board-container").scrollTop()));
-					        }
+				        	else Card_Services.UpdatePosition(that.model.boardId, that.model.id, (that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
 			        	}
 					}
 				});
@@ -351,21 +345,13 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		        		tolerance: "pointer",
 		           		drop: function(e, ui) {
 		           			if (!this._resizing) {
-			           			if (ui.draggable.context.id.trim().toLowerCase().indexOf("item-content-container") == 0) {
-			           				var droppedCardId = null;
+			           			if ($(ui.draggable).attr("object-type") == "card") {
+			           				var droppedCardId = $(ui.draggable).attr("element-id");
 
-			       					if (ui.draggable.find('#card-body').length > 0) droppedCardId = ui.draggable.find('#card-body').attr("element-id");
-									else if (ui.draggable.find('#clustered-card-body').length > 0) droppedCardId = ui.draggable.find('#clustered-card-body').attr("element-id");
-			       					
 			       					if ((droppedCardId) && ((!$(ui.draggable).attr("is-resized")) || ($(ui.draggable).attr("is-resized") == "false"))) that._workspace.createClusterFromCard(droppedCardId, that.model.id);
 					           	}
-			           			else if (ui.draggable.context.id.trim().toLowerCase().indexOf("cluster-content-container") == 0) {
-			           				var droppedClusterId = null;
-
-			       					if (ui.draggable.find('#cluster-body').length > 0) droppedClusterId = ui.draggable.find('#cluster-body').attr("element-id");
-									else if (ui.draggable.find('#cluster-body-collapsed').length > 0) droppedClusterId = ui.draggable.find('#cluster-body-collapsed').attr("element-id");
-			       					else if (ui.draggable.find('#clustered-cluster-body').length > 0) droppedClusterId = ui.draggable.find('#clustered-cluster-body').attr("element-id");
-			       					
+			           			else if ($(ui.draggable.context).attr("object-type") == "cluster") {
+			           				var droppedClusterId = $(ui.draggable).attr("element-id");
 
 			       					if (droppedClusterId) that._workspace.createClusterFromCluster(droppedClusterId, that.model.id);
 			           			}
@@ -881,7 +867,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				}));
 			});
 
-			this._parent.removeCard(cardToDelete);
+			this._parent.removeCard(cardToDelete.id);
 
 			if (this._parent.saveSortPosition) this._parent.saveSortPosition();
 		},

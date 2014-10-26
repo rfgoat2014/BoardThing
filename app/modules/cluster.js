@@ -95,6 +95,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		afterRender: function() {
+    		this.$el.attr("element-id", this.model.id);
+    		this.$el.attr("object-type", "cluster");
+
 			if (!this._parent) {
 				if ((this.model.xPos) && (this.model.yPos)) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
 				
@@ -336,14 +339,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					    	that._parent.saveSortPosition();
 						}
 						else if (!that.model.parentId) {
-							var currentPosition = that.$el.position(),
-								newXPos = that._workspace.$("#board-container").scrollLeft()+currentPosition.left,
-								newYPos = that._workspace.$("#board-container").scrollTop()+currentPosition.top;
+							that.model.xPos = that._workspace.$("#board-container").scrollLeft()+that.$el.position().left;
+							that.model.yPos = that._workspace.$("#board-container").scrollTop()+that.$el.position().top;
 
-							that.model.xPos = newXPos;
-							that.model.yPos = newYPos;
-
-				        	that.updateClusterPosition(newXPos, newYPos);
+				        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
 			        	}
 			        	
 				    	that._workspace.sortZIndexes(that.model.id,true);
@@ -365,30 +364,20 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	 					if (!that.model.collapsed) {
 		   					var isChild = false;
 
-		       				if (ui.draggable.context.id.trim().toLowerCase().indexOf("item-content-container") == 0) {
-		       					var updateDetail = null;
-
-		       					if (ui.draggable.find('#card-body').length > 0) {
-									updateDetail = {
-										clusterId: that.model.id,
-										cardId: ui.draggable.find('#card-body').attr("element-id")
-									};
-								}
-		       					else if (ui.draggable.find('#clustered-card-body').length > 0) {
-									updateDetail = {
-										clusterId: that.model.id,
-										cardId: ui.draggable.find('#clustered-card-body').attr("element-id")
-									};
-		       					}
+		       				if  ($(ui.draggable).attr("object-type") == "card") {
+		       					var updateDetail = {
+									clusterId: that.model.id,
+									cardId: $(ui.draggable).attr("element-id")
+								};
 
 		       					if (updateDetail) {
-		       						if ((!$(ui.draggable.context).attr("is-resized")) || ($(ui.draggable.context).attr("is-resized") == "false")) {
+		       						if ((!$(ui.draggable).attr("is-resized")) || ($(ui.draggable).attr("is-resized") == "false")) {
 				       					for (var i=0; i<that._childViews.length; i++) {
 				       						if ((that._childViews[i].getType() == "card") && (that._childViews[i].model.id.toString()== updateDetail.cardId.toString())) isChild = true;
 				       					}
 
 				       					if (!isChild) {	
-											Cluster.AttachCard(that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
+											Cluster_Services.AttachCard(that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
 												that._workspace.sendSocket(JSON.stringify({ 
 													action:"addCardToCluster", 
 													board: that.model.boardId, 
@@ -396,30 +385,16 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 												}));
 											});
 
-											that.addCardToCluster(updateDetail);
+											that._workspace.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
 										}
 									}
 								}
 		       				}
-		       				else if (ui.draggable.context.id.trim().toLowerCase().indexOf("cluster-content-container") == 0) {
-		       					if (ui.draggable.find('#cluster-body').length > 0) {
-									var updateDetail = {
-										targetClusterId: that.model.id,
-										sourceClusterId: ui.draggable.find('#cluster-body').attr("element-id")
-									};
-		       					}
-		       					else if (ui.draggable.find('#cluster-body-collapsed').length > 0) {
-									var updateDetail = {
-										targetClusterId: that.model.id,
-										sourceClusterId: ui.draggable.find('#cluster-body-collapsed').attr("element-id")
-									};
-		       					}
-		       					else if (ui.draggable.find('#clustered-cluster-body').length > 0) {
-									var updateDetail = {
-										targetClusterId: that.model.id,
-										sourceClusterId: ui.draggable.find('#clustered-cluster-body').attr("element-id")
-									};
-		       					}
+		       				else if ($(ui.draggable).attr("object-type") == "cluster") {
+		       					var updateDetail = {
+									targetClusterId: that.model.id,
+									sourceClusterId: $(ui.draggable).attr("element-id")
+								};
 
 		       					for (var i=0; i<that._childViews.length; i++) {
 		       						if ((that._childViews[i].getType() == "cluster") && (that._childViews[i].model.id == updateDetail.sourceClusterId)) isChild = true;
@@ -439,17 +414,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       				}
 
 		       				if (isChild) {
-		       					var elementId = null;
-
-			       				if (ui.draggable.context.id.trim().toLowerCase().indexOf("item-content-container") == 0) {
-			       					if (ui.draggable.find('#card-body').length > 0) elementId = ui.draggable.find('#card-body').attr("element-id");
-									else if (ui.draggable.find('#clustered-card-body').length > 0) elementId = ui.draggable.find('#clustered-card-body').attr("element-id");
-			       				}
-			       				else if (ui.draggable.context.id.trim().toLowerCase().indexOf("cluster-content-container") == 0) {
-			       					if (ui.draggable.find('#cluster-body').length > 0) elementId = ui.draggable.find('#cluster-body').attr("element-id");
-			       					else if (ui.draggable.find('#cluster-body-collapsed').length > 0) elementId = ui.draggable.find('#cluster-body-collapsed').attr("element-id");
-			       					else if (ui.draggable.find('#clustered-cluster-body').length > 0)  elementId = ui.draggable.find('#clustered-cluster-body').attr("element-id");
-			       				}
+		       					var elementId = $(ui.draggable).attr("element-id");
 
 		       					if (elementId) {
 			       					var selectedElement = null;
@@ -975,29 +940,32 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		removeCard: function(card) {
+		removeCard: function(cardId) {
 			var that = this,
+				cardModel = null,
 				clusterUpdated = false;
 
 			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
-				if ((this.model.cards[i] != null) && (this.model.cards[i].id == card.id)) {
+				if ((this.model.cards[i] != null) && (this.model.cards[i].id == cardId)) {
+					cardModel = this.model.cards[i];
+
 					this.model.cards.splice(i,1);
 
-					Cluster_Services.DetachCard(that.model.boardId, that.model.id, card.id, function(response) {
+					Cluster_Services.DetachCard(that.model.boardId, that.model.id, cardId, function(response) {
 		            	if (response.status == "success") {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"removeCardFromCluster", 
 								board: that.model.boardId, 
 								updateDetail: {
 									clusterId: that.model.id,
-									cardId: card.id
+									cardId: cardId
 								}
 							}));
 						}
 					});
 
 					clusterUpdated = true;
-					
+
 					break;
 				}
 			}
@@ -1008,10 +976,16 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					else this._workspace.setClusterToCard(this.model.id);
 				}
 				else this.render();
+
+				return cardModel;
 			}
 			else {
 				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					if (this._childViews[i].getType() == "cluster") this._childViews[i].removeCard(card);
+					if (this._childViews[i].getType() == "cluster") {
+						cardModel = this._childViews[i].removeCard(cardId);
+
+						if (cardModel) return cardModel;
+					}
 				}
 			}
 		},
@@ -1115,8 +1089,11 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	      			cardModel.votesReceived = parseInt(existingVotes);
       			}
 
+      			cardModel.parentId = this.model.id;
 				cardModel.parentIsVoting = this.model.isVoting;
 				cardModel.zPos = (this._childViews.length + 1);
+
+				this.model.cards.push(cardModel);
 
 				var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
 				cardView.render();

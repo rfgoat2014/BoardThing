@@ -300,6 +300,31 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return card;
 		},
 
+		addCardToCluster: function(clusterId, cardId) {
+			var card = null;
+			
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if ((this._boardEntities[i].getType() == "card") && (this._boardEntities[i].getId() == cardId)) {
+					card = this._boardEntities[i].getModel();
+
+					this._boardEntities[i].remove();
+      				this._boardEntities.splice(i, 1);
+					break;
+				}
+				else if (this._boardEntities[i].getType() == "cluster") {
+					card = this._boardEntities[i].removeCard(cardId);
+					
+					if (card) break;
+				}
+			}
+
+			if (card) {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addCardToCluster(clusterId, Card.GenerateModel(card));
+				}
+			}
+		},
+
 		addClusterToBoard: function(clusterModel, cardModel) {
 			var cluster = new Cluster.Item({ 
 				model: Cluster.GenerateModel(clusterModel), 
