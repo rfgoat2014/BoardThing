@@ -336,7 +336,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				    	that._workspace.sortZIndexes(that.model.id,true);
 		        	}
 		        	else {
-						if (that._workspace.getObjectType(elementId) == "card") that._workspace.createClusterFromCluster(that.model.id, elementId);
+		        		var objectModel = that._workspace.getObjectModel(elementId);
+
+						if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCluster(that.model.id, elementId);
 		        	}
 				}
 			});
@@ -489,11 +491,11 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	return this.model.cards.length;
 	    },
 
-		getObjectType: function(id) {
+		getObjectModel: function(id) {
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if (this._childViews[i].getId() == id) return this._childViews[i].getType();
+				if (this._childViews[i].getId() == id) return this._childViews[i].getModel();
 				else if (this._childViews[i].getType() == "cluster") {
-					var objType = this._childViews[i].getObjectType(id);
+					var objType = this._childViews[i].getObjectModel(id);
 
 					if (objType) return objType;
 				}

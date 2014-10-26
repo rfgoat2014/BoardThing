@@ -234,11 +234,11 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return "card";
 		},
 
-		getObjectType: function(id) {
+		getObjectModel: function(id) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if (this._boardEntities[i].getId() == id) return this._boardEntities[i].getType();
+				if (this._boardEntities[i].getId() == id) return this._boardEntities[i].getModel();
 				else if (this._boardEntities[i].getType() == "cluster") {
-					var objType = this._boardEntities[i].getObjectType(id);
+					var objType = this._boardEntities[i].getObjectModel(id);
 
 					if (objType) return objType;
 				}
@@ -657,7 +657,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 				for (var i=0; i<(this._boardEntities.length); i++) {
 					if ((elementId) && (this._boardEntities[i].getId() == elementId)) this._boardEntities[i].setZPos(999999999999999);
 
-					if (this._boardEntities[i].getIsLocked())_boardEntitieslockedElements.push(this._boardEntities[i]);
+					if (this._boardEntities[i].getIsLocked()) lockedElements.push(this._boardEntities[i]);
 					else unlockedElements.push(this._boardEntities[i]);
 	    		}
 

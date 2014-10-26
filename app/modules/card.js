@@ -19,7 +19,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			parentIsVoting: false, 
 			isVoting: false, 
 			votesReceived: 0, 
-			isLocked: false, 
+			isLocked: model.isLocked, 
 			xPos: model.xPos, 
 			yPos: model.yPos, 
 			created: model.created, 
@@ -332,7 +332,9 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		        		}
 			        	else {
     						if (!that.$el.attr("is-resized")) {
-    							if (that._workspace.getObjectType(elementId) == "card") that._workspace.createClusterFromCard(that.model.id, elementId);
+				        		var objectModel = that._workspace.getObjectModel(elementId);
+
+								if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCard(that.model.id, elementId);
 			           		}
 				        	else Card_Services.UpdatePosition(that.model.boardId, that.model.id, (that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
 			        	}
@@ -1031,14 +1033,14 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					};
 
 					Card_Services.UpdateTextCard(boardId, this._cardModel.id, updateTextModel, function(response) {
-						that._workspace.cardEdited(updateTextModel);
-
 						that._workspace.sendSocket(JSON.stringify({ 
 							action:"boardCardUpdated", 
 							board: boardId, 
 							card: updateTextModel 
 						}));
 					});
+					
+					that._workspace.cardEdited(updateTextModel);
 				}
 			}
 
