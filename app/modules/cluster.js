@@ -365,6 +365,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				       					}
 
 				       					if (!isChild) {	
+											that._workspace.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
+
 											Cluster_Services.AttachCard(that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
 												that._workspace.sendSocket(JSON.stringify({ 
 													action:"addCardToCluster", 
@@ -372,8 +374,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 													updateDetail: updateDetail
 												}));
 											});
-
-											that._workspace.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
 										}
 									}
 								}
@@ -389,6 +389,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       					}
 
 		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
+									that._workspace.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
+
 		       						Cluster_Services.AttachCluster(that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
 		       							that._workspace.sendSocket(JSON.stringify({ 
 		       								action:"addClusterToCluster", 
@@ -396,8 +398,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       								updateDetail: updateDetail 
 		       							}));
 		       						});
-
-									that._workspace.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
 								}
 		       				}
 
