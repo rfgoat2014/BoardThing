@@ -401,7 +401,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 								}
 		       				}
 
-
 		       				if (isChild) {
 		       					var elementId = $(ui.draggable).attr("element-id");
 

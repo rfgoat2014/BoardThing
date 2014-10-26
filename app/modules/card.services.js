@@ -8,7 +8,7 @@ function() {
 	Card.InsertTextCard = function(boardId, card, callback) {
 		$.ajax({
 			type: "POST",
-			url: "/workspace/boards/cards/" + boardId,
+			url: "/workspace/boards/cards/text/" + boardId,
 			data: card,
 			success: function(response) {
 				if (callback) callback(response);

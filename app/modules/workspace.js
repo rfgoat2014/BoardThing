@@ -86,6 +86,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			this.$("#board-cards").width(this._selectedBoard.width);
 			this.$("#board-cards").height(this._selectedBoard.height);
 
+			this.$("#page-canvas").width(this._selectedBoard.width);
+			this.$("#page-canvas").height(this._selectedBoard.height);
+
 			var overflowWidth = this._selectedBoard.width - $(window).width(),
 				overflowHeight = this._selectedBoard.height - $(window).height();
 
@@ -95,11 +98,63 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 
 		unbind: function() {
 			this.$("#board-cards").unbind("mousemove");
+
+			if (this._isMobile) {
+      			this.$("#board-cards").unbind("click");
+			}
+			else {
+				try {
+					document.getElementById("page-canvas").removeEventListener('dblclick');
+				}
+				catch (err) {}
+			}
+
 			this.$("#card-create-overlay").unbind("click");
 		},
 
 		bind: function() {
-			var that = this;
+			var that = this,
+				canvas = document.getElementById("page-canvas");
+
+			if (this._isMobile) {
+      			this.$("#board-cards").click(function(e) {
+					var selectedPageTool = that.getSelectedPageTool();
+
+					if (selectedPageTool == "card") {
+	        			that._dropPosition = { x: ($(this).scrollLeft() + e.pageX),  y: ($(this).scrollTop() + e.pageY) };
+
+	        			that._cardsDroppedInPosition = 0;
+
+						that.showAddCard();
+					}
+		        });
+
+				canvas.addEventListener("touchstart", function(e) {
+				}, false);
+
+				canvas.addEventListener("touchend", function(e) {
+				}, false);
+
+				canvas.addEventListener("touchmove", function(e) {
+				}, false);
+			}
+			else {
+	            canvas.addEventListener('dblclick', function(e) {
+					if (that.getSelectedPageTool() == "card") {
+	        			that._dropPosition = { x: that._currentMousePosition.x,  y: that._currentMousePosition.y };
+
+	        			that._cardsDroppedInPosition = 0;
+
+						that.showAddCard();
+				    }
+				});
+
+				canvas.onmousedown = function(e) {
+				};
+
+				canvas.onmouseup = function(e) {
+				}
+			}
 			
 		    this.$("#board-cards").mousemove(function(event) {
 		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
@@ -227,20 +282,18 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 		
 		showAddCard: function() {
-    		try {
+    		//try {
 				this._blockAddCard = true;
 
 				if (this._addCard) {
 					this.$("#card-create-overlay").show();
-
-					this._addCard.setSelectedColor(this.getSelectedColor);
 					
 					this._addCard.focusCardText();
 				}	
-			}
-			catch (err) {
-				Utils.sendClientError("showAddCard", err);
-			}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("showAddCard", err);
+			//}
 		},
 
 		hideAddCard: function() {
@@ -514,20 +567,25 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 
 		setClusterToCard: function(clusterId) {
-			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if (this._boardEntities[i].getType() == "cluster") {
-					if (this._boardEntities[i].getId() == clusterId) {
-						var cardModel = this._boardEntities[i].getModel();
+			//try {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") {
+						if (this._boardEntities[i].getId() == clusterId) {
+							var cardModel = this._boardEntities[i].getModel();
 
-						this._boardEntities[i].remove();
-						this._boardEntities[i] = null;
-						this._boardEntities.splice(i, 1);
+							this._boardEntities[i].remove();
+							this._boardEntities[i] = null;
+							this._boardEntities.splice(i, 1);
 
-						this.addCardToBoard(cardModel);
-						break;
+							this.addCardToBoard(cardModel);
+							break;
+						}
 					}
 				}
-			}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("createClusterFromCluster", err);
+			//}
 		},
 
 		//  ---- Check if an element exists at the specified position
