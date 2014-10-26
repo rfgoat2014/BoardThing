@@ -175,6 +175,23 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return this._currentMousePosition;
 		},
 
+		getSelectedPageTool: function() {
+			return "card";
+		},
+
+		getObjectType: function(id) {
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if (this._boardEntities[i].getId() == id) return this._boardEntities[i].getType();
+				else if (this._boardEntities[i].getType() == "cluster") {
+					var objType = this._boardEntities[i].getObjectType(id);
+
+					if (objType) return objType;
+				}
+			}
+
+			return null;
+		},
+
 		// {{ Board Map }}
 
 		viewBoardMap: function() {
@@ -344,15 +361,40 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return cluster;
 		},
 
+		addClusterToCluster: function(sourceClusterId, targetClusterId) {
+			var cluster = null;
+			
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == sourceClusterId)) {
+					cluster = this._boardEntities[i].getModel();
+
+					this._boardEntities[i].remove();
+      				this._boardEntities.splice(i, 1);
+					break;
+				}
+				else if (this._boardEntities[i].getType() == "cluster") {
+					cluster = this._boardEntities[i].removeCard(sourceClusterId);
+					
+					if (cluster) break;
+				}
+			}
+
+			if (cluster) {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addClusterToCluster(targetClusterId, Cluster.GenerateModel(cluster));
+				}
+			}
+		},
+
 		createClusterFromCard: function(sourceCardId, targetCardId) {
-			try {
+			//try {
 				var that = this,
 					sourceCard = null,
 					targetCard = null;
 
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					if ((this._boardEntities[i].getType() == "card") && (this._boardEntities[i].getId() == sourceCardId)) {
-						sourceCard = this._boardEntities[i];
+						sourceCard = this._boardEntities[i].getModel();
 
 						this._boardEntities[i].remove();
 	      				this._boardEntities.splice(i, 1);
@@ -360,7 +402,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 	      				break;
 					}
 					else if (this._boardEntities[i].getType() == "cluster") {
-						sourceCard = this._boardEntities[i].detachAndReturnCard(sourceCardId);
+						sourceCard = this._boardEntities[i].removeCard(sourceCardId);
 
 						if (sourceCard) break;
 					}
@@ -369,7 +411,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 				if (sourceCard) {
 					for (var i=0; i<this._boardEntities.length; i++) {
 						if ((this._boardEntities[i].getType() == "card") && (this._boardEntities[i].getId() == targetCardId)) {
-							targetCard = this._boardEntities[i];
+							targetCard = this._boardEntities[i].getModel();
 
 							this._boardEntities[i].remove();
 		      				this._boardEntities.splice(i, 1);
@@ -379,15 +421,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 					}
 
 					if (targetCard) {
-			  			// Create cluster in database 
 			  			var clusterModel = {
-			  				id: targetCard.getId(),
+			  				id: targetCard.id,
 			  				boardId: this._selectedBoard.id,
 			  				action: "create",
-			  				cards: [{ id: sourceCard.getId() }]
+			  				cards: [{ id: sourceCard.id }]
 			  			};
 
-			  			Cluster_Services.Insert(this._selectedBoard.id, targetCard.getId(), clusterModel, function() {
+			  			Cluster_Services.Insert(this._selectedBoard.id, targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCard", 
 			  					workspace: that.model.id, 
@@ -395,15 +436,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			  				}));
 			  			});
 
-			  			var cluster = this.addClusterToBoard(targetCard.getModel(), sourceCard.getModel());
+			  			var cluster = this.addClusterToBoard(targetCard, sourceCard);
 
-						this.sortZIndexes(targetCard.getId(), true);
+						this.sortZIndexes(targetCard.id, true);
 					}
 				}
-			}
-			catch (err) {
-				this.sendClientError("createClusterFromCard", err);
-			}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("createClusterFromCard", err);
+			//}
 		},
 
 		setClusterToCard: function(clusterId) {
@@ -449,29 +490,6 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			//}
 			//catch (err) {
 			//	Utils.sendClientError("checkPositionTaken", err);
-			//}
-		},
-
-		checkIfClusterIsEmpty: function(clusterId) {
-			//try {
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
-					if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == clusterId)) {
-						// Check if this cluster still hard cards and if not turn it back into a card
-						if (this._boardEntities[i].getChildCardCount() == 0) {
-							var cardView = new Card.Item({ model: Card.GenerateModel(this._boardEntities[i].getModel()), workspace: this, parent: null });
-							cardView.render();
-
-							this.$("#board-cards").append(cardView.el);
-							this._boardEntities.push(cardView);
-
-							this._boardEntities[i].remove();
-		      				this._boardEntities.splice(i, 1);
-						}
-					}
-				}
-			//}
-			//catch (err) {
-			//	this.sendClientError("checkIfClusterIsEmpty", err);
 			//}
 		},
 

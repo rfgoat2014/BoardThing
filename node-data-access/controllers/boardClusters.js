@@ -1273,8 +1273,7 @@ exports.detachCluster = function (req, res) {
 							if (cards[i]._id.toString() == req.params.childclusterId) {
 								cards[i].parentId = null;
 								cards[i].zPos = null;
-								cards[i].xPos = req.body.xPos;
-								cards[i].yPos = req.body.yPos;
+								cards[i].collapsed = false;
 							}
 
 							cards[i].save(function(err) {

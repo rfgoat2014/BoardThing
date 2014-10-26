@@ -24,7 +24,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			color: model.color, 
 			title: model.title, 
 			content: model.content, 
-			parentId: model.parentId, 
 			created: model.created, 
 			createdDate: new Date(model.created)
 		};
@@ -208,7 +207,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 							touchComplete = null;
 
-			    			if ((that._workspace.selectedPageTool == "pen") || (that._workspace.selectedPageTool == "eraser")) that._workspace.stopDrawing();
+			    			if ((that._workspace.getSelectedPageTool() == "pen") || (that._workspace.getSelectedPageTool() == "eraser")) that._workspace.stopDrawing();
 	   					}
 					});
 				}
@@ -219,7 +218,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	  			});
 
 				this.$el.mouseup(function(e) {
-			    	if ((that._workspace.selectedPageTool == "pen") || (that._workspace.selectedPageTool == "eraser")) that._workspace.stopDrawing();
+			    	if ((that._workspace.getSelectedPageTool() == "pen") || (that._workspace.getSelectedPageTool() == "eraser")) that._workspace.stopDrawing();
 				});
 
 	  			this.$el.dblclick(function(e) {
@@ -318,37 +317,26 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					if (elementId == -1) {
 						if (that.model.parentId) {
-							var updateDetail = {
-								clusterId: that.model.id,
-								xPos: that._workspace._currentMousePosition.x,
-								yPos: that._workspace._currentMousePosition.y
-							};
+							that.model.xPos = (that._parent.$el.position().left + that.$el.position().left + that._workspace.$("#board-container").scrollLeft());
+							that.model.yPos = (that._parent.$el.position().top + that.$el.position().top + that._workspace.$("#board-container").scrollTop());
 
-							Cluster_Services.Insert(that.model.boardId, updateDetail.clusterId, updateDetail, function(response) {
-				            	if (response.status == "success") {
-									that._workspace.sendSocket(JSON.stringify({ 
-										action:"removeClusterFromCluster", 
-										board: that.model.boardId, 
-										updateDetail: updateDetail
-									}));
-								}
-							});
+							that._parent.removeCard(that.model.id);
+					    	
+							that.model.collapsed = false;
 
-					    	that._workspace.removeClusterFromCluster(updateDetail);
-
-					    	that._parent.saveSortPosition();
+					    	that._workspace.addClusterToBoard(that.model);
 						}
 						else if (!that.model.parentId) {
 							that.model.xPos = that._workspace.$("#board-container").scrollLeft()+that.$el.position().left;
 							that.model.yPos = that._workspace.$("#board-container").scrollTop()+that.$el.position().top;
-
-				        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
 			        	}
 			        	
+			        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
+				    	
 				    	that._workspace.sortZIndexes(that.model.id,true);
 		        	}
 		        	else {
-		        		if (that.model.parentId == elementId) that.$el.css({ top: 0, left: 0, position: 'relative' });
+						if (that._workspace.getObjectType(elementId) == "card") that._workspace.createClusterFromCluster(that.model.id, elementId);
 		        	}
 				}
 			});
@@ -392,8 +380,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       				}
 		       				else if ($(ui.draggable).attr("object-type") == "cluster") {
 		       					var updateDetail = {
-									targetClusterId: that.model.id,
-									sourceClusterId: $(ui.draggable).attr("element-id")
+									sourceClusterId: $(ui.draggable).attr("element-id"),
+									targetClusterId: that.model.id
 								};
 
 		       					for (var i=0; i<that._childViews.length; i++) {
@@ -401,15 +389,15 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       					}
 
 		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
-		       						Cluster.AttachCluster(boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
+		       						Cluster_Services.AttachCluster(that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
 		       							that._workspace.sendSocket(JSON.stringify({ 
 		       								action:"addClusterToCluster", 
 		       								board: that.model.boardId, 
 		       								updateDetail: updateDetail 
 		       							}));
 		       						});
-										
-									that._workspace.addClusterToCluster(updateDetail);
+
+									that._workspace.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
 								}
 		       				}
 
@@ -502,6 +490,19 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	return this.model.cards.length;
 	    },
 
+		getObjectType: function(id) {
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				if (this._childViews[i].getId() == id) return this._childViews[i].getType();
+				else if (this._childViews[i].getType() == "cluster") {
+					var objType = this._childViews[i].getObjectType(id);
+
+					if (objType) return objType;
+				}
+			}
+
+			return null;
+		},
+
 	    // {{ Setters }}
 
 	    setZPos: function(value) {
@@ -510,6 +511,12 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 	    addCard: function(cardModel) {
 	    	this.model.cards.push(cardModel);
+	    },
+
+	    // ----- Cluster specific setters
+
+	    setCollapsed: function(collapsed) {
+	    	this.model.collapsed = collapsed;
 	    },
 
 	    // {{ Methods }}
@@ -942,8 +949,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 		removeCard: function(cardId) {
 			var that = this,
-				cardModel = null,
-				clusterUpdated = false;
+				cardModel = null;
 
 			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
 				if ((this.model.cards[i] != null) && (this.model.cards[i].id == cardId)) {
@@ -951,26 +957,42 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					this.model.cards.splice(i,1);
 
-					Cluster_Services.DetachCard(that.model.boardId, that.model.id, cardId, function(response) {
-		            	if (response.status == "success") {
-							that._workspace.sendSocket(JSON.stringify({ 
-								action:"removeCardFromCluster", 
-								board: that.model.boardId, 
-								updateDetail: {
-									clusterId: that.model.id,
-									cardId: cardId
-								}
-							}));
-						}
-					});
-
-					clusterUpdated = true;
+					if (cardModel.cards.length === 0) {
+						// This is a card so call the detach card method
+						Cluster_Services.DetachCard(that.model.boardId, that.model.id, cardId, function(response) {
+			            	if (response.status == "success") {
+								that._workspace.sendSocket(JSON.stringify({ 
+									action:"removeCardFromCluster", 
+									board: that.model.boardId, 
+									updateDetail: {
+										clusterId: that.model.id,
+										cardId: cardId
+									}
+								}));
+							}
+						});
+					}
+					else {
+						// This is a card so call the detach cluster method
+						Cluster_Services.DetachCluster(that.model.boardId, that.model.id, cardId, function(response) {
+			            	if (response.status == "success") {
+								that._workspace.sendSocket(JSON.stringify({ 
+									action:"removeClusterFromCluster", 
+									board: that.model.boardId, 
+									updateDetail: {
+										clusterId: that.model.id,
+										cardId: cardId
+									}
+								}));
+							}
+						});
+					}
 
 					break;
 				}
 			}
 					
-			if (clusterUpdated) {
+			if (cardModel) {
 				if (this.model.cards.length === 0) {
 					if (this._parent) this._parent.render();
 					else this._workspace.setClusterToCard(this.model.id);
@@ -1003,61 +1025,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 
 			if (clusterUpdated) this.render();
-		},
-
-		removeCluster: function(clusterId) {
-			var that = this,
-				clusters = this.model.clusters;
-
-			for (var i=0, clustersLength=clusters.length; i<clustersLength; i+=1) {
-				if ((clusters[i] != null) && (clusters[i].id == clusterId)) that.model.clusters.splice(i,1);
-			}
-
-			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].getId() == clusterId)) {
-					var clusterXpos = this._childViews[i].getXPos(),
-						clusterYpos = this._childViews[i].getYPos(),
-						cardCount = 0;
-
-					for (var j=0, clusterViewCardsLength=this._childViews[i]._childViews.length; j<clusterViewCardsLength; j+=1) {
-						if (this._childViews[i]._childViews.getType() == "card") {
-							var cardModel = Card.GenerateModel(this._childViews[i]._childViews[j].model, this._childViews[i].getId());
-								cardModel.xPos = clusterXpos + (cardCount*10);
-								cardModel.yPos = clusterYpos + (cardCount*10);
-
-							that.model.cards.push(cardModel);
-
-							var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
-							cardView.storeIdeaPosition((clusterXpos + (i*10)), (clusterYpos + (i*10)));
-							cardView.render();
-
-			    			this.$("#cards-container_" + this.model.id).append(cardView.el);
-
-		    				this._childViews.push(cardView);
-						}
-						else if (this._childViews[i]._childViews.getType() == "cluster") {
-							var clusterModel = Cluster.GenerateModel(this._childViews[i]._childViews[j].model);
-							clusterModel.parentId = this.model.id;
-							clusterModel.collapsed = true;
-
-							that.model.clusters.push(clusterModel);
-
-							var clusterView = new Cluster.Item({ model: clusterModel, board: this._workspace, parent: this });
-							clusterView.updateClusterPosition((clusterXpos + (cardCount*10)), (clusterYpos + (cardCount*10)));
-							clusterView.render();
-
-		    				this._childViews.push(clusterView);
-						}
-
-		    			cardCount++;
-					}
-
-					this._childViews[i].remove();
-      				this._childViews.splice(i, 1);
-				
-					this._parent.checkIfClusterIsEmpty(this.model.id);
-				}
-			}
 		},
 
 		// ---------- Actions for managing attached cards
@@ -1095,7 +1062,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 				this.model.cards.push(cardModel);
 
-				var cardView = new Card.Item({ model: cardModel, board: this._workspace, parent: this });
+				var cardView = new Card.Item({ model: cardModel, workspace: this._workspace, parent: this });
 				cardView.render();
 
 		    	this.$("#cards-container_" + this.model.id).first().append(cardView.el);
@@ -1108,40 +1075,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		detachAndReturnCard: function(cardId) {
-			var that = this;
-
-			if (this._childViews.length > 0) {
-				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					if ((this._childViews[i].getType() == "card") && (this._childViews[i].getId() == cardId)) {
-						for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
-							if ((this.model.cards[j]) && (this.model.cards[j].id == cardId)) that.model.cards.splice(j,1);
-						}
-
-						var returnCard = this._childViews[i];
-
-						if (this.model.cards.length === 0) {
-							if (this._parent) this._parent.render();
-							else this._workspace.setClusterToCard(returnCard.getId());
-						}
-						else this.render();
-
-						return returnCard;
-					}
-				}
-			}
-
-			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if (this._childViews[i].getType() == "cluster") {
-					var searchedCard = this._childViews[i].detachAndReturnCard(cardId);
-
-					if (searchedCard) return searchedCard;
-				}
-			}
-
-			return null;
-		},
-
 		updateCardContent: function(cardId,content,title,color) {
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 				this._childViews[i].updateCardContent(cardId,content,title,color);
@@ -1150,39 +1083,41 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 		// ---------- Actions for managing attached clusters
 
-		attachCluster: function(newModel) {
-			if (this.model.id == newmodel.parentId) {
+		addClusterToCluster: function(targetCluster, newCluster) {
+			if (this.model.id == targetCluster) {
 				if (this.model.isVoting) {
 					var existingVotes = 0,
 						voteCountMatches = [];
 
-	  				if (newModel.type == "text") {
-	  					voteCountMatches = newModel.content.match(/ \(\+(.*?)\)/g);
+	  				if (newCluster.type == "text") {
+	  					voteCountMatches = newCluster.content.match(/ \(\+(.*?)\)/g);
 
-	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = newModel.content.match(/\(\+(.*?)\)/g);
+	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = newCluster.content.match(/\(\+(.*?)\)/g);
 	  				}
 	  				else {
-	  					voteCountMatches = newModel.title.match(/ \(\+(.*?)\)/g);
+	  					voteCountMatches = newCluster.title.match(/ \(\+(.*?)\)/g);
 
-	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = newModel.title.match(/\(\+(.*?)\)/g);
+	  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = newCluster.title.match(/\(\+(.*?)\)/g);
 	  				}
 
 					if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
 						existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
 
-	  					if (newModel.type.trim().toLowerCase() == "text") newModel.content = newModel.content.replace(voteCountMatches[0],"");
-	  					else newModel.title = newModel.title.replace(voteCountMatches[0],"");
+	  					if (newCluster.type.trim().toLowerCase() == "text") newCluster.content = newCluster.content.replace(voteCountMatches[0],"");
+	  					else newCluster.title = newCluster.title.replace(voteCountMatches[0],"");
 					}
 
-	      			newModel.votesReceived = parseInt(existingVotes);
+	      			newCluster.votesReceived = parseInt(existingVotes);
       			}
 
-				newModel.parentIsVoting = this.model.isVoting;
-				newModel.zPos = (this._childViews.length + 1);
+      			newCluster.parentId = this.model.id;
+				newCluster.parentIsVoting = this.model.isVoting;
+				newCluster.collapsed = true;
+				newCluster.zPos = (this._childViews.length + 1);
 
-				this.model.clusters.push(newModel);
+				this.model.cards.push(newCluster);
 
-				var clusterView = new Cluster.Item({ model: newModel, board: this._workspace, parent: this });
+				var clusterView = new Cluster.Item({ model: newCluster, workspace: this._workspace, parent: this });
 				clusterView.render();
 
     			this.$("#cards-container_" + this.model.id).first().append(clusterView.el);
@@ -1190,59 +1125,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 			else {
 				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					if (this._childViews[i].getType() == "cluster") this._childViews[i].attachCluster(newModel);
-				}
-			}
-		},
-
-		detachAndReturnCluster: function(clusterId) {
-			var that = this;
-
-			if ((this._childViews) && (this._childViews.length > 0)) {
-				for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					if (this._childViews[i].getType() == "cluster") {
-						if (this._childViews[i].getId() == clusterId) {
-							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-								if ((this.model.clusters[j]) && (this.model.clusters[j].id == clusterId)) that.model.clusters.splice(j,1);
-							}
-
-							var returnCluster = this._childViews[i];
-
-							this._childViews[i].remove();
-							this._childViews.splice(i,1);
-
-							this._parent.checkIfClusterIsEmpty(this.model.id);
-							
-							return returnCluster;
-						}
-						else {
-							var detachedCluster = this._childViews[i].detachAndReturnCluster(clusterId);
-							if (detachedCluster) return detachedCluster;
-						}
-					}
-				}
-			}
-
-			return null;
-		},
-
-		checkIfClusterIsEmpty: function(clusterId) {
-			var that = this;
-
-			for (var i=0, clusterViewsLength=this._childViews.length; i<clusterViewsLength; i+=1) {
-				if ((this._childViews[i].getType() == "cluster") && (this._childViews[i].getId() == clusterId)) {
-					// Check if this cluster still hard cards and if not turn it back into a card
-					if (this._childViews[i]._childViews.length == 0) {
-						for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-							if ((this.model.clusters[j]) && (this.model.clusters[j].id == clusterId))  that.model.clusters.splice(j,1);
-						}
-
-						this.model.isVoting = false;
-
-						this.model.cards.push(Card.GenerateModel(this._childViews[i].model,this.model.id));
-						
-						this.render();
-					}
+					if (this._childViews[i].getType() == "cluster") this._childViews[i].addClusterToCluster(targetCluster, newCluster);
 				}
 			}
 		},

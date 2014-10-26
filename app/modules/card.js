@@ -218,7 +218,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 							touchComplete = null;
 
-			    			if ((that._workspace.selectedPageTool == "pen") || (that._workspace.selectedPageTool == "eraser")) that._workspace.stopDrawing();
+			    			if ((that._workspace.getSelectedPageTool() == "pen") || (that._workspace.getSelectedPageTool() == "eraser")) that._workspace.stopDrawing();
 	   					}
 					});
 				}
@@ -229,7 +229,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				});
 
 				this.$el.mouseup(function(e) {
-					if ((that._workspace.selectedPageTool == "pen") || (that._workspace.selectedPageTool == "eraser")) that._workspace.stopDrawing();
+					if ((that._workspace.getSelectedPageTool() == "pen") || (that._workspace.getSelectedPageTool() == "eraser")) that._workspace.stopDrawing();
 				});
 
 				this.$el.dblclick(function(e) {
@@ -331,34 +331,13 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					    	that._workspace.sortZIndexes(that.model.id,true);
 		        		}
 			        	else {
-    						if ((that.$el.attr("is-resized") == undefined) || (that.$el.attr("is-resized") != "true")) {
-				        		if (that.model.parentId == elementId) that.$el.css({ top: 0, left: 0, position: 'relative' });
-				        	}
+    						if (!that.$el.attr("is-resized")) {
+    							if (that._workspace.getObjectType(elementId) == "card") that._workspace.createClusterFromCard(that.model.id, elementId);
+			           		}
 				        	else Card_Services.UpdatePosition(that.model.boardId, that.model.id, (that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
 			        	}
 					}
 				});
-
-				if ((!that.model.parentId) && ((!(that.$el.attr("is-resized"))) || (that.$el.attr("is-resized") == "false"))) {
-		        	that.$el.droppable({
-		        		accept: ".new-card,.item-content-container,.clustered-item-content-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
-		        		tolerance: "pointer",
-		           		drop: function(e, ui) {
-		           			if (!this._resizing) {
-			           			if ($(ui.draggable).attr("object-type") == "card") {
-			           				var droppedCardId = $(ui.draggable).attr("element-id");
-
-			       					if ((droppedCardId) && ((!$(ui.draggable).attr("is-resized")) || ($(ui.draggable).attr("is-resized") == "false"))) that._workspace.createClusterFromCard(droppedCardId, that.model.id);
-					           	}
-			           			else if ($(ui.draggable.context).attr("object-type") == "cluster") {
-			           				var droppedClusterId = $(ui.draggable).attr("element-id");
-
-			       					if (droppedClusterId) that._workspace.createClusterFromCluster(droppedClusterId, that.model.id);
-			           			}
-		           			}
-		           		}
-		        	});
-		        }
 	    	}
 
 			this._mobileEventsBound = true;
