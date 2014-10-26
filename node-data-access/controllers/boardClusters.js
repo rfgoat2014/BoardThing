@@ -26,7 +26,6 @@ exports.update = function (req, res) {
 				if (req.body.action.trim().toLowerCase() == "create") {
 					// we're intending to create a new cluster
 					// retrieve all of a boards cards
-
 					Card
 					.find({ board: board._id })
 					.exec(function(err, cards) {
@@ -68,8 +67,10 @@ exports.update = function (req, res) {
 
 										// set the parent of this card to new cluster we're creating
 										cards[i].parentId = req.params.clusterId;
-										cards[i].collapsed = true;
 										cards[i].zPos = 1;
+										
+										if (cards[i].parentId) cards[i].collapsed = true;
+										else cards[i].collapsed = false;
 
 										updateCard = true;
 									}
