@@ -401,6 +401,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 								}
 		       				}
 
+
 		       				if (isChild) {
 		       					var elementId = $(ui.draggable).attr("element-id");
 
@@ -412,7 +413,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			       							selectedElement = that._childViews[i];
 			       							break;
 			       						}
-
 			       					}
 
 				       				if (selectedElement) that.changeSortPosition(selectedElement);
@@ -596,139 +596,33 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		// ---------- Actions to update sort position
 
 		changeSortPosition: function(selectedElement) {
-			var that = this;
+			var newIndex = -1
+				selectedElementIndex = -1;
 
-			if (selectedElement) {
-				var orderedArray = new Array(),
-					tmpArray = new Array();
-
-				for (var i = 0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					tmpArray[this._childViews[i].model.zPos-1] = this._childViews[i];
-        		}
-
-	        	tmpArray.forEach(function(entry) {
-	        		orderedArray.push(entry);
-	        	});
-
-        		tmpArray = null;
-
-				for (var i = 0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-					var cardOrdered = false;
-
-					for (var j = 0, orderedArrayLength=orderedArray.length; j<orderedArrayLength; j+=1) {
-						if (this._childViews[i].getId() == orderedArray[j].getId()) {
-							cardOrdered = true;
-							break;
-						}
-					};
-
-					if (!cardOrdered) orderedArray.push(this._childViews[i]);
-        		}
-
-				var newZPos = null;
-
-				for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i++) {
-					if (newZPos === null) {
-						if ((orderedArray[i]) && (selectedElement) && (orderedArray[i].getId() != selectedElement.getId())) {
-							var cardViewCenter = $(orderedArray[i].el).position().top + Math.round($(orderedArray[i].el).height()/2);
-
-							if ((this._workspace._currentMousePosition.y-(this._workspace.$("#board-cards").scrollTop()+this.$el.position().top)) < cardViewCenter) newZPos = i;
-						}
-					}
-				}
-
-				if (newZPos === null) newZPos = orderedArray.length;
-
-				if (newZPos != selectedElement.model.zPos) {
-					var arrayPart1 = orderedArray.slice(0,newZPos),
-						arrayPart2 = orderedArray.slice(newZPos);
-
-					for (var i=0, arrayPartLength=arrayPart1.length; i<arrayPartLength; i+=1) {
-						if (arrayPart1[i].getId() == selectedElement.getId()) {
-							arrayPart1.splice(i,1);
-							break;
-						}
-					}
-
-					for (var i=0, arrayPartLength=arrayPart2.length; i<arrayPartLength; i+=1) {
-						if (arrayPart2[i].getId() == selectedElement.getId()) {
-							arrayPart2.splice(i,1);
-							break;
-						}
-					}
-
-					orderedArray = arrayPart1.concat(selectedElement);
-					orderedArray = orderedArray.concat(arrayPart2);
-
-					var cardOrder = [];
-
-					for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i+=1) {
-						var elementFound = false;
-
-						for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
-	   						if (this.model.cards[j].id == orderedArray[i].getId()) {
-								elementFound = true;
-
-								this.model.cards[j].zPos = i+1;
-
-	   							cardOrder.push(this.model.cards[j].id);
-	   						}
-			        	}
-
-	   					if (!elementFound) {
-							for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-	       						if ((orderedArray[i]) && (this.model.clusters[j].id == orderedArray[i].getId())) {
-	   								this.model.clusters[j].zPos = i+1;
-
-	   								cardOrder.push(this.model.clusters[j].id);
-	       						}
-				        	}
-				        }
-					}
-
-					orderedArray = null;
-
-					Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
-						that._workspace.sendSocket(JSON.stringify({ 
-							action:"sortCluster", 
-							board: that.model.boardId, 
-							sortOrder: cardOrder 
-						}));
-					});
-				}
-
-				this.render();
+			for (var i=(this._childViews.length-1); i>=0; i-=1) {
+				if ((newIndex == -1) && ((this._childViews[i].getId() != selectedElement.getId()) && (this._childViews[i].$el.position().top < selectedElement.$el.position().top))) newIndex=i+1;
+				if (this._childViews[i].getId() == selectedElement.getId()) selectedElementIndex = i;
 			}
+
+			if (newIndex == -1) newIndex = 0;
+
+			var selectedCardModel = this.model.cards[selectedElementIndex];
+
+			this.model.cards.splice(selectedElementIndex, 1);
+			this.model.cards.splice(newIndex, 0, selectedCardModel);
+
+			this.saveSortPosition();
+
+			this.render();
 		},
 
 		saveSortPosition: function() {
-			var that=this,
-				orderedArray = new Array(),
-				tmpArray = new Array(),
+			var that = this,
 				cardOrder = [];
 
-			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				tmpArray[this._childViews[i].model.zPos-1] = this._childViews[i];
-        	}
-
-        	tmpArray.forEach(function(entry) {
-        		orderedArray.push(entry);
-        	});
-
-        	tmpArray = null;
-
-			for (var i=0, orderedArrayLength=orderedArray.length; i<orderedArrayLength; i+=1) {
-				var elementFound = false;
-
-				for (var j=0, cardsLength=this.model.cards.length; j<cardsLength; j+=1) {
-					if (this.model.cards[j].id == orderedArray[i].getId()) {
-						elementFound = true;
-
-						this.model.cards[j].zPos = i+1;
-
-						cardOrder.push(this.model.cards[j].id);
-					}
-	        	}
+			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
+				this.model.cards[i].zPos = i;
+				cardOrder.push(this.model.cards[i].id);
 			}
 
 			Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
