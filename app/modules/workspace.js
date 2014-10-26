@@ -247,7 +247,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return null;
 		},
 
-		// {{ Board Map }}
+		// {{ Board map }}
 
 		viewBoardMap: function() {
 			this._boardMap = new BoardMap.Index({ model: this.model});
@@ -256,7 +256,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			this.$("#overlay").show();
 		},
 
-		// {{ Adding Cards }}
+		// {{ Adding cards }}
 
 		createAddCardDialog: function() {
 			var that = this;
@@ -303,6 +303,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 				if (this._addCard) {
 					this.$("#card-create-overlay").hide();
 
+					this._addCard.setCardModel(null);
 					this._addCard.clearCardText();
 				}
 			}
@@ -349,6 +350,40 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			catch (err) {
 				Utils.sendClientError("cardAdded", err);
 			}
+		},
+
+		// {{ Editing cards }}
+
+		showEditCard: function(cardModel) {
+	   		//try {
+				this._blockAddCard = true;
+
+				if (this._addCard) {
+					this.$("#card-create-overlay").show();
+
+					this._addCard.focusCardText();
+					this._addCard.setCardModel(cardModel);
+				}	
+		    	
+			//}
+			//catch (err) {
+			//	this.sendClientError("editCard", err);
+			//}
+		},
+
+		cardEdited: function(card) {
+	   		//try {
+		    	this._blockAddCard = false;
+
+		   		if ((card) && (this._boardEntities)) {
+					for (var i=0; i<this._boardEntities.length; i++) {
+						this._boardEntities[i].updateCardContent(card.id, card.content, card.title, card.color);
+					}
+		   		}
+			//}
+			//catch (err) {
+			//	this.sendClientError("editCardComplete", err);
+			//}
 		},
 
 		// {{ Managing board cards }}

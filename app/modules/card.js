@@ -475,11 +475,19 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		},
 
 		editText: function(e) {
-			this._workspace.editText(this.model);
+			this._workspace.showEditCard(this.model);
 		},
 
 		editImage: function(e) {
-			this._workspace.editImage(this.model);
+	   		//try {
+		    	this._editing = true;
+		    	
+				this.$("#card-edit-overlay").append(editImageView.el);
+				this.$("#card-edit-overlay").show();
+			//}
+			//catch (err) {
+			//	this.sendClientError("editImage", err);
+			//}
 		},
 
 		updateCardContent: function(cardId,content,title,color) {
@@ -892,6 +900,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	Card.AddText = Backbone.View.extend({
     	el: "<div>",
 
+    	_cardModel: null,
     	_isMobile: null,
     	_workspace: null,
 
@@ -981,21 +990,56 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			});
 		},
 
+		setCardModel: function(cardModel) {
+			if (cardModel) {
+				this._cardModel = cardModel;
+
+				this.$("#card-text").val(cardModel.content)
+			}
+			else this._cardModel = null;
+		},
+
 		saveCard: function(e) {
 			var that = this;
 
 			if (this.$("#card-text").val().trim().length > 0) {
 				var boardId = this._workspace.getSelectedBoardId();
 
-				var newCard = {
-					boardId: boardId,
-					content: this.$("#card-text").val(),
-					color: this.$("#card-color-select").spectrum("get").toString()
-				};
-				
-				Card_Services.InsertTextCard(boardId, newCard, function(response) {
-					that._workspace.cardAdded(response.card);
-				});
+				if (!this._cardModel) {
+					var newCard = {
+						boardId: boardId,
+						content: this.$("#card-text").val(),
+						color: this.$("#card-color-select").spectrum("get").toString()
+					};
+					
+					Card_Services.InsertTextCard(boardId, newCard, function(response) {
+						that._workspace.cardAdded(response.card);
+
+						that._workspace.sendSocket(JSON.stringify({ 
+							action:"boardCardAdded", 
+							board: boardId, 
+							card: newCard 
+						}));
+					});
+				}
+				else {
+					var updateTextModel = {
+						id: this._cardModel.id,
+						parentId: this._cardModel.parentId,
+						content: this.$("#card-text").val(),
+						color: this.$("#card-color-select").spectrum("get").toString()
+					};
+
+					Card_Services.UpdateTextCard(boardId, this._cardModel.id, updateTextModel, function(response) {
+						that._workspace.cardEdited(updateTextModel);
+
+						that._workspace.sendSocket(JSON.stringify({ 
+							action:"boardCardUpdated", 
+							board: boardId, 
+							card: updateTextModel 
+						}));
+					});
+				}
 			}
 
 			this._workspace.hideAddCard();
