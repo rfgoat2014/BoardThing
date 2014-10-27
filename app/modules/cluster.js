@@ -9,14 +9,22 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	var Cluster = {};
 
 	Cluster.GenerateModel = function(model, parentId) {
+		var parentIsVoting = false, 
+			isVoting = false, 
+			votesReceived = 0;
+
+		if  (model.parentIsVoting) parentIsVoting = model.parentIsVoting;
+		if  (model.isVoting) isVoting = model.isVoting;
+		if  (model.votesReceived) votesReceived = model.votesReceived;
+
 		var clusterModel = {
 			id: model.id, 
 			boardId: model.boardId,
 			type: model.type, 
 			parentId: parentId,
-			parentIsVoting: false, 
-			isVoting: false, 
-			votesReceived: 0, 
+			parentIsVoting: parentIsVoting, 
+			isVoting: isVoting, 
+			votesReceived: votesReceived, 
 			xPos: model.xPos,
 			yPos: model.yPos,
 			width: model.width,
@@ -1032,12 +1040,12 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			var that = this;
 
-			Cluster.StartDotVoting(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.StartDotVoting(this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"startDotVoting",
-					board: this.model.boardId,
+					board: that.model.boardId,
 					cluster: { 
-						id: this.model.id
+						id: that.model.id
 					} 
 				}));
 			});
@@ -1082,12 +1090,12 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			var that = this;
 
-			Cluster.StopDotVoting(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.StopDotVoting(this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"stopDotVoting",
-					board: this.model.boardId,
+					board: that.model.boardId,
 					cluster: { 
-						id: this.model.id
+						id: that.model.id
 					}
 				}));
 			});
@@ -1113,6 +1121,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 		addVote: function(e) {
 			e.stopPropagation();
+
+			var that = this;
 
 			Cluster_Services.AddVote(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 

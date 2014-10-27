@@ -32,6 +32,27 @@
     box-shadow: 0 0px 0px #ffffff;
 }
 
+
+/* Voting styles */
+
+.vote-container {
+    margin-top: 0px;
+}
+
+.vote-container .add-vote {
+    margin-right: 5px;
+}
+
+.vote-container .vote-count {
+    position: relative;
+    font-size: 12px;
+    font-weight: normal;
+    vertical-align: top;
+    top: 1px;
+}
+
+/* Resizing styles */
+
 .resizing-content {
     top: -5px;
     left: -5px;

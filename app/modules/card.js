@@ -9,6 +9,14 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	var Card = {};
 
 	Card.GenerateModel = function(model, parentId) {
+		var parentIsVoting = false, 
+			isVoting = false, 
+			votesReceived = 0;
+
+		if  (model.parentIsVoting) parentIsVoting = model.parentIsVoting;
+		if  (model.isVoting) isVoting = model.isVoting;
+		if  (model.votesReceived) votesReceived = model.votesReceived;
+		
 		var cardModel = {
 			id: model.id, 
 			boardId: model.boardId,
@@ -16,9 +24,9 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			title: model.title, 
 			content: model.content,
 			cards: [], 
-			parentIsVoting: false, 
-			isVoting: false, 
-			votesReceived: 0, 
+			parentIsVoting: parentIsVoting, 
+			isVoting: isVoting, 
+			votesReceived: votesReceived, 
 			isLocked: model.isLocked, 
 			xPos: model.xPos, 
 			yPos: model.yPos, 
@@ -758,7 +766,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		duplicateCard: function(e) {
 			var that = this;
 
-			Card_Services.Duplicate(this.model.boardId + "/" + this.model.id, function(response) {
+			Card_Services.Duplicate(this.model.boardId, this.model.id, function(response) {
 				that._workspace.addCardToBoard(response.card);
 
 				that._workspace.sendSocket(JSON.stringify({ 
