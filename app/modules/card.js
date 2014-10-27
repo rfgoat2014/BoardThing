@@ -564,54 +564,14 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	    			resize: function(e,ui) {
 	    				that.$("#undo-card-resize-button").show();
 
-	    				/*if ((startX) && (startY) && (that.$el.width() == 180)) {
-							that.$el.css({ left: startX });
-
-							if (that.$el.height() < currentHeight)  that.$el.css({ top: startY });
-	    				}*/
-
 	    				if (that.model.type.trim().toLowerCase() != "text") {
-    						/*if (that.$el.width() > 180) {
-			    				if (currentWidth != that.$el.width()) {
-									that.$("#card-body-image_" + that.model.id).css({ height: "auto", width: that.$el.width()-20 });
-			    				}
-			    				else if (currentHeight != that.$el.height()) {
-									that.$("#card-body-image_" + that.model.id).css({ height: that.$el.height()-20, width: "auto" });
-									
-									that.$el.css({ width: that.$("#card-body-image_" + that.model.id).width() + 20 });
-			    				}
 
-								if ((that.model.title) && (that.model.title.length > 0)) that.$el.css({ height: that.$("#card-body-image_" + that.model.id).height() + 20 + that.$("#card-image-title").height() + 10 });
-								else that.$el.css({ height: that.$("#card-body-image_" + that.model.id).height() + 20 });
-							}
-							else if (that.$el.height() > currentHeight) {
-								that.$("#card-body-image_" + that.model.id).css({ height: that.$el.height()-20 });
-								that.$("#card-body-image_" + that.model.id).css({ width: "auto" });
-								
-								that.$el.css({ width: that.$("#card-body-image_" + that.model.id).width() + 20 });
-							
-								if ((that.model.title) && (that.model.title.length > 0)) that.$el.css({ height: that.$("#card-body-image_" + that.model.id).height() + 20 + that.$("#card-image-title").height() + 10 });
-								else that.$el.css({ height: that.$("#card-body-image_" + that.model.id).height() + 20 });
-							}
-							else {	
-								that.$("#card-body-image_" + that.model.id).css({ height: "auto", width: 160 });
-
-								that.$el.css({ width: that.$("#card-body-image_" + that.model.id).width() + 20 });
-
-								if ((that.model.title) && (that.model.title.length > 0)) that.$el.css({ height: that.$("#card-body-image_" + that.model.id).height() + 20 + that.$("#card-image-title").height() + 10 });
-								else that.$el.css({ height: that.$("#card-body-image_" + that.model.id).height() + 20 });
-							}
-
-							currentWidth = that.$el.width();
-							currentHeight = that.$el.height();*/
 						}
 						else {
 							if (that.$el.height() < (that.$("#card-body-text").height() + 20)) that.$el.css({ height: that.$("#card-body-text").height() + 20 });	
 						}
 
-	    				if (that.$el.width() == 180) {
-	    					that.$el.css({ left: lastX })
-	    				}
+	    				if (that.$el.width() == 180) that.$el.css({ left: lastX });
 
 	    				lastX = that.$el.position().left;
 	    			}
