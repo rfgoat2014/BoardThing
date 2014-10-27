@@ -2,6 +2,9 @@ define([
 	"modules/card.services",
 	"modules/cluster.services",
 	"modules/workspace.services",
+	"jquery",
+    'jqueryUI',
+    'touchpunch',
 	"spectrum"
 ],
 
@@ -16,7 +19,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		if  (model.parentIsVoting) parentIsVoting = model.parentIsVoting;
 		if  (model.isVoting) isVoting = model.isVoting;
 		if  (model.votesReceived) votesReceived = model.votesReceived;
-		
+
 		var cardModel = {
 			id: model.id, 
 			boardId: model.boardId,
@@ -556,7 +559,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 				this._resizing = true;
 
-	    		this.el$.resizable({
+	    		this.$el.resizable({
 	    			handles: "n,s,e,w",
 					start: function(e,ui) {
 						startX = that.$el.position().left;
