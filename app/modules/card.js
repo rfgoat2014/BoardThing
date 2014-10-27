@@ -624,7 +624,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 		// Called when the resize is finished
 
-		disableResizeCard: function() {
+		stopCardResize: function() {
 			if (this._resizing) {
 				this.removeResizeStyling();
 

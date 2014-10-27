@@ -1,12 +1,11 @@
 define([
-	"modules/board",
 	"modules/board.services",
 	"modules/workspace.services",
 	"jquery",
 	"jqueryUI"
 ],
 
-function(Board, Board_Services, Workspace_Services) {
+function(Board_Services, Workspace_Services) {
 	var BoardMap = {};
 
 	//////////////////////// Views

@@ -1,5 +1,4 @@
 define([
-	"modules/board",
 	"modules/card",
 	"modules/cluster",
 	"modules/boardMap",
@@ -10,7 +9,7 @@ define([
 	"modules/cluster.services"
 ],
 
-function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
+function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
@@ -103,8 +102,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
       			this.$("#board-cards").unbind("click");
 			}
 			else {
+				var canvas = document.getElementById("page-canvas");
+
 				try {
-					document.getElementById("page-canvas").removeEventListener('dblclick');
+					canvas.removeEventListener('click');
+				}
+				catch (err) {}
+
+				try {
+					canvas.removeEventListener('dblclick');
 				}
 				catch (err) {}
 			}
@@ -139,6 +145,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 				}, false);
 			}
 			else {
+	            canvas.addEventListener('click', function(e) {
+					that.removePopups();
+				});
+
 	            canvas.addEventListener('dblclick', function(e) {
 					if (that.getSelectedPageTool() == "card") {
 	        			that._dropPosition = { x: that._currentMousePosition.x,  y: that._currentMousePosition.y };
@@ -654,7 +664,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 					lockedElements = new Array(),
 					unlockedElements = new Array();
 
-				for (var i=0; i<(this._boardEntities.length); i++) {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
 					if ((elementId) && (this._boardEntities[i].getId() == elementId)) this._boardEntities[i].setZPos(999999999999999);
 
 					if (this._boardEntities[i].getIsLocked()) lockedElements.push(this._boardEntities[i]);
@@ -703,6 +713,24 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			//catch (err) {
 			//	Utils.sendClientError("sortZIndexes", err);
 			//}
+		},
+				
+		removePopups: function(calledBy) {
+			if (calledBy != "authenticate") {
+				this.$("#authenticate-user-container").remove();
+			}
+			
+			if (calledBy != "saveAs") {
+				this.$("#save-as-board-container").remove();
+			}
+
+			if (this._boardEntities) {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
+					this._boardEntities[i].clearSettingsmenu();
+
+					if (this._boardEntities[i].getType() == "card") this._boardEntities[i].stopCardResize();
+				}
+			}
 		},
 
 		// {{ Managing web sockets }}
