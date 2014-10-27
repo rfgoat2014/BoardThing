@@ -59,6 +59,8 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
     	_workspace: null,
     	_parent: null,
 
+    	_resizing: false,
+
     	// {{ Contructor }}
 
 		initialize: function(options) {
@@ -481,7 +483,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		editItem: function(e) {
 			e.stopPropagation();
 
-			this.disableResizeCard();
+			this.stopCardResize();
 
 			if (this.model.type.toLowerCase() == "text") this.editText(e);
 			else this.editImage(e);
@@ -541,11 +543,11 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			this.$("#card-resize-button").hide();
 
 			if(this.model.parentId == null) {
-				var startX = null;
-				var startY = null;
+				var currentWidth = this.$el.width(),
+					currentHeight = this.$el.height(),
+					lastX = null;
 
-				var currentWidth = this.$el.width();
-				var currentHeight = this.$el.height();
+				this._resizing = true;
 
 				this.$el.addClass("resizing-content");
 
@@ -557,25 +559,19 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				}
 				catch(err) {}
 
-				this._resizing = true;
-
 	    		this.$el.resizable({
 	    			handles: "n,s,e,w",
-					start: function(e,ui) {
-						startX = that.$el.position().left;
-						startY = that.$el.position().top;
-					},
 	    			resize: function(e,ui) {
 	    				that.$("#undo-card-resize-button").show();
 
-	    				if ((startX) && (startY) && (that.$el.width() == 180)) {
+	    				/*if ((startX) && (startY) && (that.$el.width() == 180)) {
 							that.$el.css({ left: startX });
 
 							if (that.$el.height() < currentHeight)  that.$el.css({ top: startY });
-	    				}
+	    				}*/
 
 	    				if (that.model.type.trim().toLowerCase() != "text") {
-    						if (that.$el.width() > 180) {
+    						/*if (that.$el.width() > 180) {
 			    				if (currentWidth != that.$el.width()) {
 									that.$("#card-body-image_" + that.model.id).css({ height: "auto", width: that.$el.width()-20 });
 			    				}
@@ -607,16 +603,17 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 							}
 
 							currentWidth = that.$el.width();
-							currentHeight = that.$el.height();
+							currentHeight = that.$el.height();*/
 						}
 						else {
 							if (that.$el.height() < (that.$("#card-body-text").height() + 20)) that.$el.css({ height: that.$("#card-body-text").height() + 20 });	
 						}
 
 	    				if (that.$el.width() == 180) {
-							startX = that.$el.position().left;
-							startY = that.$el.position().top;
+	    					that.$el.css({ left: lastX })
 	    				}
+
+	    				lastX = that.$el.position().left;
 	    			}
 				});
 			}
@@ -640,7 +637,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				if (!isStartSize) {
 					this.saveCardSize(this.$el.width(), this.$el.height());
 
-		        	this.updateCardPosition((this.$el.position().left + this._workspace.$("#board-cards").scrollLeft()), (this.$el.position().top + this._workspace.$("#board-cards").scrollTop()));
+		        	this.updateCardPosition((this.$el.position().left + this._workspace.$("#board-container").scrollLeft()), (this.$el.position().top + this._workspace.$("#board-container").scrollTop()));
 				}
 				else this.saveUndoResizing();
 			}
