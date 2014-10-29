@@ -28,7 +28,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			content: model.content,
 			cards: [], 
 			parentIsVoting: parentIsVoting, 
-			isVoting: isVoting, 
+			isVoting: false, 
 			votesReceived: votesReceived, 
 			isLocked: model.isLocked, 
 			xPos: model.xPos, 

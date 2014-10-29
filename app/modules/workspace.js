@@ -622,6 +622,8 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 							this._boardEntities[i] = null;
 							this._boardEntities.splice(i, 1);
 
+							Cluster_Services.StopDotVoting(this._selectedBoard.id, clusterId);
+
 							this.addCardToBoard(cardModel);
 							break;
 						}
