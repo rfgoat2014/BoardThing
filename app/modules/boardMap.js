@@ -22,6 +22,8 @@ function(Board_Services, Workspace_Services) {
 
 			this.on("addBoard", this.addBoard);
 
+			this._workspace = options.workspace;
+
 			this.render();
 		},
 
@@ -32,23 +34,33 @@ function(Board_Services, Workspace_Services) {
 				that.$el.html(_.template(contents, that.model));
 
 				that.afterRender();
+
+				that.unbind();
+				that.bind();
 			}, "text");
 		},
 
 		afterRender: function() {
-            var boards = this.model.boards;
+            var boards = this._workspace.getBoards();
+
+            this._boards = [];
 
             for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-            	this._boards.push(new BoardMap.Board({ model: boards[i], parent: this }));
+            	this._boards.push(new BoardMap.Board({ model: boards[i], parent: this, workspace: this._workspace }));
             }
 
             this.drawBoardMap();
 		},
 
-		bind: function(unbind) {
-			var that = this;
+		unbind: function() {
+			try {
+				this.$("#board-map-container").sortable("destroy");
+			}
+			catch (err) {}
+		},
 
-	    	if (unbind) this.$("#board-map-container").sortable("destroy");
+		bind: function() {
+			var that = this;
 
     		this.$("#board-map-container").sortable({
     			items: ".board-map-board-container",
@@ -89,8 +101,6 @@ function(Board_Services, Workspace_Services) {
             if (this._addBoardMap) this._addBoardMap.destroy();
             this._addBoardMap = new BoardMap.AddBoard({ parent: this });
             this.$("#board-map-container").append(this._addBoardMap.el);
-
-			this.bind(unbind);
 		},
 
 		storeBoardPositions: function() {
@@ -103,7 +113,7 @@ function(Board_Services, Workspace_Services) {
             	});
             }
 
-            Workspace_Services.UpdateBoardPositions(this.model.id, boardPositions);
+            Workspace_Services.UpdateBoardPositions(this._workspace.getWorkspaceId(), boardPositions);
 		},
 
 		addBoard: function() {
@@ -112,8 +122,20 @@ function(Board_Services, Workspace_Services) {
             Board_Services.Insert(this.model.get("id"), "New Board", function(response) {
             	that._boards.push(new BoardMap.Board({ model: response.board, parent: that }));
 
-            	that.drawBoardMap(true);
+            	that.drawBoardMap();
+
+				that.unbind();
+				that.bind();
             });
+		},
+
+		destroy: function() {
+            for (var i=0, boardsLength = this._boards.length; i<boardsLength; i+=1) {
+            	this._boards[i].destroy();
+            }
+
+			$(this.el).detach();
+			this.remove();
 		}
 	});
 
@@ -125,6 +147,8 @@ function(Board_Services, Workspace_Services) {
 			this.el.className = "board-map-board-container";
 
 			this._parent = options.parent;
+
+			this._workspace = options.workspace;
 		
 			this.render()
 		},
@@ -134,7 +158,23 @@ function(Board_Services, Workspace_Services) {
 
 			$.get("/app/templates/boardMap/board.html", function(contents) {
 				that.$el.html(_.template(contents, that.model));
+
+				that.unbind();
+				that.bind();
 			}, "text");
+		},
+
+		unbind: function() {
+			this.$(".board-map-board").unbind("dblclick");
+		},
+
+		bind: function() {
+			var that = this;
+
+			this.$(".board-map-board").dblclick(function(e) {
+				that._workspace.setSelectedBoard($(this).attr("element-id"));
+				that._workspace.hideBoardMap();
+			});
 		},
 
 		getBoardId: function() {
@@ -147,6 +187,11 @@ function(Board_Services, Workspace_Services) {
 
 		setBoardPosition: function(position) {
 			this.model.position = position;
+		},
+
+		destroy: function() {
+			$(this.el).detach();
+			this.remove();
 		}
 	});
 
@@ -184,7 +229,7 @@ function(Board_Services, Workspace_Services) {
 		destroy: function() {
 			$(this.el).detach();
 			this.remove();
-		},
+		}
 	});
 
 	return BoardMap;

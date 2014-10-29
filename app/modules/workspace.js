@@ -46,10 +46,6 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 		    this._isMobile = (iOS || android);	
 		},
 
-      	events: {
-      		"click #view-board-map": "viewBoardMap"
-      	},
-
       	// {{ Build Workspace }}
 
 		render: function() {
@@ -165,7 +161,11 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 				canvas.onmouseup = function(e) {
 				}
 			}
-			
+
+			this.$("#view-board-map").click(function(event) {
+				that.viewBoardMap();
+			});
+
 		    this.$("#board-cards").mousemove(function(event) {
 		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
 		        that._currentMousePosition.y = that.$("#board-container").scrollTop() + event.pageY;
@@ -232,6 +232,10 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 			return this._selectedBoard.id;
 		},
 
+		getBoards: function() {
+			return this.model.boards;
+		},
+
 		getSelectedColor: function() {
 			return "#ffffff";
 		},
@@ -260,10 +264,39 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 		// {{ Board map }}
 
 		viewBoardMap: function() {
-			this._boardMap = new BoardMap.Index({ model: this.model});
+			this._boardMap = new BoardMap.Index({ workspace: this });
 
 			this.$("#overlay").html(this._boardMap.el);
 			this.$("#overlay").show();
+		},
+
+
+		hideBoardMap: function() {
+			this._boardMap.destroy();
+			delete this._boardMap;
+
+			this.$("#overlay").empty();
+			this.$("#overlay").hide();
+		},
+
+		setSelectedBoard: function(boardId) {
+			var boards = this.model.boards;
+
+			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
+				if ((boardId) && (boards[i].id.toString() == boardId)) {
+					this._selectedBoard = boards[i];		
+					break;
+				}
+			}
+
+			this.setupBoard();
+
+			this.unbind();
+			this.bind();
+
+			this.$("#board-title").html(this._selectedBoard.title);
+
+			this.drawBoardItems();
 		},
 
 		// {{ Adding cards }}
