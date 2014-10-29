@@ -43,6 +43,8 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		if (model.votesReceived > 0) {
 			if (model.type.trim().toLowerCase() == "text") cardModel.content = model.content + " (+" + model.votesReceived + ")";
 			else cardModel.title = model.title + " (+" + model.votesReceived + ")";
+
+			cardModel.votesReceived = 0;
 		}
 
 		if (parentId) cardModel.parentId = parentId;
@@ -154,7 +156,8 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 	    		if (that.$el.attr("is-resized") == "true") {
 					if (that.model.type.trim().toLowerCase() == "text") {
 						if ((that.$("#card-body-text").height() + 20) > that.$el.height()) {
-							that.$el.css({ height: (that.$("#card-body-text").height() + 20) });	
+							that.$el.css({ height: (that.$("#card-body-text").height() + 20) });
+
 							that.saveCardSize(that.$el.width(), that.$el.height());
 						}
 					}

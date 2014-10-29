@@ -45,6 +45,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		if (model.votesReceived > 0) {
 			if (model.type.trim().toLowerCase() == "text") clusterModel.content = model.content + " (+" + model.votesReceived + ")";
 			else clusterModel.title = model.title + " (+" + model.votesReceived + ")";
+
+			clusterModel.votesReceived = 0;
 		}
 
 		if (model.cards) clusterModel.cards = model.cards;
