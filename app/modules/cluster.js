@@ -256,20 +256,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	        	});
 	        }
 
-        	this.$el.keypress(function(e) {
-			  	if (e) {
-				  	var charCode = e.charCode || e.keyCode;
-
-			        if (charCode == 13) {
-			        	e.preventDefault();
-
-			        	that.updateCluster();
-
-						that.$("#editable-title_" + that.model.id).blur();
-			        }
-			    }
-        	});
-
         	this.$("#edit-title_" + this.model.id).click(function(e) {
 	        	that.clearSettingsmenu();
 
@@ -288,10 +274,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	        	that.clearSettingsmenu();
 
         		that.stopDotVoting(e);
-        	});
-
-        	this.$("#editable-title_" + this.model.id).blur(function(e) {
-        		that.updateCluster();
         	});
 
         	this.$("#add-vote").click(function(e) {
@@ -630,8 +612,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				cardOrder = [];
 
 			for (var i=0, cardsLength=this.model.cards.length; i<cardsLength; i+=1) {
-				this.model.cards[i].zPos = i;
-				cardOrder.push(this.model.cards[i].id);
+				if (this.model.cards[i]) {
+					this.model.cards[i].zPos = i;
+					cardOrder.push(this.model.cards[i].id);
+				}
 			}
 
 			Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
@@ -746,64 +730,24 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		editCluster: function(e) {
 			e.stopPropagation();
 
-			var that = this;
-
-			this.$("#cluster-title_" + this.model.id).hide();
-			this.$("#cluster-editable-title_" + this.model.id).show();
-
-    		this._editing = true;
-			this._workspace.setEditing();
-
-    		this.hideHoverIcons();
+			if (this.model.type.toLowerCase() == "text") this.editText(e);
+			else this.editImage(e);
 		},
 
-		updateCluster: function() {
-			var that = this,
-				clusterValid = true;
+		editText: function(e) {
+			this._workspace.showEditCard(this.model);
+		},
 
-			if (this.$("#editable-title_" + this.model.id).val().trim().length == 0) clusterValid = false;
-
-			if (clusterValid) {
-				// Update styles
-				if (this.model.type.trim().toLowerCase() == "text") this.model.content = this.$("#editable-title_" + this.model.id).val();
-				else this.model.title = this.$("#editable-title_" + this.model.id).val();
-
-				this.$("#cluster-title_" + this.model.id).html(this.$("#editable-title_" + this.model.id).val());
-				
-				this.$("#cluster-title_" + this.model.id).show();
-				this.$("#cluster-editable-title_" + this.model.id).hide();
-
-				// Save updates
-				var clusterModel = null;
-
-				if (this.model.type == "text") {
-		  			clusterModel = {
-						id: this.model.id, 
-						boardId: this.model.boardId,
-		  				action: "update",
-						content: this.model.content
-					};
-				}
-				else {
-		  			clusterModel = {
-						id: this.model.id, 
-						boardId: this.model.boardId,
-		  				action: "update",
-						title: this.model.title
-					};	
-				}
-
-				Cluster_Services.Insert(this.model.boardId, this.model.id, clusterModel, function(response) {
-					that._workspace.sendSocket(JSON.stringify({ 
-						action:"boardClusterUpdated", 
-						board: that.model.boardId, 
-						cluster: clusterModel 
-					}));
-				});
-
-    			this._editing = false;
-				this._workspace.disableEditing();
-			}
+		editImage: function(e) {
+	   		//try {
+		    	this._editing = true;
+		    	
+				this.$("#card-edit-overlay").append(editImageView.el);
+				this.$("#card-edit-overlay").show();
+			//}
+			//catch (err) {
+			//	this.sendClientError("editImage", err);
+			//}
 		},
 
 		updateClusterTitle: function(clusterId, title, content) {
@@ -979,6 +923,13 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		updateCardContent: function(cardId,content,title,color) {
+			if (this.model.id == cardId) {
+				this.model.content = content;
+				this.model.title = title;
+
+				this.render();
+			}
+
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
 				this._childViews[i].updateCardContent(cardId,content,title,color);
 			}

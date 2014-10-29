@@ -970,11 +970,11 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		},
 
 		saveCard: function(e) {
-			var that = this;
+			var that = this,
+				boardId = this._workspace.getSelectedBoardId();
+
 
 			if (this.$("#card-text").val().trim().length > 0) {
-				var boardId = this._workspace.getSelectedBoardId();
-
 				if (!this._cardModel) {
 					var newCard = {
 						boardId: boardId,
@@ -993,22 +993,44 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					});
 				}
 				else {
-					var updateTextModel = {
-						id: this._cardModel.id,
-						parentId: this._cardModel.parentId,
-						content: this.$("#card-text").val(),
-						color: this.$("#card-color-select").spectrum("get").toString()
-					};
+					var updateModel = null;
 
-					Card_Services.UpdateTextCard(boardId, this._cardModel.id, updateTextModel, function(response) {
-						that._workspace.sendSocket(JSON.stringify({ 
-							action:"boardCardUpdated", 
-							board: boardId, 
-							card: updateTextModel 
-						}));
-					});
+					if ((this._cardModel.cards == null) && (this._cardModel.cards.length === 0)) {
+						var updateModel = {
+							id: this._cardModel.id,
+							parentId: this._cardModel.parentId,
+							content: this.$("#card-text").val(),
+							color: this.$("#card-color-select").spectrum("get").toString()
+						};
+
+						Card_Services.UpdateTextCard(boardId, this._cardModel.id, updateModel, function(response) {
+							that._workspace.sendSocket(JSON.stringify({ 
+								action:"boardCardUpdated", 
+								board: boardId, 
+								card: updateModel 
+							}));
+						});
+					}
+					else {
+						updateModel = {
+							id: this._cardModel.id, 
+							boardId: boardId,
+			  				action: "update"
+			  			};
+
+			  			if (this._cardModel.type == "text") updateModel.content = this.$("#card-text").val();
+			  			else updateModel.title = this.$("#card-text").val();
+
+						Cluster_Services.Insert(boardId, this._cardModel.id, updateModel, function(response) {
+							that._workspace.sendSocket(JSON.stringify({ 
+								action:"boardClusterUpdated", 
+								board: boardId, 
+								cluster: updateModel 
+							}));
+						});
+					}
 					
-					that._workspace.cardEdited(updateTextModel);
+					that._workspace.cardEdited(updateModel);
 				}
 			}
 
