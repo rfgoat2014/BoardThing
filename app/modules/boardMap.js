@@ -20,8 +20,6 @@ function(Board_Services, Workspace_Services) {
 			this.el.id = "board-map-popup-container";
 			this.el.className = "popup-container";
 
-			this.on("addBoard", this.addBoard);
-
 			this._workspace = options.workspace;
 
 			this.render();
@@ -113,7 +111,7 @@ function(Board_Services, Workspace_Services) {
             	});
             }
 
-            Workspace_Services.UpdateBoardPositions(this._workspace.getWorkspaceId(), boardPositions);
+            Workspace_Services.UpdateBoardPositions(this._workspace.getId(), boardPositions);
 		},
 
 		addBoard: function() {
@@ -222,7 +220,7 @@ function(Board_Services, Workspace_Services) {
 			this.$("#add-board").unbind("click");
 
 			this.$("#add-board").click(function(e) {
-				that._parent.trigger("addBoard");
+				that._parent.addBoard();
 			});
 		},
 

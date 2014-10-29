@@ -29,13 +29,6 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 	    _cardsDroppedInPosition: 0,
 
 		initialize: function(options) {
-			this.on("cardAdded", this.cardAdded);
-			this.on("setClusterToCard", this.setClusterToCard);
-			this.on("cardPositionUpdated", this.cardPositionUpdated);
-			this.on("saveClusterOrder", this.saveClusterOrder);
-			this.on("updateClusterExpanded", this.updateClusterExpanded);
-			this.on("updateClusterCollapsed", this.updateClusterCollapsed);
-
 			this.render();
 
 		    // Check if is being viewed on a mobile device
@@ -224,7 +217,7 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 
 		// {{ Getters }}
 
-		getWorkspaceId: function() {
+		getId: function() {
 			return this.model.id;
 		},
 
@@ -915,7 +908,7 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 		},
 
 		cancel: function() {
-			this.parent.trigger("cancelAddWorkspace");
+			this.parent.cancelAddWorkspace();
 		},
 
 		create: function() {
@@ -927,7 +920,7 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 
 			if ((title) && (title.trim().length > 0)) {
 				Workspace_Services.Insert(title.trim(), function(response) {
-					if (response.status == "success") that.parent.trigger("workspaceAdded", response.workspace);
+					if (response.status == "success") that.parent.workspaceAdded(response.workspace);
 					else that.$("#create-error-message").html(response.message);
 				})
 			}
@@ -976,7 +969,7 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 				e.stopPropagation();
 				e.preventDefault();
 
-				that.parent.trigger("viewWorkspace", that.model.id);
+				that.parent.viewWorkspace(that.model.id);
 			});
 		}
 	});

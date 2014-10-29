@@ -15,15 +15,7 @@ function(Workspace, Workspace_Services) {
     	_workspaces: [],
 
 		initialize: function() {
-			this.on("cancelAddWorkspace", this.cancelAddWorkspace);
-			this.on("workspaceAdded", this.workspaceAdded);
-			this.on("viewWorkspace", this.viewWorkspace);
-
 			this.render();
-      	},
-
-      	events: {
-      		"click #create-workspace-button": "createWorkspace"
       	},
 
 		render: function(){
@@ -33,6 +25,9 @@ function(Workspace, Workspace_Services) {
 				that.$el.html(_.template(contents));
 			
 				that.afterRender();
+
+				that.unbind();
+				that.bind();
 			}, "text");
 		},
 
@@ -50,6 +45,18 @@ function(Workspace, Workspace_Services) {
 					that.renderWorkspaces();
 				}
 			});
+		},
+
+		unbind: function() {
+  			this.$("#create-workspace-button").unbind("click");
+		},
+
+		bind: function() {
+  			var that = this;
+
+  			this.$("#create-workspace-button").click(function(e) {
+  				this.createWorkspace();
+  			});
 		},
 
 		// ----- Sort and render workspaces
