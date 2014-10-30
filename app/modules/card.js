@@ -173,7 +173,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				this.$el.unbind("mouseover");
 				this.$el.unbind("mouseout");
 
-				this.$("#card-settings-button").unbind("click");
+				this.$("#card-settings-button_" + this.model.id).unbind("click");
 			}
 			
 			this.$el.unbind("draggable");
@@ -242,6 +242,10 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			else {
 				this.$el.click(function(e) {
 					e.stopPropagation();
+
+					that.clearSettingsmenu(e);
+
+					if (that._parent) that._parent.bubbleClearSettingsmenu();
 				});
 
 				this.$el.mouseup(function(e) {
@@ -270,7 +274,9 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 					that.hideHoverIcons(e);
 				});
 
-				this.$("#card-settings-button").click(function(e) {
+				this.$("#card-settings-button_" + this.model.id).click(function(e) {					
+					if (that._parent) that._parent.bubbleClearSettingsmenu();
+
 					that.showSettingsMenu(e);
 				});
 			}
@@ -412,11 +418,11 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		showHoverIcons: function (e) {
 			e.stopPropagation();
 
-			this.$("#card-action-container").show();
+			this.$("#card-action-container_" + this.model.id).show();
 		},
 
 	    hideHoverIcons: function(e) {
-	    	if (!this._showSettingsIcon) this.$("#card-action-container").hide();
+	    	if (!this._showSettingsIcon) this.$("#card-action-container_" + this.model.id).hide();
 	    },
 
 		// ---------- Actions for displaying sthe settings menu
@@ -424,21 +430,27 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		showSettingsMenu: function(e) {
 			e.stopPropagation();
 
-			if (!this.$("#card-settings-menu").is(':visible')) {
+			if (!this.$("#card-settings-menu_" + this.model.id).is(':visible')) {
 				this._showSettingsIcon = true;
 
 				if (this._isMobile) this.$("#card-resize-button").hide();
 
-				this.$("#card-settings-menu").show();
+				this.$("#card-settings-menu_" + this.model.id).show();
 			}
 			else this.clearSettingsmenu();
+		},
+
+		bubbleClearSettingsmenu: function() {
+			this.clearSettingsmenu();
+
+			if (this._parent) this._parent.bubbleClearSettingsmenu();
 		},
 
 		clearSettingsmenu: function() {
 			this._showSettingsIcon = false;
 
-			this.$("#card-settings-menu").hide();
-			this.$("#card-action-container").hide();
+			this.$("#card-settings-menu_" + this.model.id).hide();
+			this.$("#card-action-container_" + this.model.id).hide();
 		},
 
 		// ---------- Actions for setting card position
@@ -822,7 +834,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 			Card_Services.Delete(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"boardCardDeleted", 
-					board: this.model.boardId, 
+					board: that.model.boardId, 
 					card: cardToDelete 
 				}));
 			});

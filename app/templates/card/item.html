@@ -1,8 +1,8 @@
-<div id="card-body" class="item-content body-content">
+<div id="card-body_<%= id %>" class="item-content body-content">
 	<% if (!isLocked) { %>
-		<div id="card-action-container" class="card-action-container" style="display:none">
-			<img id="card-settings-button" src="/img/settings-small.png" border="0" class="board-settings-button" />
-			<div id="card-settings-menu" style="display:none">
+		<div id="card-action-container_<%= id %>" class="card-action-container" style="display:none">
+			<img id="card-settings-button_<%= id %>" src="/img/settings-small.png" border="0" class="board-settings-button" />
+			<div id="card-settings-menu_<%= id %>" class="card-settings-menu" style="display:none">
 				<div id="card-resize-button" class="menu-item">Resize</div>
 				<div id="undo-card-resize-button" class="menu-item"<% if (!width) { %> style="display:none"<% } %>>Undo Resizing</div>
 				<div id="card-lock-button" class="menu-item">Lock</div>

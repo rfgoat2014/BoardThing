@@ -224,6 +224,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			else {
 	  			this.$el.click(function(e) {
 		        	that.clearSettingsmenu();
+
+		        	if (that._parent) that._parent.bubbleClearSettingsmenu();
+
+		        	that.cascadeClearSettingsmenu();
 	  			});
 
 				this.$el.mouseup(function(e) {
@@ -237,6 +241,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				});
 
 	  			this.$("#cluster-settings-button_" + this.model.id).click(function(e) {
+					if (that._parent) that._parent.bubbleClearSettingsmenu();
+
+		        	that.cascadeClearSettingsmenu();
+
 		        	that.showSettingsMenu(e);
 	  			});
 
@@ -534,6 +542,20 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				this._showSettingsIcon = true;
 			}
 			else this.clearSettingsmenu();
+		},
+
+		bubbleClearSettingsmenu: function() {
+			this.clearSettingsmenu();
+
+			if (this._parent) this._parent.bubbleClearSettingsmenu();
+		},
+
+		cascadeClearSettingsmenu: function() {
+			for (var i = 0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				this._childViews[i].clearSettingsmenu();
+				
+				if (this._childViews[i].getType() == "cluster") this._childViews[i].cascadeClearSettingsmenu();
+			}
 		},
 
 		clearSettingsmenu: function() {

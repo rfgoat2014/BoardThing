@@ -93,8 +93,8 @@
 .cluster-action-container {
     position: absolute;
     width: 100%;
-    top: 6px;
-    right: 7px;
+    top: 8px;
+    right: 5px;
     text-align: right;
     padding: 0px;
     padding-bottom: 10px;
@@ -148,6 +148,11 @@
     color: #222222;
     cursor: hand;
     cursor: pointer;
+}
+
+.child-cards-container img {
+    position: relative;
+    top: 3px;
 }
 
 #cluster-editable-title #editable-title-container {
