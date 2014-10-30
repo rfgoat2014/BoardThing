@@ -309,8 +309,8 @@
 
 .card-input-container .card-color-spectrum {
     position: relative;
-    float: right;
-    margin-top: 10px;
+    float: left;
+    margin-top: 8px;
     padding: 4px;
     margin-right: 10px;
 }

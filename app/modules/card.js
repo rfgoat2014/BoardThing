@@ -968,8 +968,15 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				this._cardModel = cardModel;
 
 				this.$("#card-text").val(cardModel.content)
+				this.$("#card-color-select").spectrum("set", cardModel.color);
+
+				this.$("#post-card").html("Update");
 			}
-			else this._cardModel = null;
+			else {
+				this._cardModel = null;
+
+				this.$("#post-card").html("Post");
+			}
 		},
 
 		saveCard: function(e) {
@@ -998,7 +1005,7 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				else {
 					var updateModel = null;
 
-					if ((this._cardModel.cards == null) && (this._cardModel.cards.length === 0)) {
+					if ((this._cardModel.cards == null)|| (this._cardModel.cards.length === 0)) {
 						var updateModel = {
 							id: this._cardModel.id,
 							parentId: this._cardModel.parentId,
@@ -1018,7 +1025,8 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 						updateModel = {
 							id: this._cardModel.id, 
 							boardId: boardId,
-			  				action: "update"
+			  				action: "update",
+							color: this.$("#card-color-select").spectrum("get").toString()
 			  			};
 
 			  			if (this._cardModel.type == "text") updateModel.content = this.$("#card-text").val();
@@ -1305,244 +1313,6 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 
 		destroy: function() {
 			$('#imageUpload').detach();
-			this.$el.detach();
-			this.remove();
-		}
-	});
-
-	Card.EditText = Backbone.View.extend({
-    	el: "<div>",
-
-    	_isMobile: null,
-    	_workspace: null,
-
-		initialize: function(options) {
-    		this.el.id = "edit-card-container";
-
-    		this._isMobile = options.isMobile;
-    		this._workspace = options.workspace;
-		},
-
-		render: function() {
-			var that = this;
-
-			var template = "/app/templates/card/editText.html";
-			if (this._isMobile) template = "/app/templates/card/editText.mobile.html";
-
-			$.get(template, function(contents) {
-				that.$el.html(_.template(contents, that.model));
-
-				that.afterRender();				
-
-				that.unbind();
-				that.bind();
-			}, "text");
-		},
-
-	    afterRender: function() {
-	    	var that = this;
-
-			this.$el.addClass("card-input-container");
-
-	    	this.$("#card-color-select").spectrum("destroy");
-
-	    	this.$("#card-color-select").spectrum({
-			    color: this.model.color,
-			    showInput: true,
-			    className: "card-color-spectrum",
-			    showInitial: true,
-			    showPaletteOnly: true,
-			    showPalette:true,
-			    maxPaletteSize: 10,
-			    preferredFormat: "hex",
-			    localStorageKey: "spectrum.boardthing.card",
-			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"]
-			});
-
-			var data = this.$("#edit-card-content_" + this.model.id).val();
-
-			if (this._isMobile) this.$el.addClass("mobile");
-	    	else this.$el.addClass("desktop");
-	    },
-
-	    unbind: function() {
-			this.$el.unbind("click");
-
-			this.$("#card-content_" + this.model.id).unbind("keypress");
-			this.$("#update-card").unbind("click");
-	    },
-
-	    bind: function() {
-			var that = this;
-
-  			this.$el.click(function(e) {
-				e.preventDefault();
-  			});
-
-			this.$("#card-content_" + this.model.id).keypress(function(e) {
-			  	var charCode = e.charCode || e.keyCode;
-
-		        if ((e) && (charCode == 13)) {
-		        	e.preventDefault();
-
-		        	this.updateCard();
-		        }
-			});
-
-			this.$("#update-card").click(function(e) {
-				e.stopPropagation();
-				
-				that.updateCard();
-			});
-	    },
-
-		updateCard: function() {
-			var that = this;
-
-			if ((this.$("#edit-card-content_" + this.model.id).val().trim().length > 0) && (!this._ideaUpdated)) {
-    			this._ideaUpdated = true;
-
-				var parentId = null
-				if (this.model.parentId) parentId = this.model.parentId;
-
-				var updateTextModel = {
-					id: this.model.id,
-					parentId: parentId,
-					content: this.$("#edit-card-content_" + this.model.id).val(),
-					color: this.$("#card-color-select").spectrum("get").toString(),
-					boardId: this.model.boardId
-				};
-
-				Card_Services.UpdateTextCard(this.model.boardId, this.model.id, updateTextModel, function(response) {
-					_workspace.editCardComplete(updateIdeaModel);
-
-					that._workspace.sendSocket(JSON.stringify({ 
-						action:"boardCardUpdated", 
-						board: that._model.boardId, 
-						card: updateTextModel 
-					}));
-
-					that.destroy();
-				});
-			}
-		},
-
-		destroy: function() {
-			this.$el.detach();
-			this.remove();
-		},
-	});
-
-	Card.EditImage = Backbone.View.extend({
-		el: "<div>",
-
-    	_isMobile: null,
-    	_workspace: null,
-
-		initialize: function(options) {
-    		this.el.id = "edit-image-container";
-
-    		this._isMobile = options.isMobile;
-    		this._workspace = options.workspace;
-		},
-
-		render: function() {
-			var that = this;
-
-			var template = "/app/templates/card/editImage.html";
-			if (this._isMobile) template = "/app/templates/card/editImage.mobile.html";
-
-			$.get(template, function(contents) {
-				that.$el.html(_.template(contents, that.model));
-
-				that.afterRender();				
-
-				that.unbind();
-				that.bind();
-			}, "text");
-		},
-
-	    afterRender: function() {
-	    	var that = this;
-
-	    	this.$("#card-color-select").spectrum("destroy");
-
-	    	this.$("#card-color-select").spectrum({
-			    color: this.model.color,
-			    showInput: true,
-			    className: "card-color-spectrum",
-			    showInitial: true,
-			    showPaletteOnly: true,
-			    showPalette:true,
-			    maxPaletteSize: 10,
-			    preferredFormat: "hex",
-			    localStorageKey: "spectrum.boardthing.card",
-			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"]
-			});
-
-			if (this._isMobile) this.$el.addClass("mobile");
-	    	else this.$el.addClass("desktop");
-	    },
-
-	    unbind: function() {
-			this.$el.unbind("click");
-
-			this.$("#image-title_" + this.model.id).unbind("keypress");
-			this.$("#update-card").unbind("click");
-	    },
-
-	    bind: function() {
-			var that = this;
-
-  			this.$el.click(function(e) {
-				e.stopPropagation();
-  			});
-
-			this.$("#image-title_" + this.model.id).keypress(function(e) {
-			  	var charCode = e.charCode || e.keyCode;
-
-		        if ((e) && (charCode == 13)) {
-		        	e.preventDefault();
-
-		        	this.updateCard();
-		        }
-			});
-
-			this.$("#update-card").click(function(e) {
-				e.stopPropagation();
-				
-				that.updateCard();
-			});
-	    },
-
-		updateCard: function() {
-			var that = this;
-
-			var parentId = null
-			if (this.model.parentId) parentId = this.model.parentId;
-
-			var updateImageModel = {
-				id: this.model.id,
-				boardId: this.model.boardId,
-				parentId: parentId,
-				title: this.$("#image-title_" + that.model.id).val(),
-				color: this.$("#card-color-select").spectrum("get").toString()
-			};
-	      
-			Card_Services.UpdateImageCard(this.model.boardId, this.model.id, updateImageModel, function(response) {
-				that._workspace.editCardComplete(updateImageModel);
-
-				that._workspace.sendSocket(JSON.stringify({ 
-					action:"boardCardUpdated", 
-					board: that._model.boardId, 
-					card: updateImageModel 
-				}));
-
-				that.destroy();
-			});
-		},
-
-		destroy: function() {
 			this.$el.detach();
 			this.remove();
 		}

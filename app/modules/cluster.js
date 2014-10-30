@@ -112,8 +112,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				
 				if (this.model.zPos != null) this.$el.zIndex(this.model.zPos);
 			}
-
-			if ((this.model.color) && (this.model.color.trim().toLowerCase() != "#ffffff")) this.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(that.model.color) + ",0.20);" });
+			if ((this.model.color) && (this.model.color.trim().toLowerCase() != "#ffffff")) this.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(this.model.color) + ",0.20)" });
 			
 			// Build up the clusters child cards and clusters
       		this._childViews = [];
@@ -928,6 +927,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			if (this.model.id == cardId) {
 				this.model.content = content;
 				this.model.title = title;
+				this.model.color = color;
 
 				this.render();
 			}

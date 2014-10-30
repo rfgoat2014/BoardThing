@@ -131,6 +131,8 @@ exports.update = function (req, res) {
 
 							if (req.body.content) cluster.content = req.body.content;
 
+							if (req.body.color) cluster.color = req.body.color;
+
 							cluster.save(function(err) {
 								if (err) {
 									dataError.log({
