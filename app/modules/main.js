@@ -55,7 +55,7 @@ function(Workspace, Workspace_Services) {
   			var that = this;
 
   			this.$("#create-workspace-button").click(function(e) {
-  				this.createWorkspace();
+  				that.createWorkspace();
   			});
 		},
 
