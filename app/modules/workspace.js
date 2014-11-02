@@ -579,7 +579,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			  				}));
 			  			});
 
-			  			var cluster = this.addClusterToBoard(targetCard, sourceCard);
+			  			this.addClusterToBoard(targetCard, sourceCard);
 
 						this.sortZIndexes(targetCard.id, true);
 					}
@@ -650,6 +650,21 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			//}
 			//catch (err) {
 			//	Utils.sendClientError("createClusterFromCluster", err);
+			//}
+		},
+
+		removeCardFromBoard: function(card) {
+			//try {
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getId() == card.id) {
+						this._boardEntities[i].remove();
+	      				this._boardEntities.splice(i, 1);
+	      				break;
+					}
+				}
+			//}
+			//catch (err) {
+			//	this.sendClientError("editCardComplete", err);
 			//}
 		},
 

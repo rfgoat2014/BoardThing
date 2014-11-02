@@ -839,9 +839,12 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 				}));
 			});
 
-			this._parent.removeCard(cardToDelete.id);
+			if (this._parent) {
+				this._parent.removeCard(cardToDelete.id);
 
-			if (this._parent.saveSortPosition) this._parent.saveSortPosition();
+				if (this._parent.saveSortPosition) this._parent.saveSortPosition();
+			}
+			else  this._workspace.removeCardFromBoard(cardToDelete);
 		},
 
 		// ---------- Actions for dot voting
