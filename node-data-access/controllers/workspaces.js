@@ -230,6 +230,10 @@ var buildReturnWorkspace = function(res, req, workspace) {
 
 					returnWorkspace.boards.push(returnBoard);
 
+					returnWorkspace.boards.sort(function (a, b) { 
+						return a.position > b.position ? 1 : a.position < b.position ? -1 : 0; 
+					});
+
 					if ((!returnWorkspace.startBoardId) && (boards[i].position == 1)) returnWorkspace.startBoardId = boards[i]._id;
 				}
 			}
@@ -446,7 +450,7 @@ exports.updatePassword = function (req, res) {
 exports.updateBoardPositions = function (req, res) {
 	Board
 	.find({ workspace: req.params.id })
-	.select("_id position")
+	.select("_id title position")
 	.exec(function(err, boards) {
 		if (err) {
 			dataError.log({
@@ -459,10 +463,17 @@ exports.updateBoardPositions = function (req, res) {
 		}
 		else if (boards) {
 			var boardPositions = req.body.boardPositions;
+						console.log(req.body.boardPositions);
 
 			for (var i=0, boardsLength=boards.length; i<boards.length; i+=1) {
 				for (var j=0, boardPositionsLength=boardPositions.length; j<boardPositions.length; j+=1) {
 					if (boards[i]._id.toString() == boardPositions[j].boardId.toString()) {
+						console.log("--------------------------------");
+						console.log(boards[i]._id);
+						console.log(boards[i].title);
+						console.log(boards[i].position);
+						console.log(boardPositions[j].position);
+
 						boards[i].position = boardPositions[j].position;
 						boards[i].save();
 						break;

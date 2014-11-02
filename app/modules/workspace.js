@@ -1,4 +1,5 @@
 define([
+	"modules/board",
 	"modules/card",
 	"modules/cluster",
 	"modules/boardMap",
@@ -9,7 +10,7 @@ define([
 	"modules/cluster.services"
 ],
 
-function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
+function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	//////////////////////// Views
@@ -270,6 +271,10 @@ function(Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Car
 
 			this.$("#overlay").empty();
 			this.$("#overlay").hide();
+		},
+
+		addBoard: function(board) {
+			this.model.boards.push(Board.GenerateModel(board, this.model.id));
 		},
 
 		setSelectedBoard: function(boardId) {

@@ -82,6 +82,8 @@ function(Board_Services, Workspace_Services) {
 						}
 					}
 
+					that._boards.sort(function (a, b) { return a.getBoardPosition() > b.getBoardPosition() ? 1 : a.getBoardPosition() < b.getBoardPosition() ? -1 : 0; });
+
 					that.storeBoardPositions();
 				}
 			});
@@ -97,6 +99,7 @@ function(Board_Services, Workspace_Services) {
             }	
 
             if (this._addBoardMap) this._addBoardMap.destroy();
+
             this._addBoardMap = new BoardMap.AddBoard({ parent: this });
             this.$("#board-map-container").append(this._addBoardMap.el);
 		},
@@ -117,13 +120,17 @@ function(Board_Services, Workspace_Services) {
 		addBoard: function() {
 			var that = this;
 
-            Board_Services.Insert(this.model.get("id"), "New Board", function(response) {
-            	that._boards.push(new BoardMap.Board({ model: response.board, parent: that }));
+            Board_Services.Insert(this._workspace.getId(), "New Board", function(response) {
+            	if (response.status == "success") {
+	            	that._boards.push(new BoardMap.Board({ model: response.board, workspace: that._workspace, parent: that }));
 
-            	that.drawBoardMap();
+	            	that._workspace.addBoard(response.board);
 
-				that.unbind();
-				that.bind();
+	            	that.drawBoardMap();
+
+					that.unbind();
+					that.bind();
+				}
             });
 		},
 
