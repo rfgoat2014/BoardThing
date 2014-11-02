@@ -171,27 +171,23 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 
 		getBoardItems: function() {
-			var that = this;
-
-			var boards = this.model.boards;
+			var that = this,
+				boards = this.model.boards;
 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
-				Board_Services.GetCards(boards[i].id, function(response) {
-					if (response.status == "success") {
-						for (var j=0, boardsLength=boards.length; j<boardsLength; j+=1) {
-							if (response.board.id.toString() == boards[j].id.toString()) {
-								boards[j].cards = response.board.cards;
-								break;
-							}
-						}
-
-						if (response.board.id.toString() == that._selectedBoard.id.toString()) {
+				if (boards[i].id == that._selectedBoard.id) {
+					Board_Services.GetCards(boards[i].id, function(response) {
+						if (response.status == "success") {
+							boards[i].cards = response.board.cards;
+							
 							that._selectedBoard.cards = response.board.cards;
 
 							that.drawBoardItems();
 						}
-					}
-				});
+					});
+
+					break;
+				}
 			}
 
 			this.createAddCardDialog();
@@ -278,21 +274,36 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 
 		setSelectedBoard: function(boardId) {
-			var boards = this.model.boards;
+			var that = this,
+				boards = this.model.boards;
 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
 				if ((boardId) && (boards[i].id.toString() == boardId)) {
-					this._selectedBoard = boards[i];		
+					boards[i].cards = [];	
+
+					this._selectedBoard = boards[i];	
+
+					this.setupBoard();	
+
+					this.$("#board-title").html(this._selectedBoard.title);
+					
+					this.unbind();
+					this.bind();
+
+					Board_Services.GetCards(boards[i].id, function(response) {
+						if (response.status == "success") {
+							boards[i].cards = response.board.cards;
+
+							that._selectedBoard.cards = response.board.cards;
+
+							that.drawBoardItems();
+						}
+					});
+
 					break;
 				}
 			}
 
-			this.setupBoard();
-
-			this.unbind();
-			this.bind();
-
-			this.$("#board-title").html(this._selectedBoard.title);
 
 			this.drawBoardItems();
 		},
