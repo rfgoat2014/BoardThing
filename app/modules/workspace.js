@@ -365,11 +365,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 
 		cardAdded: function(card) {
-    		try {
-				var xPos = Math.floor($(document).width()/2)-90,
-					yPos = Math.floor($(document).height()/2);
+    		//try {
+				var xPos = Math.floor(this.$("#board-cards").width()/2)+this.$("#board-container").scrollLeft()-90,
+					yPos = Math.floor(this.$("#board-cards").height()/2)+this.$("#board-container").scrollTop();
 
-				console.log(this._dropPosition)
 				if (this._dropPosition) {
 					xPos = this._dropPosition.x;
 					yPos = this._dropPosition.y;
@@ -399,10 +398,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 	        	this._cardsDroppedInPosition++;
 
 				this.addCardToBoard(newCard);
-			}
-			catch (err) {
-				Utils.sendClientError("cardAdded", err);
-			}
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("cardAdded", err);
+			//}
 		},
 
 		// {{ Editing cards }}
