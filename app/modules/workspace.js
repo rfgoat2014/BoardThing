@@ -160,7 +160,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 				that.viewBoardMap();
 			});
 
-		    this.$("#board-cards").mousemove(function(event) {
+		    this.$("#board-container").mousemove(function(event) {
 		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
 		        that._currentMousePosition.y = that.$("#board-container").scrollTop() + event.pageY;
 		    });
@@ -366,9 +366,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 
 		cardAdded: function(card) {
     		try {
-				var xPos = Math.floor($(document).width()/2)-90;
-				var yPos = Math.floor($(document).height()/2);
+				var xPos = Math.floor($(document).width()/2)-90,
+					yPos = Math.floor($(document).height()/2);
 
+				console.log(this._dropPosition)
 				if (this._dropPosition) {
 					xPos = this._dropPosition.x;
 					yPos = this._dropPosition.y;
