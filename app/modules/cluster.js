@@ -112,6 +112,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				
 				if (this.model.zPos != null) this.$el.zIndex(this.model.zPos);
 			}
+			
 			if ((this.model.color) && (this.model.color.trim().toLowerCase() != "#ffffff")) this.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(this.model.color) + ",0.20)" });
 			
 			// Build up the clusters child cards and clusters
@@ -315,9 +316,11 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					var elementId = that._workspace.checkPositionTaken(that.model.id);
 
 					if (elementId == -1) {
-						if (that.model.parentId) {
-							that.model.xPos = (that._parent.$el.position().left + that.$el.position().left + that._workspace.$("#board-container").scrollLeft());
-							that.model.yPos = (that._parent.$el.position().top + that.$el.position().top + that._workspace.$("#board-container").scrollTop());
+						if (that._parent) {
+							var totalParentOffset = that._parent.getTotalParentOffset();
+
+							that.model.xPos = totalParentOffset.x + that.$el.position().left + that._workspace.$("#board-container").scrollLeft();
+							that.model.yPos = totalParentOffset.y + that.$el.position().top + that._workspace.$("#board-container").scrollTop();
 
 							that._parent.removeCard(that.model.id);
 					    	
@@ -501,6 +504,21 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 
 			return null;
+		},
+
+		getTotalParentOffset: function() {
+			if (this._parent) {
+				var parentOffset = this._parent.getTotalParentOffset();
+	 		
+	 			return {
+					x: parentOffset.x + this.$el.position().left,
+					y: parentOffset.y + this.$el.position().top
+				};
+			}
+			else return {
+				x: this.$el.position().left,
+				y: this.$el.position().top
+			};
 		},
 
 	    // {{ Setters }}

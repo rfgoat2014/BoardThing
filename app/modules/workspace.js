@@ -218,6 +218,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return this.model.id;
 		},
 
+		getWidth: function() {
+			return this.model.width;
+		},
+
+		getHeight: function() {
+			return this.model.height;
+		},
+
 		getSelectedBoardId: function() {
 			return this._selectedBoard.id;
 		},
