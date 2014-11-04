@@ -46,7 +46,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             this._boards = [];
 
             for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-            	this._boards.push(new BoardMap.Board({ model: boards[i], parent: this, workspace: this._workspace }));
+            	this._boards.push(new Board.List({ model: boards[i], parent: this, workspace: this._workspace }));
             }
 
             this.drawBoardMap();
