@@ -1,19 +1,21 @@
 define([
-	"modules/board",
+	"modules/board.model",
+	"modules/add.card",
 	"modules/card",
+	"modules/card.model",
 	"modules/cluster",
+	"modules/cluster.model",
 	"modules/boardMap",
 	"modules/utils",
 	"modules/workspace.services",
 	"modules/board.services",
 	"modules/card.services",
-	"modules/cluster.services"
+	"modules/cluster.services",
+	"jquery"
 ],
 
-function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
+function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
-
-	//////////////////////// Views
 
 	// ===== View for viewing a workdspace
 
@@ -278,7 +280,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 
 		addBoard: function(board) {
-			this.model.boards.push(Board.GenerateModel(board, this.model.id));
+			this.model.boards.push(BoardModel.Generate(board, this.model.id));
 		},
 
 		setSelectedBoard: function(boardId) {
@@ -321,7 +323,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		createAddCardDialog: function() {
 			var that = this;
 
-			this._addCard = new Card.AddText({ 
+			this._addCard = new AddCard.Text({ 
 				workspace: this, 
 				parent: null, 
 				isMobile: this._isMobile 
@@ -451,7 +453,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		addCardToBoard: function(cardModel) {
 			try {
 				var card = new Card.Item({ 
-					model: Card.GenerateModel(cardModel), 
+					model: CardModel.Generate(cardModel), 
 					isMobile: this._isMobile, 
 					workspace: this, 
 					parent: null 
@@ -491,7 +493,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 
 				if (card) {
 					for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-						if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addCardToCluster(clusterId, Card.GenerateModel(card));
+						if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addCardToCluster(clusterId, CardModel.Generate(card));
 					}
 				}
 			}
@@ -503,15 +505,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		addClusterToBoard: function(clusterModel, cardModel) {
 			try {
 				var cluster = new Cluster.Item({ 
-					model: Cluster.GenerateModel(clusterModel), 
+					model: ClusterModel.Generate(clusterModel), 
 					isMobile: this._isMobile, 
 					workspace: this, 
 					parent: null 
 				});
 
 				if (cardModel) {
-					if (cardModel.cards === 0) cluster.addCard(Card.GenerateModel(cardModel, cluster.getId()));
-					else cluster.addCard(Cluster.GenerateModel(cardModel, cluster.getId()));
+					if (cardModel.cards === 0) cluster.addCard(CardModel.Generate(cardModel, cluster.getId()));
+					else cluster.addCard(ClusterModel.Generate(cardModel, cluster.getId()));
 				} 
 
 				cluster.render();
@@ -550,7 +552,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 
 				if (cluster) {
 					for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-						if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addClusterToCluster(targetClusterId, Cluster.GenerateModel(cluster));
+						if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addClusterToCluster(targetClusterId, ClusterModel.Generate(cluster));
 					}
 				}
 			}
@@ -936,69 +938,9 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		}
 	});
 
-	// ===== View to create a new workspace
-
-	Workspace.Add = Backbone.View.extend({
-    	el: "<div>",
-
-		initialize: function(options) {
-			this.el.id = "add-workspace";
-			this.el.className = "popup-container";
-
-			this.parent = options.parent;
-
-			$(this.el).click(function(e) {
-				e.stopPropagation();
-				e.preventDefault();
-			});
-
-			this.render();
-      	},
-
-      	events: {
-      		"click #cancel-button": "cancel",
-      		"click #add-button": "create"
-      	},
-
-		render: function() {
-			var that = this;
-
-			$.get("/app/templates/workspace/add.html", function(contents) {
-				that.$el.html(_.template(contents));
-			}, "text");
-		},
-
-		cancel: function() {
-			this.parent.cancelAddWorkspace();
-		},
-
-		create: function() {
-			var that = this;
-
-			this.$("#create-error-message").empty();
-
-			var title = this.$("#title").val();
-
-			if ((title) && (title.trim().length > 0)) {
-				Workspace_Services.Insert(title.trim(), function(response) {
-					if (response.status == "success") that.parent.workspaceAdded(response.workspace);
-					else that.$("#create-error-message").html(response.message);
-				})
-			}
-			else {
-				this.$("#create-error-message").html("Workspaces require a title");
-			}
-		},
-
-		removeDialog: function() {
-			$(this.el).detach();
-			this.remove();
-		}
-	});
-
 	// ===== View of workspace on main page
 
-	Workspace.ListItem = Backbone.View.extend({
+	Workspace.List = Backbone.View.extend({
     	el: "<tr>",
 
 		initialize: function(options) {
@@ -1010,7 +952,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		render: function(){
 			var that = this;
 
-			$.get("/app/templates/workspace/listItem.html", function(contents) {
+			$.get("/app/templates/workspace/list.html", function(contents) {
 				that.$el.html(_.template(contents, that.model));
 
 				that.afterRender();

@@ -1,12 +1,10 @@
 define([
-	"modules/user",
-	"modules/user.services"
+	"modules/user.services",
+	"jquery"
 ],
 	
-function(User, User_Services) {
+function(User_Services) {
 	var Home = {};
-
-	//////////////////////// Views
 
 	// ===== View when you first come to BoardThing
 

@@ -1,12 +1,12 @@
 define([
+	"modules/add.workspace",
 	"modules/workspace",
-	"modules/workspace.services"
+	"modules/workspace.services",
+	"jquery"
 ],
 
-function(Workspace, Workspace_Services) {
+function(AddWorkspace, Workspace, Workspace_Services) {
 	var Main = {};
-
-	//////////////////////// Views
 
 	// ===== View that appears to users when they first log in. Allows board management.
 
@@ -39,7 +39,7 @@ function(Workspace, Workspace_Services) {
 					var workspaces = response.workspaces;
 
 					for (var i=0, workspacesLength=workspaces.length; i<workspacesLength; i+=1) {
-						that._workspaces.push(new Workspace.ListItem({ model: workspaces[i], parent: that }));
+						that._workspaces.push(new Workspace.List({ model: workspaces[i], parent: that }));
 					}
 
 					that.renderWorkspaces();
@@ -80,7 +80,7 @@ function(Workspace, Workspace_Services) {
 		// ------ Actions to create a new workspace
 
 		createWorkspace: function() {
-			this._addWorkspace = new Workspace.Add({ parent: this });
+			this._addWorkspace = new AddWorkspace.New({ parent: this });
 
 			this.$("#modal-overlay").html(this._addWorkspace.el);
 			this.$("#modal-overlay").show();
@@ -92,7 +92,7 @@ function(Workspace, Workspace_Services) {
 			this.$("#modal-overlay").empty();
 			this.$("#modal-overlay").hide();
 
-			this._workspaces.push(new Workspace.ListItem({ model: workspace, parent: this }));
+			this._workspaces.push(new Workspace.List({ model: workspace, parent: this }));
 
 			this.renderWorkspaces();
 

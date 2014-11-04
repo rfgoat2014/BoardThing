@@ -1,11 +1,13 @@
 define([
+	"modules/add.board",
+	"modules/board",
 	"modules/board.services",
 	"modules/workspace.services",
 	"jquery",
 	"jqueryUI"
 ],
 
-function(Board_Services, Workspace_Services) {
+function(AddBoard, Board, Board_Services, Workspace_Services) {
 	var BoardMap = {};
 
 	//////////////////////// Views
@@ -100,7 +102,7 @@ function(Board_Services, Workspace_Services) {
 
             if (this._addBoardMap) this._addBoardMap.destroy();
 
-            this._addBoardMap = new BoardMap.AddBoard({ parent: this });
+            this._addBoardMap = new AddBoard.New({ parent: this });
             this.$("#board-map-container").append(this._addBoardMap.el);
 		},
 
@@ -122,7 +124,7 @@ function(Board_Services, Workspace_Services) {
 
             Board_Services.Insert(this._workspace.getId(), "New Board", function(response) {
             	if (response.status == "success") {
-	            	that._boards.push(new BoardMap.Board({ model: response.board, workspace: that._workspace, parent: that }));
+	            	that._boards.push(new Board.List({ model: response.board, workspace: that._workspace, parent: that }));
 
 	            	that._workspace.addBoard(response.board);
 
@@ -139,99 +141,6 @@ function(Board_Services, Workspace_Services) {
             	this._boards[i].destroy();
             }
 
-			$(this.el).detach();
-			this.remove();
-		}
-	});
-
-	BoardMap.Board = Backbone.View.extend({
-		el: "<div>",
-	
-		initialize: function(options) {
-			this.el.id = "board-map-board_" + this.model.id;
-			this.el.className = "board-map-board-container";
-
-			this._parent = options.parent;
-
-			this._workspace = options.workspace;
-		
-			this.render()
-		},
-
-		render: function() {
-			var that = this;
-
-			$.get("/app/templates/boardMap/board.html", function(contents) {
-				that.$el.html(_.template(contents, that.model));
-
-				that.unbind();
-				that.bind();
-			}, "text");
-		},
-
-		unbind: function() {
-			this.$(".board-map-board").unbind("dblclick");
-		},
-
-		bind: function() {
-			var that = this;
-
-			this.$(".board-map-board").dblclick(function(e) {
-				that._workspace.setSelectedBoard($(this).attr("element-id"));
-				that._workspace.hideBoardMap();
-			});
-		},
-
-		getBoardId: function() {
-			return this.model.id;
-		},
-
-		getBoardPosition: function() {
-			return this.model.position;
-		},
-
-		setBoardPosition: function(position) {
-			this.model.position = position;
-		},
-
-		destroy: function() {
-			$(this.el).detach();
-			this.remove();
-		}
-	});
-
-	BoardMap.AddBoard = Backbone.View.extend({
-		el: "<div>",
-	
-		initialize: function(options) {
-			this.el.id = "add-board-map-board";
-
-			this._parent = options.parent;
-		
-			this.render()
-		},
-
-		render: function() {
-			var that = this;
-
-			$.get("/app/templates/boardMap/addBoard.html", function(contents) {
-				that.$el.html(_.template(contents));
-
-				that.bind();
-			}, "text");
-		},
-
-		bind: function() {
-			var that = this;
-
-			this.$("#add-board").unbind("click");
-
-			this.$("#add-board").click(function(e) {
-				that._parent.addBoard();
-			});
-		},
-
-		destroy: function() {
 			$(this.el).detach();
 			this.remove();
 		}

@@ -1,26 +1,65 @@
 define([
+	"jquery"
 ],
 
 function() {
 	var Board = {};
 
-	Board.GenerateModel = function(model, workspaceId) {
-		var boardModel = {
-			id: model.id,
-			workspaceId: workspaceId,
-			title: model.title,
-			width: model.width,
-			height: model.height,
-			created: model.created,
-			lastModified: model.lastModified,
-			position: model.position
+	Board.List = Backbone.View.extend({
+		el: "<div>",
+	
+		initialize: function(options) {
+			this.el.id = "board-map-board_" + this.model.id;
+			this.el.className = "board-map-board-container";
+
+			this._parent = options.parent;
+
+			this._workspace = options.workspace;
+		
+			this.render()
+		},
+
+		render: function() {
+			var that = this;
+
+			$.get("/app/templates/boardMap/board.html", function(contents) {
+				that.$el.html(_.template(contents, that.model));
+
+				that.unbind();
+				that.bind();
+			}, "text");
+		},
+
+		unbind: function() {
+			this.$(".board-map-board").unbind("dblclick");
+		},
+
+		bind: function() {
+			var that = this;
+
+			this.$(".board-map-board").dblclick(function(e) {
+				that._workspace.setSelectedBoard($(this).attr("element-id"));
+				that._workspace.hideBoardMap();
+			});
+		},
+
+		getBoardId: function() {
+			return this.model.id;
+		},
+
+		getBoardPosition: function() {
+			return this.model.position;
+		},
+
+		setBoardPosition: function(position) {
+			this.model.position = position;
+		},
+
+		destroy: function() {
+			$(this.el).detach();
+			this.remove();
 		}
-
-		if (model.cards) boardModel.cards = model.cards;
-		else boardModel.cards = [];
-
-		return boardModel;
-	}
+	});
 
 	return Board;
 });
