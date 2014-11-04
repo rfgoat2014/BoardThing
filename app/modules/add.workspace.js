@@ -50,7 +50,7 @@ function( Workspace_Services) {
 
 			if ((title) && (title.trim().length > 0)) {
 				Workspace_Services.Insert(title.trim(), function(response) {
-					if (response.status == "success") that._parent.workspaceAdded(response.workspace);
+					if (response.code == 200) that._parent.workspaceAdded(response.workspace);
 					else that.$("#create-error-message").html(response.message);
 				})
 			}

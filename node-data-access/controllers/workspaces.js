@@ -16,7 +16,8 @@ exports.getAll = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getAll",
-				msg: "Error retrieving post ups",
+				code: 500,
+				msg: "Error retrieving workspaces",
 				err: err,
 				res: res
 			});
@@ -56,6 +57,7 @@ exports.getAll = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "getAll",
+						code: 500,
 						msg: "Error retrieving user",
 						err: err,
 						res: res
@@ -96,21 +98,22 @@ exports.getAll = function (req, res) {
 								})
 							}
 
-				        	res.send({ status: "success", workspaces: returnList });
+				        	res.send({ code: 200, workspaces: returnList });
 						});
 					}
 					else {
-				       	res.send({ status: "success", workspaces: returnList });
+				       	res.send({ code: 200, workspaces: returnList });
 					}
 		        }
 		        else {
 		        	dataError.log({
 						model: __filename,
 						action: "getAll",
+						code: 404,
 						msg: "Unable to find user"
 					});
 				    
-				    res.send({ status: "success", workspaces: returnList });
+				    res.send({ code: 200, workspaces: returnList });
 		        }
 			});
         }
@@ -132,6 +135,7 @@ exports.get = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getAll",
+				code: 500,
 				msg: "Error retrieving boards",
 				err: err,
 				res: res
@@ -158,6 +162,7 @@ var getWorkspace = function(res, req, workspaceId, startingBoardId, callback) {
 			dataError.log({
 				model: __filename,
 				action: "get",
+				code: 500,
 				msg: "Error retrieving workspace for id: " + workspaceId,
 				err: err
 			});
@@ -205,6 +210,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 				dataError.log({
 					model: __filename,
 					action: "getAll",
+					code: 500,
 					msg: "Error retrieving boards",
 					err: err,
 					res: res
@@ -244,12 +250,16 @@ var buildReturnWorkspace = function(res, req, workspace) {
 				User
 				.findById(req.user._id)
 				.exec(function(err, user) {
-					if (err) dataError.log({
-						model: __filename,
-						action: "get",
-						msg: "Error retrieving user",
-						err: err
-					});
+					if (err) {
+						dataError.log({
+							model: __filename,
+							action: "get",
+							code: 500,
+							msg: "Error retrieving user",
+							err: err,
+							res: res
+						});
+					}
 					else if (user) {
 						// check that if this is a private workspace. private workspace aren't added to a users list of shared workspace
 						if (!workspace.isPrivate) {
@@ -270,21 +280,22 @@ var buildReturnWorkspace = function(res, req, workspace) {
 							}
 						}
 
-	       				res.send({ status: "success", workspace: returnWorkspace });
+	       				res.send({ code: 200, workspace: returnWorkspace });
 			        }
 			        else {
 			        	dataError.log({
 							model: __filename,
 							action: "get",
+							code: 404,
 							msg: "Unable to find user"
 						});
 
-	       				res.send({ status: "success", workspace: returnWorkspace });
+	       				res.send({ code: 200, workspace: returnWorkspace });
 					}
 				});
 			}
 			else {
-	       		res.send({ status: "success", workspace: returnWorkspace });
+	       		res.send({ code: 200, workspace: returnWorkspace });
 			}
 		});
 	}
@@ -292,6 +303,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 		dataError.log({
 			model: __filename,
 			action: "get",
+			code: 404,
 			msg: "Unable to retrieve workspace",
 			res: res
 		});
@@ -319,6 +331,7 @@ exports.insert = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "insert",
+				code: 500,
 				msg: "Error saving workspace",
 				err: err,
 				res: res
@@ -338,6 +351,7 @@ exports.insert = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "insert",
+						code: 500,
 						msg: "Error saving board",
 						err: err,
 						res: res
@@ -354,7 +368,7 @@ exports.insert = function (req, res) {
 					    createdAt: moment(newWorkspace.created).fromNow()
 					};
 					
-					res.send({ status: "success", workspace: returnWorkspace });
+					res.send({ code: 200, workspace: returnWorkspace });
 				}
 			});
 		}
@@ -370,20 +384,22 @@ exports.authenticateWorkspace = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "authenticateWorkspace",
-				msg: "Error getting workspace",
+				code: 500,
+				msg: "Error retrieving workspace",
 				err: err,
 				res: res
 			});
         }
         else if (workspace) {
         	// check if the password provided matches the workspaces password
-        	if (workspace.password.trim() == req.body.password.trim()) res.send({ status: "success" });
-        	else res.send({ status: "failed", message: "Incorrect password" });
+        	if (workspace.password.trim() == req.body.password.trim()) res.send({ code: 200 });
+        	else res.send({ code: 401, message: "Incorrect password" });
         }
 		else {
 			dataError.log({
 				model: __filename,
 				action: "authenticateWorkspace",
+				code: 404,
 				msg: "Unable to find workspace " + req.params.id,
 				res: res
 			});
@@ -400,6 +416,7 @@ exports.updatePassword = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "updatePassword",
+				code: 500,
 				msg: "Error getting workspace",
 				err: err,
 				res: res
@@ -424,13 +441,14 @@ exports.updatePassword = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "updatePassword",
+							code: 500,
 							msg: "Error saving workspace",
 							err: err,
 							res: res
 						});
 					}	
 					else {
-			  			res.send({ status: "success", workspace: workspace });
+			  			res.send({ code: 200, workspace: workspace });
 			  		}
 				});
 			}
@@ -438,6 +456,7 @@ exports.updatePassword = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "updatePassword",
+					code: 404,
 					msg: "Error finding workspace " + req.params.id,
 					res: res
 				});
@@ -456,6 +475,7 @@ exports.updateBoardPositions = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getAll",
+				code: 500,
 				msg: "Error retrieving boards",
 				err: err,
 				res: res
@@ -614,7 +634,7 @@ exports.saveAs = function (req, res) {
 											});
 										});
 
-										res.send({ status: "success" });
+										res.send({ code: 200 });
 									});
 								}
 							});

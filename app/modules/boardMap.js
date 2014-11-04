@@ -123,7 +123,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			var that = this;
 
             Board_Services.Insert(this._workspace.getId(), "New Board", function(response) {
-            	if (response.status == "success") {
+            	if (response.code == 200) {
 	            	that._boards.push(new Board.List({ model: response.board, workspace: that._workspace, parent: that }));
 
 	            	that._workspace.addBoard(response.board);

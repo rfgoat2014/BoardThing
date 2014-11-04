@@ -35,7 +35,7 @@ function(AddWorkspace, Workspace, Workspace_Services) {
 			var that = this;
 
 			Workspace_Services.GetAll(function(response) {
-				if (response.status == "success") {
+				if (response.code == 200) {
 					var workspaces = response.workspaces;
 
 					for (var i=0, workspacesLength=workspaces.length; i<workspacesLength; i+=1) {

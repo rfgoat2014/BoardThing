@@ -257,18 +257,18 @@
 
 		passport.authenticate("local", function(err, user, info) {
 			if (err) {
-				return res.send({ status: "failed", message: err.message});
+				return res.send({ status: "401", message: err.message});
 			}
 			else if (!user) {
-				return res.send({ status: "failed", message: info.message});
+				return res.send({ status: "401", message: info.message});
 			}
 			else {
 				req.logIn(user, function(err) {
-					if (err) return res.send({ status: "failed", message: err.message});
+					if (err) return res.send({ status: "401", message: err.message});
 
 					user.password = null;
 
-					return res.send({ status: "success", user: user });
+					return res.send({ code: 200, user: user });
 				});
 			}
 		})(req, res, next);
@@ -278,16 +278,16 @@
 		req.logout();
 		req.session.destroy();
 
-		return res.send({ status: "success" });
+		return res.send({ code: 200 });
 	});
 	
 	app.get("/checkAuthenticated", function(req, res, next) {
 	 	checkAuthenticated(req, res, function(user) {
 			if (user) {
-				return res.send({ status: "success", user: user });
+				return res.send({ code: 200, user: user });
 			}
 			else {
-				return res.send({ status: "failed" });
+				return res.send({ status: "401" });
 			}
 		});
 	});
@@ -418,6 +418,7 @@
 					dataError.log({
 						model: "users",
 						action: "getDisplayCardAddHint",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -439,6 +440,7 @@
 					dataError.log({
 						model: "users",
 						action: "disableDisplayCardAddHint",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -464,6 +466,7 @@
 					dataError.log({
 						model: "users",
 						action: "updateSharedBoards",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -489,6 +492,7 @@
 					dataError.log({
 						model: "users",
 						action: "get",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -512,6 +516,7 @@
 					dataError.log({
 						model: "users",
 						action: "update",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -552,6 +557,7 @@
 					dataError.log({
 						model: "workspaces",
 						action: "getAll",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -575,6 +581,7 @@
 					dataError.log({
 						model: "workspaces",
 						action: "insert",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -625,6 +632,7 @@
 					dataError.log({
 						model: "workspaces",
 						action: "updatePassword",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -648,6 +656,7 @@
 					dataError.log({
 						model: "boards",
 						action: "update",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -669,6 +678,7 @@
 					dataError.log({
 						model: "boards",
 						action: "insert",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -718,6 +728,7 @@
 					dataError.log({
 						model: "boards",
 						action: "update",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -739,6 +750,7 @@
 					dataError.log({
 						model: "boards",
 						action: "delete",
+						code: 401,
 						msg: "Unauthorized access",
 						res: res
 					});
@@ -960,6 +972,7 @@
 
 		sub.on("error", function(e) {
 			console.log("Application: Subscription Error: " + e.toString());	
+			
 			sub = redis.createClient();	
 			if (refreshIntervalId != null) clearInterval(refreshIntervalId);	
 			generateSubscriptionActions();

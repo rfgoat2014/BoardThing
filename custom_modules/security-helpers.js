@@ -14,6 +14,7 @@
 			dataError.log({
 				model: __filename,
 				action: "hashPassword",
+				code: 500,
 				msg: "Error hashing entered password '" + password + "': " + err.toString(),
 			});
 
@@ -33,6 +34,7 @@
 			dataError.log({
 				model: __filename,
 				action: "comparePasswords",
+				code: 500,
 				msg: "Error comparing passwords" +  err.toString(),
 			});
 

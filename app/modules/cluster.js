@@ -792,7 +792,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					if (cardModel.cards.length === 0) {
 						// This is a card so call the detach card method
 						Cluster_Services.DetachCard(that.model.boardId, that.model.id, cardId, function(response) {
-			            	if (response.status == "success") {
+			            	if (response.code == 200) {
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeCardFromCluster", 
 									board: that.model.boardId, 
@@ -807,7 +807,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					else {
 						// This is a card so call the detach cluster method
 						Cluster_Services.DetachCluster(that.model.boardId, that.model.id, cardId, function(response) {
-			            	if (response.status == "success") {
+			            	if (response.code == 200) {
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeClusterFromCluster", 
 									board: that.model.boardId, 

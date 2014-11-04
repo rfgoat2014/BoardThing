@@ -179,7 +179,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
 				if (boards[i].id == that._selectedBoard.id) {
 					Board_Services.GetCards(boards[i].id, function(response) {
-						if (response.status == "success") {
+						if (response.code == 200) {
 							boards[i].cards = response.board.cards;
 							
 							that._selectedBoard.cards = response.board.cards;
@@ -301,7 +301,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					this.bind();
 
 					Board_Services.GetCards(boards[i].id, function(response) {
-						if (response.status == "success") {
+						if (response.code == 200) {
 							boards[i].cards = response.board.cards;
 
 							that._selectedBoard.cards = response.board.cards;

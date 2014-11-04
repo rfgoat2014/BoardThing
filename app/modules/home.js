@@ -87,7 +87,7 @@ function(User_Services) {
 			if (((email) && (email.trim().toLowerCase().length > 0)) && 
 				((password) && (password.trim().toLowerCase().length > 0))) {
 				User_Services.Athenticate(email, password, function(response) {
-					if (response.status == "success") {
+					if (response.code == 200) {
 						Backbone.history.navigate("/main", true);
 					}
 					else {
@@ -165,9 +165,9 @@ function(User_Services) {
 		
 					if (emailFilter.test(email)) {
 						User_Services.Insert(username, email, password, function(response) {
-							if (response.status.trim().toLowerCase() == "success") {
+							if (response.code == 200) {
 								User_Services.Athenticate(email, password, function(loginResponse) {
-									if (loginResponse.status == "success") {
+									if (loginResponse.code == 200) {
 										Backbone.history.navigate("/main", true);
 									}
 									else {

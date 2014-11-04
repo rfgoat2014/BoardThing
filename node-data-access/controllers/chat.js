@@ -11,6 +11,7 @@ exports.get = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "getChat",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -21,12 +22,13 @@ exports.get = function (req, res) {
         	if ((!board.isPrivate) ||
         		((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
         		((cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim()))) {
-  				res.send({ status: "success", chat: board.chat });
+  				res.send({ code: 200, chat: board.chat });
   			}
   			else {
 				dataError.log({
 					model: __filename,
 					action: "getChat",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -36,6 +38,7 @@ exports.get = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getChat",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -53,6 +56,8 @@ exports.insert = function (req, res) {
 		if (err) {
 			dataError.log({
 				model: __filename,
+				action: "insert",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -79,13 +84,14 @@ exports.insert = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "insert",
+								code: 500,
 								msg: "Error saving board with added chat",
 								err: err,
 								res: res
 							});
 						}
 						else {
-							res.send({ message: "success", chat: chatItem });
+							res.send({ code: 200, chat: chatItem });
 						}
 					});
 	  			}
@@ -93,6 +99,7 @@ exports.insert = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "insert",
+						code: 401,
 						msg: "Invalid board authentication",
 						res: res
 					});
@@ -102,6 +109,7 @@ exports.insert = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "insert",
+					code: 404,
 					msg: "Error finding board " + req.params.boardId,
 					res: res
 				});

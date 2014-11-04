@@ -7,6 +7,7 @@ exports.getWorkspaceHint = function (callback) {
 			dataError.log({
 				model: __filename,
 				action: "getAllHints",
+				code: 500,
 				msg: "Error retrieving hints",
 				err: err
 			});

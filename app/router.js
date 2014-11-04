@@ -63,7 +63,7 @@ function(require, exports, module, Home, Main, Workspace, User_Services, Workspa
           $.cookie("BoardThing_sessionId", $.cookie("BoardThing_rememberMe_sessionId"), { path: '/' });
         }
 
-        if (userResponse.status.trim().toLowerCase() == "success") {
+        if (userResponse.code == 200) {
           $.cookie("BoardThing_rememberMe_sessionId", userResponse.user.sessionId, { path: '/' });
           $.cookie("BoardThing_sessionId", userResponse.user.sessionId, { path: '/' });
           $.cookie("BoardThing_username", userResponse.user.username, { path: '/' });
@@ -72,7 +72,7 @@ function(require, exports, module, Home, Main, Workspace, User_Services, Workspa
         var workspaceModel = { id: id };
         
         Workspace_Services.Get(id, function(workspaceResponse) {
-          if ((workspaceResponse != null) && (workspaceResponse.status == "success")) {
+          if ((workspaceResponse != null) && (workspaceResponse.code == 200)) {
             $("#page-loading-status").html("Creating workspace layout");
 
             var displayView = new Workspace.Index({ model: workspaceResponse.workspace });

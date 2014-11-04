@@ -111,6 +111,7 @@ exports.saveSessionId = function (id, sessionId) {
 			dataError.log({
 				model: __filename,
 				action: "saveSessionId",
+				code: 500,
 				msg: "Error retrieving user",
 				err: err
 			});
@@ -131,6 +132,7 @@ exports.get = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "get",
+				code: 500,
 				msg: "Error retrieving user",
 				err: err,
 				res: res
@@ -144,7 +146,7 @@ exports.get = function (req, res) {
 				joined: user.joined
 			};
 
-        	res.send({ status: "success", user: returnUser });
+        	res.send({ code: 200, user: returnUser });
         }
 	});
 } 
@@ -158,6 +160,7 @@ exports.sendUserPassword = function(req,res) {
 			dataError.log({
 				model: __filename,
 				action: "sendUserPassword",
+				code: 500,
 				msg: "Error retrieving user",
 				err: err,
 				res: res
@@ -170,12 +173,13 @@ exports.sendUserPassword = function(req,res) {
 			// Send the password reminder to the selected user
 			email.sendUserMsg(user.username, user.email, "Password reset for BoardThing", resetEmailContent);
 
-			res.send({ status: "success" });  
+			res.send({ code: 200 });  
 		}
 		else {
 			dataError.log({
 				model: __filename,
 				action: "sendUserPassword",
+				code: 404,
 				msg: "Error retrieving user",
 				err: err,
 				res: res
@@ -219,18 +223,22 @@ exports.insert = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "insert",
+						code: 500,
 						msg: "Error saving user",
 						err: err,
 						res: res
 					});
 				}
 				else {
-		        	res.send({ status: "success", user: savedUser });
+		        	res.send({ code: 200, user: savedUser });
 		        }
 			});
 		}
 		else {
-			res.send({ status: "failed", message: "An account already exists for your e-mail" });
+			res.send({ 
+				code: 403, 
+				message: "An account already exists for your e-mail" 
+			});
 		}
 	})
 }
@@ -271,13 +279,14 @@ exports.update = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "update",
+								code: 500,
 								msg: err
 							});
 
-							res.send({ status: "failed", message: "Unable to update your profile" });
+							res.send({ code: 500, message: "Unable to update your profile" });
 						}
 						else {
-							res.send({ status: "success" });
+							res.send({ code: 200 });
 						}
 					});
 				}
@@ -285,16 +294,19 @@ exports.update = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "update",
-						msg: "Unable to find profile for " + req.user._id,
-						res: res
+						code: 500,
+						msg: "Unable to find profile for " + req.user._id
 					});	
 
-					res.send({ status: "failed", message: "Unable to update your profile" });
+					res.send({ code: 500, message: "Unable to update your profile" });
 				}
 			});
 		}
 		else {
-			res.send({ status: "failed", message: "That e-mail address is currently in use" });
+			res.send({ 
+				code: 403, 
+				message: "That e-mail address is currently in use" 
+			});
 		}
 	});
 }
@@ -315,6 +327,8 @@ exports.resetPassword = function (req, res) {
 				if (err) {
 					dataError.log({
 						model: __filename,
+						action: "resetPassword",
+						code: 500,
 						msg: "An error occurred",
 						err: err,
 						res: res
@@ -326,12 +340,18 @@ exports.resetPassword = function (req, res) {
 						email: savedUser.email
 					};
 
-					res.send({ status: "success", user: returnUser });
+					res.send({ code: 200, user: returnUser });
 				}
 			});
 		}
 		else {
-			res.send({ status: "failed", message: "Unable to find your account" });
+			dataError.log({
+				model: __filename,
+				action: "resetPassword",
+				code: 404,
+				msg: "Unable to find your account",
+				res: res
+			});	
 		}
 	});
 }
@@ -344,6 +364,7 @@ exports.updateSharedBoards = function (req, res) {
 		if (err) dataError.log({
 			model: __filename,
 			action: "updateSharedBoards",
+			code: 500,
 			msg: "Error retrieving user",
 			err: err,
 			res: res
@@ -356,6 +377,7 @@ exports.updateSharedBoards = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "updateSharedBoards",
+						code: 500,
 						msg: "Error retrieving user",
 						err: err,
 						res: res
@@ -379,17 +401,15 @@ exports.updateSharedBoards = function (req, res) {
 							user.sharedBoards.push(req.params.boardId);
 							user.save();
 						}
-
-			        	res.send({ status: "success" });
 				   	}
-				   	else {
-				   		res.send({ status: "success" });
-				   	}
+				   		
+				   	res.send({ code: 200 });
 		        }
 				else {
 					dataError.log({
 						model: __filename,
 						action: "updateSharedBoards",
+						code: 404,
 						msg: "Could not find board",
 						res: res
 					});
@@ -408,6 +428,7 @@ exports.getDisplayCardAddHint = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getDisplayCardAddHint",
+				scode: 500,
 				msg: "Error retrieving user",
 				err: err,
 				res: res
@@ -421,7 +442,7 @@ exports.getDisplayCardAddHint = function (req, res) {
 				displayCardAddHint = true;
 			}
 
-        	res.send({ status: "success", displayCardAddHint: displayCardAddHint });
+        	res.send({ code: 200, displayCardAddHint: displayCardAddHint });
         }
 	});
 } 
@@ -435,6 +456,7 @@ exports.disableDisplayCardAddHint = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "disableDisplayCardAddHint",
+				code: 500,
 				msg: "Error retrieving user",
 				err: err,
 				res: res
@@ -446,7 +468,7 @@ exports.disableDisplayCardAddHint = function (req, res) {
 			user.displayCardAddHint = false;
 			user.save();
 
-        	res.send({ status: "success" });
+        	res.send({ code: 200 });
         }
 	});
 } 

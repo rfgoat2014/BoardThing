@@ -12,6 +12,7 @@ exports.update = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "update",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -99,6 +100,7 @@ exports.update = function (req, res) {
 											dataError.log({
 												model: __filename,
 												action: "update",
+												code: 500,
 												msg: "Error saving card: " + cards[i]._id,
 												err: err,
 												res: res
@@ -119,6 +121,7 @@ exports.update = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "update",
+								code: 500,
 								msg: "Error saving cluster " + req.params.clusterId,
 								err: err,
 								res: res
@@ -138,6 +141,7 @@ exports.update = function (req, res) {
 									dataError.log({
 										model: __filename,
 										action: "update",
+										code: 500,
 										msg: "Error saving cluster " + req.params.clusterId,
 										err: err,
 										res: res
@@ -147,7 +151,7 @@ exports.update = function (req, res) {
 									board.lastModified = new Date();
 									board.save();
 
-									res.send({ status: "success" });
+									res.send({ code: 200 });
 								}
 							});
 						}
@@ -155,6 +159,7 @@ exports.update = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "update",
+								code: 404,
 								msg: "Unable to find cluster " + req.params.clusterId,
 								err: err,
 								res: res
@@ -167,6 +172,7 @@ exports.update = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "update",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -176,6 +182,7 @@ exports.update = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "update",
+				code: 404,
 				msg: "Unable to find board " + req.params.boardId,
 				res: res
 			});
@@ -194,6 +201,7 @@ exports.expand = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "expand",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -212,6 +220,7 @@ exports.expand = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "expand",
+							code: 500,
 							msg: "Error retrieving cluster " + req.params.clusterId,
 							err: err,
 							res: res
@@ -227,6 +236,7 @@ exports.expand = function (req, res) {
 					        	dataError.log({
 									model: __filename,
 									action: "expand",
+									code: 500,
 									msg: "Unable to save cluster " + req.params.clusterId,
 									err: err
 								});
@@ -236,7 +246,7 @@ exports.expand = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-								res.send({ status: "success" });
+								res.send({ code: 200 });
 							}
 						});
 			   		}
@@ -244,6 +254,7 @@ exports.expand = function (req, res) {
 			        	dataError.log({
 							model: __filename,
 							action: "expand",
+							code: 404,
 							msg: "Unable to find cluster " + req.params.clusterId,
 							res: res
 						});
@@ -254,6 +265,7 @@ exports.expand = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "expand",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -263,6 +275,7 @@ exports.expand = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "expand",
+				code: 404,
 				msg: "Unable to find board " + req.params.boardId,
 				res: res
 			});
@@ -281,6 +294,7 @@ exports.collapse = function (req, res) {
 	        dataError.log({
 				model: __filename,
 				action: "collapse",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -299,6 +313,7 @@ exports.collapse = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "collapse",
+							code: 500,
 							msg: "Error retrieving cluster " + req.params.clusterId,
 							err: err,
 							res: res
@@ -314,6 +329,7 @@ exports.collapse = function (req, res) {
 					        	dataError.log({
 									model: __filename,
 									action: "collapse",
+									code: 500,
 									msg: "Unable to save cluster " + req.params.clusterId,
 									err: err,
 									res: res
@@ -323,7 +339,7 @@ exports.collapse = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-								res.send({ status: "success" });
+								res.send({ code: 200 });
 							}
 						});
 			   		}
@@ -331,6 +347,7 @@ exports.collapse = function (req, res) {
 			        	dataError.log({
 							model: __filename,
 							action: "collapse",
+							code: 404,
 							msg: "Unable to find cluster " + req.params.clusterId,
 							res: res
 						});
@@ -341,6 +358,7 @@ exports.collapse = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "collapse",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -350,6 +368,7 @@ exports.collapse = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "collapse",
+				code: 404,
 				msg: "Unable to find board " + req.params.boardId,
 				res: res
 			});
@@ -368,6 +387,7 @@ exports.startDotVoting = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "startDotVoting",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -420,6 +440,7 @@ exports.startDotVoting = function (req, res) {
 										        	dataError.log({
 														model: __filename,
 														action: "startDotVoting",
+														code: 500,
 														msg: "Unable to save card " + cards[i]._id,
 														err: err
 													});
@@ -435,6 +456,7 @@ exports.startDotVoting = function (req, res) {
 										        	dataError.log({
 														model: __filename,
 														action: "startDotVoting",
+														code: 500,
 														msg: "Unable to save card " + cards[i]._id,
 														err: err
 													});
@@ -451,6 +473,7 @@ exports.startDotVoting = function (req, res) {
 						        	dataError.log({
 										model: __filename,
 										action: "startDotVoting",
+										code: 500,
 										msg: "Unable to save cluster " + req.params.clusterId,
 										err: err,
 										res: res
@@ -461,7 +484,7 @@ exports.startDotVoting = function (req, res) {
 									board.lastModified = new Date();
 									board.save();
 
-									res.send({ status: "success" });
+									res.send({ code: 200 });
 								}
 							});
 						});
@@ -470,6 +493,7 @@ exports.startDotVoting = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "startDotVoting",
+							code: 404,
 							msg: "Unable to find cluster " + req.params.clusterId,
 							res: res
 						});
@@ -480,6 +504,7 @@ exports.startDotVoting = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "startDotVoting",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -489,6 +514,7 @@ exports.startDotVoting = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "startDotVoting",
+				code: 404,
 				msg: "Unable to find board " + req.params.boardId,
 				res: res
 			});
@@ -507,6 +533,7 @@ exports.stopDotVoting = function (req, res) {
          	dataError.log({
 				model: __filename,
 				action: "stopDotVoting",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -544,6 +571,7 @@ exports.stopDotVoting = function (req, res) {
 										        	dataError.log({
 														model: __filename,
 														action: "startDotVoting",
+														code: 500,
 														msg: "Unable to save card " + cards[i]._id,
 														err: err
 													});
@@ -560,6 +588,7 @@ exports.stopDotVoting = function (req, res) {
 										        	dataError.log({
 														model: __filename,
 														action: "startDotVoting",
+														code: 500,
 														msg: "Unable to save card " + cards[i]._id,
 														err: err
 													});
@@ -576,6 +605,7 @@ exports.stopDotVoting = function (req, res) {
 						        	dataError.log({
 										model: __filename,
 										action: "stopDotVoting",
+										code: 500,
 										msg: "Unable to save cluster " + req.params.clusterId,
 										err: err,
 										res: res
@@ -585,7 +615,7 @@ exports.stopDotVoting = function (req, res) {
 									board.lastModified = new Date();
 									board.save();
 
-									res.send({ status: "success" });
+									res.send({ code: 200 });
 								}
 							});
 						});
@@ -594,6 +624,7 @@ exports.stopDotVoting = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "stopDotVoting",
+							code: 404,
 							msg: "Unable to find cluster " + req.params.clusterId,
 							res: res
 						});
@@ -604,6 +635,7 @@ exports.stopDotVoting = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "stopDotVoting",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -613,6 +645,7 @@ exports.stopDotVoting = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "stopDotVoting",
+				code: 404,
 				msg: "Unable to find board " + req.params.boardId,
 				res: res
 			});
@@ -631,6 +664,7 @@ exports.delete = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "delete",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -664,6 +698,7 @@ exports.delete = function (req, res) {
 											dataError.log({
 												model: __filename,
 												action: "delete",
+												code: 500,
 												msg: "Error saving child card of " + req.params.clusterId,
 												err: err
 											});
@@ -693,6 +728,7 @@ exports.delete = function (req, res) {
 										dataError.log({
 											model: __filename,
 											action: "delete",
+											code: 500,
 											msg: "Error updating parent card of " + req.params.clusterId,
 											err: err,
 											res: res
@@ -707,6 +743,7 @@ exports.delete = function (req, res) {
 												dataError.log({
 													model: __filename,
 													action: "delete",
+													code: 500,
 													msg: "Error updating parent card of " + req.params.clusterId,
 													err: err,
 													res: res
@@ -717,7 +754,7 @@ exports.delete = function (req, res) {
 												board.lastModified = new Date();
 												board.save();
 
-												res.send({ message: "success" });
+												res.send({ code: 200 });
 											}
 										});
 									}
@@ -729,6 +766,7 @@ exports.delete = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "delete",
+							code: 404,
 							msg: "Unable to find the cluster " + req.params.clusterId,
 							res: res
 						});
@@ -739,6 +777,7 @@ exports.delete = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "delete",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -748,6 +787,7 @@ exports.delete = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "delete",
+				code: 404,
 				msg: "Unable to find board " + req.params.boardId,
 				res: res
 			});
@@ -766,6 +806,7 @@ exports.attachCard = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "attachCard",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -858,6 +899,7 @@ exports.attachCard = function (req, res) {
 									dataError.log({
 										model: __filename,
 										action: "attachCard",
+										code: 500,
 										msg: "Error saving card",
 										err: err
 									});
@@ -866,13 +908,14 @@ exports.attachCard = function (req, res) {
 						}
 					}
 
-					res.send({ status: "success" });
+					res.send({ code: 200 });
 				});
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "attachCard",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -882,6 +925,7 @@ exports.attachCard = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "attachCard",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -900,6 +944,7 @@ exports.detachCard = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "detachCard",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -963,6 +1008,7 @@ exports.detachCard = function (req, res) {
 										dataError.log({
 											model: __filename,
 											action: "detachCard",
+											code: 500,
 											msg: "Error saving card",
 											err: err
 										});
@@ -977,13 +1023,14 @@ exports.detachCard = function (req, res) {
 						board.save();
 					}
 					
-					res.send({ status: "success" });
+					res.send({ code: 200 });
 				});
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "detachCard",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -993,6 +1040,7 @@ exports.detachCard = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "detachCard",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1011,6 +1059,7 @@ exports.attachClusterToMain = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "attachClusterToMain",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -1067,6 +1116,7 @@ exports.attachClusterToMain = function (req, res) {
 										dataError.log({
 											model: __filename,
 											action: "attachClusterToMain",
+											code: 500,
 											msg: "Error saving card",
 											err: err
 										});
@@ -1082,13 +1132,14 @@ exports.attachClusterToMain = function (req, res) {
 						board.save();
 					}
 					
-					res.send({ status: "success" });
+					res.send({ code: 200 });
 				});
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "attachClusterToMain",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1098,6 +1149,7 @@ exports.attachClusterToMain = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "attachClusterToMain",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1116,6 +1168,7 @@ exports.attachCluster = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "attachCluster",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -1202,6 +1255,7 @@ exports.attachCluster = function (req, res) {
 									dataError.log({
 										model: __filename,
 										action: "attachCluster",
+										code: 500,
 										msg: "Error saving card",
 										err: err
 									});
@@ -1214,13 +1268,14 @@ exports.attachCluster = function (req, res) {
 		        	board.lastModified = new Date();
 					board.save();
 					
-					res.send({ status: "success" });
+					res.send({ code: 200 });
 				});
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "attachCluster",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1230,6 +1285,7 @@ exports.attachCluster = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "attachCluster",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1248,6 +1304,7 @@ exports.detachCluster = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "detachCluster",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -1284,6 +1341,7 @@ exports.detachCluster = function (req, res) {
 									dataError.log({
 										model: __filename,
 										action: "detachCluster",
+										code: 500,
 										msg: "Error saving card",
 										err: err
 									});
@@ -1296,13 +1354,14 @@ exports.detachCluster = function (req, res) {
 		        	board.lastModified = new Date();
 					board.save();
 					
-					res.send({ status: "success" });
+					res.send({ code: 200 });
 				});
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "detachCluster",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1312,6 +1371,7 @@ exports.detachCluster = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "detachCluster",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1331,6 +1391,7 @@ exports.sort = function (req, res) {
 				model: __filename,
 				action: "sort",
 				msg: "Error getting bo",
+				code: 500,
 				err: err,
 				res: res
 			});
@@ -1360,6 +1421,7 @@ exports.sort = function (req, res) {
 												dataError.log({
 													model: __filename,
 													action: "sort",
+													code: 500,
 													msg: "Error saving card",
 													err: err
 												});
@@ -1375,17 +1437,18 @@ exports.sort = function (req, res) {
 			        	board.lastModified = new Date();
 						board.save();
 
-						res.send({ message: "success" });
+						res.send({ code: 200 });
 					});
 				}
 				else {
-					res.send({ message: "success" });
+					res.send({ code: 200 });
 				}
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "sort",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1395,6 +1458,7 @@ exports.sort = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "sort",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});

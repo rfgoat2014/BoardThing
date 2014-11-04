@@ -9,24 +9,28 @@ exports.getBackground = function (req, res) {
 	Board
 	.findById(req.params.id)
 	.exec(function(err, board) {
-        if (err) dataError.log({
-			model: __filename,
-			action: "getBackground",
-			msg: "Error getting board",
-			err: err,
-			res: res
-		});
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "getBackground",
+				code: 500,
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
         else if (board) {
 			// Check if this board is private and if so check this user has access
     		if ((!board.isPrivate)||
     			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
     			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-					res.send({ status: "success", background: board.background });
+					res.send({ code: 200, background: board.background });
     		}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "getBackground",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -36,6 +40,7 @@ exports.getBackground = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getBackground",
+				code: 404,
 				msg: "Error finding board " + req.params.id,
 				res: res
 			});
@@ -64,6 +69,7 @@ exports.insert = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "insert",
+					code: 500,
 					msg: "Error saving board",
 					err: err,
 					res: res
@@ -82,7 +88,7 @@ exports.insert = function (req, res) {
 				    lastModified: newBoard.lastModified
 				});
 				
-				res.send({ status: "success", board: returnBoard });
+				res.send({ code: 200, board: returnBoard });
 			}
 		});
 	});
@@ -98,6 +104,7 @@ exports.update = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "update",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -115,18 +122,19 @@ exports.update = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "update",
+							code: 500,
 							msg: "Error saving board",
 							err: err
 						});
 					}	
-
-		  			res.send({ status: "success", board: board });
+					else  res.send({ code: 200, board: board });
 				});
 			}
 			else {
 				dataError.log({
 					model: __filename,
 					action: "update",
+					code: 404,
 					msg: "Error finding board " + req.params.boardId,
 					res: res
 				});
@@ -147,6 +155,7 @@ exports.updateBackground = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "updateBackground",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -167,13 +176,14 @@ exports.updateBackground = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "updateBackground",
+							code: 500,
 							msg: "Error saving board",
 							err: err,
 							res: res
 						});
 					}
 					else {
-		  				res.send({ status: "success" });
+		  				res.send({ code: 200 });
 					}
 				});
 		    }
@@ -181,6 +191,7 @@ exports.updateBackground = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "updateBackground",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -190,6 +201,7 @@ exports.updateBackground = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateBackground",
+				code: 404,
 				msg: "Error finding board " + req.params.id,
 				res: res
 			});
@@ -225,6 +237,7 @@ exports.delete = function (req, res) {
 								if (err) dataError.log({
 									model: __filename,
 									action: "delete",
+									code: 500,
 									msg: "Error deleting image",
 									err: err
 								});
@@ -246,13 +259,14 @@ exports.delete = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "delete",
+							code: 500,
 							msg: "Error saving board",
 							err: err,
 							res: res
 						});
 					}
 					else {
-						res.send({ status: "success" });
+						res.send({ code: 200 });
 					}
 				});
 		    }
@@ -265,6 +279,7 @@ exports.delete = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "delete",
+							code: 500,
 							msg: "Error retrieving user",
 							res: res,
 							err: err
@@ -285,12 +300,13 @@ exports.delete = function (req, res) {
 
 							if (boardDeleted) user.save();
 	
-							res.send({ status: "success" });
+							res.send({ code: 200 });
 				        }
 				        else {
 				        	dataError.log({
 								model: __filename,
 								action: "delete",
+								code: 404,
 								msg: "Unable to find user",
 								res: res
 							});

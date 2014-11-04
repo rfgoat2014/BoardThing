@@ -12,13 +12,12 @@ exports.get = function (req, res) {
         if (err) {
         	dataError.log({
 				model: __filename,
-				action: "update",
+				action: "get",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
 			});
-
-			res.send({ status: "failed" });
         }
         else if (board) {
         	// Check if this is a public board and if not check if the user has access to it
@@ -106,13 +105,14 @@ exports.get = function (req, res) {
 						cards: returnCards
 					};
 
-					res.send({ status: "success", board: board });
+					res.send({ code: 200, board: board });
 				});
 			}
     		else {
 				dataError.log({
 					model: __filename,
 					action: "get",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -122,6 +122,7 @@ exports.get = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "get",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -154,9 +155,9 @@ exports.getImage = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "getImage",
+				code: 500,
 				msg: "Error retrieving board",
-				err: err,
-				res: res
+				err: err
 			});
 
 			return null;
@@ -185,7 +186,8 @@ exports.getImage = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "getImage",
-					msg: "Error finding card " + req.params.boardId,
+					code: 404,
+					msg: "Error finding card " + req.params.boardId
 				});
 
 				return null;
@@ -204,7 +206,8 @@ exports.insertText = function (req, res) {
 		if (err) { 
 			dataError.log({
 				model: __filename,
-				action: "insert",
+				action: "insertText",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -234,6 +237,7 @@ exports.insertText = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "insert",
+								code: 500,
 								msg: "Error saving card",
 								err: err,
 								res: res
@@ -262,7 +266,7 @@ exports.insertText = function (req, res) {
 								cards: []
 							};
 
-				  			res.send({ status: "success", card: returnCard });
+				  			res.send({ code: 200, card: returnCard });
 			  			}
 					});
 				}
@@ -270,6 +274,7 @@ exports.insertText = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "insert",
+						code: 401,
 						msg: "Invalid board authentication",
 						res: res
 					});
@@ -279,6 +284,7 @@ exports.insertText = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "insert",
+					code: 404,
 					msg: "Error finding board " + req.params.boardId,
 					res: res
 				});
@@ -300,6 +306,7 @@ exports.insertImage = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "insertImage",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -355,6 +362,7 @@ exports.insertImage = function (req, res) {
 											dataError.log({
 												model: __filename,
 												action: "insertImage",
+												code: 500,
 												msg: "Error saving board",
 												err: err,
 												res: res
@@ -383,7 +391,7 @@ exports.insertImage = function (req, res) {
 												cards: []
 											};
 
-								  			res.send({ status: "success", card: returnCard });
+								  			res.send({ code: 200, card: returnCard });
 										}
 									});
 								}
@@ -391,6 +399,7 @@ exports.insertImage = function (req, res) {
 									dataError.log({
 										model: __filename,
 										action: "insertImage",
+										code: 500,
 										res: res
 									});
 								}
@@ -407,13 +416,20 @@ exports.insertImage = function (req, res) {
 					req.pipe(busboy);
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "insertImage",
+						code: 401,
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
 				dataError.log({
 					model: __filename,
 					action: "insertImage",
+					code: 404,
 					msg: "Error finding board " + req.params.boardId,
 					res: res
 				});
@@ -435,6 +451,7 @@ exports.downloadImage = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "downloadImage",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -477,6 +494,7 @@ exports.downloadImage = function (req, res) {
 												dataError.log({
 													model: __filename,
 													action: "downloadImage",
+													code: 500,
 													msg: "Error saving board",
 													err: err,
 													res: res
@@ -503,7 +521,7 @@ exports.downloadImage = function (req, res) {
 													cards: []
 												};
 
-												res.send({ status: "success", card: returnCard });
+												res.send({ code: 200, card: returnCard });
 											}
 										});
 									}
@@ -511,6 +529,7 @@ exports.downloadImage = function (req, res) {
 										dataError.log({
 											model: __filename,
 											action: "downloadImage",
+											code: 500,
 											msg: "failed" ,
 											res: res
 										});
@@ -520,19 +539,32 @@ exports.downloadImage = function (req, res) {
 	  							fileReq.end(data);
 						    }
 						    else {
-								res.send({ status: "failed" });
+								dataError.log({
+									model: __filename,
+									action: "downloadImage",
+									code: 500,
+									msg: "failed" ,
+									res: res
+								});
 						    }
 						});
 					}
 				}
 				else {
-  					res.send({ status: "failed", message: "Invalid board authentication" });
+					dataError.log({
+						model: __filename,
+						action: "downloadImage",
+						code: 401,
+						msg: "Invalid board authentication",
+						res: res
+					});
 				}
 			}
 			else {
 				dataError.log({
 					model: __filename,
 					action: "downloadImage",
+					code: 404,
 					msg: "Error finding board " + req.params.boardId,
 					res: res
 				});
@@ -552,6 +584,7 @@ exports.updateText = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "update",
+				code: 500,
 				msg: "Error getting board: " + req.params.boardId,
 				err: err,
 				res: res
@@ -577,18 +610,18 @@ exports.updateText = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "update",
-								msg: "Error saving card: " + req.params.cardId,
-								err: err
+								code: 500,
+								msg: "Error saving card " + req.params.cardId,
+								err: err,
+								res: res
 							});
-
-				  			res.send({ status: "failed" });
 						}
 						else {
 							// update the timestamp of when the board was last modified
 							board.lastModified = new Date();
 							board.save();
 
-				  			res.send({ status: "success" });
+				  			res.send({ code: 200 });
 			  			}
 					});
 				});
@@ -597,6 +630,7 @@ exports.updateText = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "update",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -606,6 +640,7 @@ exports.updateText = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "update",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -624,6 +659,7 @@ exports.updateImage = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateImage",
+				code: 500,
 				msg: "Error retrieving board",
 				err: err,
 				res: res
@@ -653,18 +689,17 @@ exports.updateImage = function (req, res) {
 								dataError.log({
 									model: __filename,
 									action: "updateImage",
-									msg: "Error saving card: " + req.params.cardId,
+									code: 500,
+									msg: "Error saving card " + req.params.cardId,
 									err: err,
 									res: res
 								});
-
-					  			res.send({ status: "failed" });
 							}
 							else {
 								board.lastModified = new Date();
 								board.save();
 
-					  			res.send({ status: "success" }); 
+					  			res.send({ code: 200 }); 
 				  			}
 				  		});
 					}
@@ -672,7 +707,8 @@ exports.updateImage = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "updateImage",
-							msg: "Error finding card: " + req.params.cardId,
+							code: 404,
+							msg: "Error finding card " + req.params.cardId,
 							res: res
 						});
 					}
@@ -682,6 +718,7 @@ exports.updateImage = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "removeVotes",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -691,6 +728,7 @@ exports.updateImage = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateImage",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -709,6 +747,7 @@ exports.delete = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "delete",
+				code: 500,
 				msg: "Error retrieving board " + req.params.boardId,
 				err: err,
 				res: res
@@ -732,8 +771,9 @@ exports.delete = function (req, res) {
 								if (err) {
 									dataError.log({
 										model: __filename,
-										action: "updateZIndex",
-										msg: "delete: Error deleting image " + card.content,
+										action: "delete",
+										code: 500,
+										msg: "Error deleting image " + card.content,
 										err: err
 									});
 								}
@@ -766,6 +806,7 @@ exports.delete = function (req, res) {
 								dataError.log({
 									model: __filename,
 									action: "delete",
+									code: 500,
 									msg: "Error saving card on " + req.params.boardId,
 									err: err,
 									res: res
@@ -776,7 +817,7 @@ exports.delete = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-					  			res.send({ status: "success" }); 
+					  			res.send({ code: 200 }); 
 				  			}
 				  		});
 					});
@@ -785,6 +826,7 @@ exports.delete = function (req, res) {
 					dataError.log({
 						model: __filename,
 						action: "delete",
+						code: 401,
 						msg: "Invalid board authentication",
 						res: res
 					});
@@ -794,6 +836,7 @@ exports.delete = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "delete",
+					code: 404,
 					msg: "Error finding board " + req.params.boardId,
 					res: res
 				});
@@ -813,6 +856,7 @@ exports.duplicate = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "duplicate",
+				code: 500,
 				msg: "Error getting board: " + req.params.boardId,
 				err: err,
 				res: res
@@ -831,6 +875,7 @@ exports.duplicate = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "duplicate",
+							code: 500,
 							msg: "Error retrieving board",
 							err: err,
 							res: res
@@ -875,6 +920,7 @@ exports.duplicate = function (req, res) {
 										dataError.log({
 											model: __filename,
 											action: "duplicate",
+											code: 500,
 											msg: "Error saving card",
 											err: err,
 											res: res
@@ -905,7 +951,7 @@ exports.duplicate = function (req, res) {
 											zPos: null,
 										};
 
-										res.send({ status: "success", card: returnCard });
+										res.send({ code: 200, card: returnCard });
 									}
 								});
 							}).end();
@@ -917,6 +963,7 @@ exports.duplicate = function (req, res) {
 									dataError.log({
 										model: __filename,
 										action: "duplicate",
+										code: 500,
 										msg: "Error saving card",
 										err: err,
 										res: res
@@ -947,7 +994,7 @@ exports.duplicate = function (req, res) {
 										zPos: null,
 									};
 
-									res.send({ status: "success", card: returnCard });
+									res.send({ code: 200, card: returnCard });
 								}
 							});
 						}
@@ -958,6 +1005,7 @@ exports.duplicate = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "duplicate",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -967,6 +1015,7 @@ exports.duplicate = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "duplicate",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -985,6 +1034,7 @@ exports.updateDimensions = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "updatePosition",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -1009,7 +1059,8 @@ exports.updateDimensions = function (req, res) {
 								dataError.log({
 									model: __filename,
 									action: "updateDimensions",
-									msg: "Error saving card: " + req.params.cardId,
+									code: 500,
+									msg: "Error saving card " + req.params.cardId,
 									err: err,
 									res: res
 								});
@@ -1019,7 +1070,7 @@ exports.updateDimensions = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-					  			res.send({ status: "success" }); 
+					  			res.send({ code: 200 }); 
 					  		}
 				  		});
 					}
@@ -1027,6 +1078,7 @@ exports.updateDimensions = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "updateDimensions",
+							code: 404,
 							msg: "Unable to find card " + req.params.cardId,
 							res: res
 						});
@@ -1037,6 +1089,7 @@ exports.updateDimensions = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "updateDimensions",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1046,6 +1099,7 @@ exports.updateDimensions = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateDimensions",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1064,6 +1118,7 @@ exports.updatePosition = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "updatePosition",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -1088,7 +1143,8 @@ exports.updatePosition = function (req, res) {
 								dataError.log({
 									model: __filename,
 									action: "updatePosition",
-									msg: "Error saving card: " + req.params.cardId,
+									code: 500,
+									msg: "Error saving card " + req.params.cardId,
 									err: err,
 									res: res
 								});
@@ -1098,7 +1154,7 @@ exports.updatePosition = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-					  			res.send({ status: "success" }); 
+					  			res.send({ code: 200 }); 
 				  			}
 				  		});
 			  		}
@@ -1106,7 +1162,8 @@ exports.updatePosition = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "updatePosition",
-							msg: "Unable to find card: " + req.params.cardId,
+							code: 404,
+							msg: "Unable to find card " + req.params.cardId,
 							res: res
 						});
 			  		}
@@ -1116,6 +1173,7 @@ exports.updatePosition = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "updateDimensions",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1125,6 +1183,7 @@ exports.updatePosition = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updatePosition",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1143,6 +1202,7 @@ exports.updateZIndex = function (req, res) {
         	dataError.log({
 				model: __filename,
 				action: "updatePosition",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -1175,6 +1235,7 @@ exports.updateZIndex = function (req, res) {
 											dataError.log({
 												model: __filename,
 												action: "updateZIndex",
+												code: 500,
 												msg: "Error saving card",
 												err: err
 											});
@@ -1192,7 +1253,7 @@ exports.updateZIndex = function (req, res) {
 							board.save();
 						}
 
-			  			res.send({ status: "success" });
+			  			res.send({ code: 200 });
 					});
 				}
 			}
@@ -1200,6 +1261,7 @@ exports.updateZIndex = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "updateZIndex",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1209,6 +1271,7 @@ exports.updateZIndex = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateZIndex",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1227,6 +1290,7 @@ exports.addVote = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "addVote",
+				code: 500,
 				msg: "Error getting board: " + req.params.boardId,
 				err: err,
 				res: res
@@ -1252,7 +1316,8 @@ exports.addVote = function (req, res) {
 								dataError.log({
 									model: __filename,
 									action: "addVote",
-									msg: "Error saving card: " + req.params.cardId,
+									code: 500,
+									msg: "Error saving card " + req.params.cardId,
 									err: err,
 									res: res
 								});
@@ -1262,7 +1327,7 @@ exports.addVote = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-					  			res.send({ status: "success" }); 
+					  			res.send({ code: 200 }); 
 							}
 				  		});
 			  		}
@@ -1270,7 +1335,8 @@ exports.addVote = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "addVote",
-							msg: "Error finding card: " + req.params.cardId,
+							code: 404,
+							msg: "Error finding card " + req.params.cardId,
 							res: res
 						});
 			  		}
@@ -1280,6 +1346,7 @@ exports.addVote = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "addVote",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1289,6 +1356,7 @@ exports.addVote = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "addVote",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1307,6 +1375,7 @@ exports.removeVotes = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "removeVotes",
+				code: 500,
 				msg: "Error getting board: " + req.params.boardId,
 				err: err,
 				res: res
@@ -1330,6 +1399,7 @@ exports.removeVotes = function (req, res) {
 								dataError.log({
 									model: __filename,
 									action: "removeVotes",
+									code: 500,
 									msg: "Error saving card: " + req.params.cardId,
 									err: err,
 									res: res
@@ -1340,7 +1410,7 @@ exports.removeVotes = function (req, res) {
 								board.lastModified = new Date();
 								board.save();
 
-					  			res.send({ status: "success" }); 
+					  			res.send({ code: 200 }); 
 				  			}
 				  		});
 					}
@@ -1348,7 +1418,8 @@ exports.removeVotes = function (req, res) {
 						dataError.log({
 							model: __filename,
 							action: "removeVotes",
-							msg: "Error finding card: " + req.params.cardId,
+							code: 404,
+							msg: "Error finding card " + req.params.cardId,
 							res: res
 						});
 					}
@@ -1358,6 +1429,7 @@ exports.removeVotes = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "removeVotes",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1367,6 +1439,7 @@ exports.removeVotes = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "removeVotes",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1385,6 +1458,7 @@ exports.lock = function (req, res) {
 	        dataError.log({
 				model: __filename,
 				action: "lock",
+				code: 500,
 				msg: "Error getting board",
 				err: err,
 				res: res
@@ -1407,6 +1481,7 @@ exports.lock = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "lock",
+								code: 500,
 								msg: "Error saving card: " + req.params.cardId,
 								err: err,
 								res: res
@@ -1417,7 +1492,7 @@ exports.lock = function (req, res) {
 							board.lastModified = new Date();
 							board.save();
 
-				  			res.send({ status: "success" });
+				  			res.send({ code: 200 });
 			  			} 
 			  		});
 				});
@@ -1426,6 +1501,7 @@ exports.lock = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "lock",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1435,6 +1511,7 @@ exports.lock = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "lock",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
@@ -1452,6 +1529,7 @@ exports.unlock = function (req, res) {
         if (err) dataError.log({
 			model: __filename,
 			action: "unlock",
+			code: 500,
 			msg: "Error getting board",
 			err: err,
 			res: res
@@ -1473,7 +1551,8 @@ exports.unlock = function (req, res) {
 							dataError.log({
 								model: __filename,
 								action: "unlock",
-								msg: "Error saving card: " + req.params.cardId,
+								code: 500,
+								msg: "Error saving card " + req.params.cardId,
 								err: err,
 								res: res
 							});
@@ -1483,7 +1562,7 @@ exports.unlock = function (req, res) {
 							board.lastModified = new Date();
 							board.save();
 
-				  			res.send({ status: "success" }); 
+				  			res.send({ code: 200 }); 
 				  		}
 			  		});
 				});
@@ -1492,6 +1571,7 @@ exports.unlock = function (req, res) {
 				dataError.log({
 					model: __filename,
 					action: "lock",
+					code: 401,
 					msg: "Invalid board authentication",
 					res: res
 				});
@@ -1501,6 +1581,7 @@ exports.unlock = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "unlock",
+				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res
 			});
