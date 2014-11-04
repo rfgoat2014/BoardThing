@@ -512,38 +512,19 @@ function(Card_Services, Cluster_Services, Workspace_Services) {
 		},
 
 		editImage: function(e) {
-	   		//try {
-		    	this._editing = true;
-		    	
-				this.$("#card-edit-overlay").append(editImageView.el);
-				this.$("#card-edit-overlay").show();
-			//}
-			//catch (err) {
-			//	this.sendClientError("editImage", err);
-			//}
 		},
 
 		updateCardContent: function(cardId,content,title,color) {
 			if (this.model.id == cardId) {
 				var cardUpdated = false;
 
-				if (content) {
-					this.model.content = content;
+				if (content) this.model.content = content;
 
-					cardUpdated = true;
-				}
+				if (title) this.model.title = title;
 
-				if (title) {
-					this.model.title = title;
+				if (color) this.model.color = color;
 
-					cardUpdated = true;
-				}
-
-				if (color) {
-					this.model.color = color;
-
-					cardUpdated = true;
-				}
+				if ((content) || (title) || (color)) cardUpdated = true;
 
 				if (cardUpdated) this.render();
 			}

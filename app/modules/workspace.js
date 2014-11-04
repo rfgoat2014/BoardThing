@@ -214,6 +214,18 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 
 		// {{ Getters }}
 
+		getCurrentMousePosition: function() {
+			return this._currentMousePosition;
+		},
+
+		getSelectedColor: function() {
+			return "#ffffff";
+		},
+
+		getSelectedPageTool: function() {
+			return "card";
+		},
+
 		getId: function() {
 			return this.model.id;
 		},
@@ -226,24 +238,12 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 			return this.model.height;
 		},
 
-		getSelectedBoardId: function() {
-			return this._selectedBoard.id;
-		},
-
 		getBoards: function() {
 			return this.model.boards;
 		},
 
-		getSelectedColor: function() {
-			return "#ffffff";
-		},
-
-		getCurrentMousePosition: function() {
-			return this._currentMousePosition;
-		},
-
-		getSelectedPageTool: function() {
-			return "card";
+		getSelectedBoardId: function() {
+			return this._selectedBoard.id;
 		},
 
 		getObjectModel: function(id) {
@@ -342,7 +342,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 		
 		showAddCard: function() {
-    		//try {
+    		try {
 				this._blockAddCard = true;
 
 				if (this._addCard) {
@@ -350,10 +350,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 					
 					this._addCard.focusCardText();
 				}	
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("showAddCard", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("showAddCard", err);
+			}
 		},
 
 		hideAddCard: function() {
@@ -373,7 +373,7 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		},
 
 		cardAdded: function(card) {
-    		//try {
+    		try {
 				var xPos = Math.floor(this.$("#board-cards").width()/2)+this.$("#board-container").scrollLeft()-90,
 					yPos = Math.floor(this.$("#board-cards").height()/2)+this.$("#board-container").scrollTop();
 
@@ -406,16 +406,16 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 	        	this._cardsDroppedInPosition++;
 
 				this.addCardToBoard(newCard);
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("cardAdded", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("cardAdded", err);
+			}
 		},
 
 		// {{ Editing cards }}
 
 		showEditCard: function(cardModel) {
-	   		//try {
+	   		try {
 				this._blockAddCard = true;
 
 				if (this._addCard) {
@@ -425,14 +425,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 					this._addCard.setCardModel(cardModel);
 				}	
 		    	
-			//}
-			//catch (err) {
-			//	this.sendClientError("editCard", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("editCard", err);
+			}
 		},
 
 		cardEdited: function(card) {
-	   		//try {
+	   		try {
 		    	this._blockAddCard = false;
 
 		   		if ((card) && (this._boardEntities)) {
@@ -440,105 +440,127 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 						this._boardEntities[i].updateCardContent(card.id, card.content, card.title, card.color);
 					}
 		   		}
-			//}
-			//catch (err) {
-			//	this.sendClientError("editCardComplete", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("editCardComplete", err);
+			}
 		},
 
 		// {{ Managing board cards }}
 
 		addCardToBoard: function(cardModel) {
-			var card = new Card.Item({ 
-				model: Card.GenerateModel(cardModel), 
-				isMobile: this._isMobile, 
-				workspace: this, 
-				parent: null 
-			});
+			try {
+				var card = new Card.Item({ 
+					model: Card.GenerateModel(cardModel), 
+					isMobile: this._isMobile, 
+					workspace: this, 
+					parent: null 
+				});
 
-			card.render();
+				card.render();
 
-			this.$("#board-cards").append(card.el);
+				this.$("#board-cards").append(card.el);
 
-			this._boardEntities.push(card);
+				this._boardEntities.push(card);
 
-			return card;
+				return card;
+			}
+			catch (err) {
+				Utils.sendClientError("addCardToBoard", err);
+			}
 		},
 
 		addCardToCluster: function(clusterId, cardId) {
-			var card = null;
-			
-			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if ((this._boardEntities[i].getType() == "card") && (this._boardEntities[i].getId() == cardId)) {
-					card = this._boardEntities[i].getModel();
+			try {
+				var card = null;
+				
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if ((this._boardEntities[i].getType() == "card") && (this._boardEntities[i].getId() == cardId)) {
+						card = this._boardEntities[i].getModel();
 
-					this._boardEntities[i].remove();
-      				this._boardEntities.splice(i, 1);
-					break;
+						this._boardEntities[i].remove();
+	      				this._boardEntities.splice(i, 1);
+						break;
+					}
+					else if (this._boardEntities[i].getType() == "cluster") {
+						card = this._boardEntities[i].removeCard(cardId);
+						
+						if (card) break;
+					}
 				}
-				else if (this._boardEntities[i].getType() == "cluster") {
-					card = this._boardEntities[i].removeCard(cardId);
-					
-					if (card) break;
+
+				if (card) {
+					for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+						if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addCardToCluster(clusterId, Card.GenerateModel(card));
+					}
 				}
 			}
-
-			if (card) {
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-					if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addCardToCluster(clusterId, Card.GenerateModel(card));
-				}
+			catch (err) {
+				Utils.sendClientError("addCardToCluster", err);
 			}
 		},
 
 		addClusterToBoard: function(clusterModel, cardModel) {
-			var cluster = new Cluster.Item({ 
-				model: Cluster.GenerateModel(clusterModel), 
-				isMobile: this._isMobile, 
-				workspace: this, 
-				parent: null 
-			});
+			try {
+				var cluster = new Cluster.Item({ 
+					model: Cluster.GenerateModel(clusterModel), 
+					isMobile: this._isMobile, 
+					workspace: this, 
+					parent: null 
+				});
 
-			if (cardModel) {
-				if (cardModel.cards === 0) cluster.addCard(Card.GenerateModel(cardModel, cluster.getId()));
-				else cluster.addCard(Cluster.GenerateModel(cardModel, cluster.getId()));
-			} 
+				if (cardModel) {
+					if (cardModel.cards === 0) cluster.addCard(Card.GenerateModel(cardModel, cluster.getId()));
+					else cluster.addCard(Cluster.GenerateModel(cardModel, cluster.getId()));
+				} 
 
-			cluster.render();
+				cluster.render();
 
-			this.$("#board-cards").append(cluster.el);
+				this.$("#board-cards").append(cluster.el);
 
-			this._boardEntities.push(cluster);
+				this._boardEntities.push(cluster);
 
-			return cluster;
+				return cluster;
+			}
+			catch (err) {
+				Utils.sendClientError("addClusterToBoard", err);
+
+				return null;
+			}
 		},
 
 		addClusterToCluster: function(sourceClusterId, targetClusterId) {
-			var cluster = null;
-			
-			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == sourceClusterId)) {
-					cluster = this._boardEntities[i].getModel();
+			try {
+				var cluster = null;
+				
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == sourceClusterId)) {
+						cluster = this._boardEntities[i].getModel();
 
-					this._boardEntities[i].remove();
-      				this._boardEntities.splice(i, 1);
-					break;
+						this._boardEntities[i].remove();
+	      				this._boardEntities.splice(i, 1);
+						break;
+					}
+					else if (this._boardEntities[i].getType() == "cluster") {
+						cluster = this._boardEntities[i].removeCard(sourceClusterId);
+						
+						if (cluster) break;
+					}
 				}
-				else if (this._boardEntities[i].getType() == "cluster") {
-					cluster = this._boardEntities[i].removeCard(sourceClusterId);
-					
-					if (cluster) break;
+
+				if (cluster) {
+					for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+						if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addClusterToCluster(targetClusterId, Cluster.GenerateModel(cluster));
+					}
 				}
 			}
-
-			if (cluster) {
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-					if (this._boardEntities[i].getType() == "cluster") this._boardEntities[i].addClusterToCluster(targetClusterId, Cluster.GenerateModel(cluster));
-				}
+			catch (err) {
+				Utils.sendClientError("addClusterToCluster", err);
 			}
 		},
 
 		createClusterFromCard: function(sourceCardId, targetCardId) {
-			//try {
+			try {
 				var that = this,
 					sourceCard = null,
 					targetCard = null;
@@ -592,14 +614,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 						this.sortZIndexes(targetCard.id, true);
 					}
 				}
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("createClusterFromCard", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("createClusterFromCard", err);
+			}
 		},
 
 		createClusterFromCluster: function(sourceClusterId, targetCardId) {
-			//try {
+			try {
 				var that = this,
 					sourceCluster = null,
 					targetCard = null;
@@ -655,14 +677,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 						this.sortZIndexes(targetCard.id, true);
 					}
 				}
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("createClusterFromCluster", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("createClusterFromCluster", err);
+			}
 		},
 
 		removeCardFromBoard: function(card) {
-			//try {
+			try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					if (this._boardEntities[i].getId() == card.id) {
 						this._boardEntities[i].remove();
@@ -670,14 +692,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 	      				break;
 					}
 				}
-			//}
-			//catch (err) {
-			//	this.sendClientError("editCardComplete", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("editCardComplete", err);
+			}
 		},
 
 		setClusterToCard: function(clusterId) {
-			//try {
+			try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					if (this._boardEntities[i].getType() == "cluster") {
 						if (this._boardEntities[i].getId() == clusterId) {
@@ -694,15 +716,15 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 						}
 					}
 				}
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("createClusterFromCluster", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("createClusterFromCluster", err);
+			}
 		},
 
 		//  ---- Check if an element exists at the specified position
 		checkPositionTaken: function(elementId) {
-			//try {
+			try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
 					if (this._boardEntities[i].getId() != elementId) {
 						var xposStart = this._boardEntities[i].getXPos();
@@ -719,14 +741,14 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 				}
 				
 				return -1;
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("checkPositionTaken", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("checkPositionTaken", err);
+			}
 		},
 
 		sortZIndexes: function(elementId, publish) {
-			//try {
+			try {
 				var that = this,
 					lockedElements = new Array(),
 					unlockedElements = new Array();
@@ -776,10 +798,10 @@ function(Board, Card, Cluster, BoardMap, Utils, Workspace_Services, Board_Servic
 		            	}));
 	            	});
 	        	}
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("sortZIndexes", err);
-			//}
+			}
+			catch (err) {
+				Utils.sendClientError("sortZIndexes", err);
+			}
 		},
 				
 		removePopups: function(calledBy) {

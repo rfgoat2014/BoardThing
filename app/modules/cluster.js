@@ -112,7 +112,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				
 				if (this.model.zPos != null) this.$el.zIndex(this.model.zPos);
 			}
-			
+
 			if ((this.model.color) && (this.model.color.trim().toLowerCase() != "#ffffff")) this.$el.css({ backgroundColor: "rgba(" + Utils.hexToRgb(this.model.color) + ",0.20)" });
 			
 			// Build up the clusters child cards and clusters
@@ -527,11 +527,11 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	this.model.zPos = value;
 	    },
 
+	    // ----- Cluster specific setters
+
 	    addCard: function(cardModel) {
 	    	this.model.cards.push(cardModel);
 	    },
-
-	    // ----- Cluster specific setters
 
 	    setCollapsed: function(collapsed) {
 	    	this.model.collapsed = collapsed;
@@ -780,15 +780,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		editImage: function(e) {
-	   		//try {
-		    	this._editing = true;
-		    	
-				this.$("#card-edit-overlay").append(editImageView.el);
-				this.$("#card-edit-overlay").show();
-			//}
-			//catch (err) {
-			//	this.sendClientError("editImage", err);
-			//}
 		},
 
 		updateClusterTitle: function(clusterId, title, content) {
