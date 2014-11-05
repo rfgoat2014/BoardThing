@@ -822,7 +822,7 @@
 
 // Actions for sockets without redis
 	
-	if (global.global.boardConnections == null) global.global.boardConnections = {};
+	if (global.global.workspaceConnections == null) global.global.workspaceConnections = {};
 	
 	var pub = redis.createClient();
 	generatePublicationActions();
@@ -847,29 +847,29 @@
 					console.log("Application: Error receiving package: " + ex.toString());
 				}
 
-				if ((packageData) && (packageData.board)) {
+				if ((packageData) && (packageData.workspace)) {
 					packageData.sendingClientId = client.id;
 
 					data = JSON.stringify(packageData);
 
-					if (!(packageData.board in global.boardConnections)) global.boardConnections[packageData.board] = {
+					if (!(packageData.workspace in global.workspaceConnections)) global.workspaceConnections[packageData.workspace] = {
 						lastAccessed: new Date,
 						connections: []
 					};
 
 					var connectionRecorded = false;
 
-					for (var i=0; i<global.boardConnections[packageData.board].connections.length; i++) {
-						if (global.boardConnections[packageData.board].connections[i] == client.id) {
+					for (var i=0; i<global.workspaceConnections[packageData.workspace].connections.length; i++) {
+						if (global.workspaceConnections[packageData.workspace].connections[i] == client.id) {
 							connectionRecorded = true;
-							global.boardConnections[packageData.board].lastAccessed = new Date;
+							global.workspaceConnections[packageData.workspace].lastAccessed = new Date;
 							break;
 						}
 					}
 
 					if (!connectionRecorded) {
-						global.boardConnections[packageData.board].lastAccessed = new Date;
-						global.boardConnections[packageData.board].connections.push(client.id);
+						global.workspaceConnections[packageData.workspace].lastAccessed = new Date;
+						global.workspaceConnections[packageData.workspace].connections.push(client.id);
 					}
 
 					try {
@@ -883,12 +883,12 @@
 		});
 	
 		client.on("close", function () {
-			for (var boardId in global.boardConnections) {
+			for (var workspaceId in global.workspaceConnections) {
 				do {  
 					var containedConnection = false;
-					for (var i=0; i<global.boardConnections[boardId].connections.length; i++) {
-						if (global.boardConnections[boardId].connections[i] == client.id) {
-							global.boardConnections[boardId].connections.splice(i,1);
+					for (var i=0; i<global.workspaceConnections[workspaceId].connections.length; i++) {
+						if (global.workspaceConnections[workspaceId].connections[i] == client.id) {
+							global.workspaceConnections[workspaceId].connections.splice(i,1);
 							containedConnection = true;
 							break;
 						}
@@ -896,8 +896,8 @@
 				}
 				while (containedConnection);	
 
-				if (global.boardConnections[boardId].connections.length == 0) {
-					delete global.boardConnections[boardId];
+				if (global.workspaceConnections[workspaceId].connections.length == 0) {
+					delete global.workspaceConnections[workspaceId];
 				}
 			}
 		});
@@ -928,8 +928,8 @@
 			if (refreshIntervalId != null) clearInterval(refreshIntervalId);
 
 			refreshIntervalId = setInterval(function() {
-				for (var boardId in global.boardConnections) {
-					if (Math.round(Math.abs(((new Date).getTime() - global.boardConnections[boardId].lastAccessed.getTime())/(60*60*1000))) >= 1) delete global.boardConnections[boardId];
+				for (var workspaceId in global.workspaceConnections) {
+					if (Math.round(Math.abs(((new Date).getTime() - global.workspaceConnections[workspaceId].lastAccessed.getTime())/(60*60*1000))) >= 1) delete global.workspaceConnections[workspaceId];
 				}
 				
 				sub.subscribe(config.socketID);
@@ -946,18 +946,19 @@
 						console.log("Application: Error receiving messages: " + ex.toString());
 					}
 
-					if ((packageData) && (packageData.board)) {
-						if (packageData.board in global.boardConnections) {
-							for (var i=0; i<global.boardConnections[packageData.board].connections.length; i++) {   
+					console.log(packageData)
+					if ((packageData) && (packageData.workspace)) {
+						if (packageData.workspace in global.workspaceConnections) {
+							for (var i=0; i<global.workspaceConnections[packageData.workspace].connections.length; i++) {   
 								if(typeof packageData.sendingClientId !== "undefined") {
 									// Don't broadcast to sending client
-									if(global.boardConnections[packageData.board].connections[i] == packageData.sendingClientId ) {
+									if(global.workspaceConnections[packageData.workspace].connections[i] == packageData.sendingClientId ) {
 										continue;
 									}
 								}
 
-								if (socket.clients[global.boardConnections[packageData.board].connections[i]]) {
-									socket.clients[global.boardConnections[packageData.board].connections[i]].send(message);
+								if (socket.clients[global.workspaceConnections[packageData.workspace].connections[i]]) {
+									socket.clients[global.workspaceConnections[packageData.workspace].connections[i]].send(message);
 								}
 							}
 						}

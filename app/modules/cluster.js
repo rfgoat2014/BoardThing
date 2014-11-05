@@ -300,7 +300,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			if (!that.model.collapsed) {
 	        	this.$el.droppable({
-	        		accept: ".new-card,.item-content-container,.clustered-item-content-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
+	        		accept: ".item-content-container,.clustered-item-content-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
 	        		tolerance: "pointer",
 	            	greedy:true,
 	           		drop: function(e, ui) {
@@ -327,7 +327,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 											Cluster_Services.AttachCard(that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
 												that._workspace.sendSocket(JSON.stringify({ 
 													action:"addCardToCluster", 
-													board: that.model.boardId, 
+													workspace: that._workspace.getId(),
 													updateDetail: updateDetail
 												}));
 											});
@@ -351,7 +351,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       						Cluster_Services.AttachCluster(that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
 		       							that._workspace.sendSocket(JSON.stringify({ 
 		       								action:"addClusterToCluster", 
-		       								board: that.model.boardId, 
+											workspace: that._workspace.getId(),
 		       								updateDetail: updateDetail 
 		       							}));
 		       						});
@@ -547,7 +547,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			this._workspace.sendSocket(JSON.stringify({
 				action:"updateClusterPosition",
-				board: this.model.boardId,
+				workspace: that._workspace.getId(),
 				position: {
 		        	id: this.model.id,
 		        	xPos: left,
@@ -615,7 +615,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"sortCluster", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					sortOrder: cardOrder 
 				}));
 			});
@@ -655,7 +655,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			Cluster_Services.Collapse(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"collapseCluster", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					cluster: { 
 						id:  that.model.id
 					}
@@ -690,7 +690,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			Cluster_Services.Expand(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"expandCluster", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(), 
 					cluster: { 
 						id:  that.model.id
 					}
@@ -795,7 +795,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			            	if (response.code == 200) {
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeCardFromCluster", 
-									board: that.model.boardId, 
+									workspace: that._workspace.getId(),
 									updateDetail: {
 										clusterId: that.model.id,
 										cardId: cardId
@@ -810,7 +810,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			            	if (response.code == 200) {
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeClusterFromCluster", 
-									board: that.model.boardId, 
+									workspace: that._workspace.getId(),
 									updateDetail: {
 										clusterId: that.model.id,
 										cardId: cardId
@@ -1064,7 +1064,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			Cluster_Services.AddVote(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"addVote", 
-					board: that.model.boardId,
+					workspace: that._workspace.getId(),
 					vote: { 
 						cluster: that.model.parentId,
 						card: that.model.id

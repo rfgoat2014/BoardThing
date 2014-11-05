@@ -212,6 +212,8 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					else this.addClusterToBoard(this._selectedBoard.cards[i]);
 				}
 			}
+
+			this._boardContentLoaded = true;
 		},
 
 		// {{ Getters }}
@@ -286,9 +288,12 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 		setSelectedBoard: function(boardId) {
 			var that = this,
 				boards = this.model.boards;
+			
+			this._boardContentLoaded = false;
 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
 				if ((boardId) && (boards[i].id.toString() == boardId)) {
+
 					boards[i].cards = [];	
 
 					this._selectedBoard = boards[i];	
@@ -855,7 +860,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 				}
 				catch (er) {}
 
-				that._socket.send(JSON.stringify({ board: that.model.id, action: "Establishing connection" }));
+				that._socket.send(JSON.stringify({ workspace: that.model.id, action: "Establishing connection" }));
 
 			    that._socket.on("message", function(package) {
 			  		that._connectionAttempts = 0;
@@ -884,6 +889,48 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 			    	if ((socketPackage != null) && (socketPackage.action != null) && (that._boardContentLoaded)) {
 			    		try {
 			    			switch(socketPackage.action) {
+								case "boardCardAdded":
+								break;
+								case "boardCardUpdated":
+								break;
+								case "boardCardDeleted":
+								break;
+								case "updateCardPosition":
+								case "updateClusterPosition":
+		    						var position = socketPackage.position;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getId() == position.id) that._boardEntities[i].setCardPosition(position.id,position.xPos,position.yPos); 
+										}
+									}
+								break;
+								case "updateCardSize":
+								break;
+								case "undoCardResize":
+								break;
+								case "lockCard":
+								break;
+								case "unlockCard":
+								break;
+								case "boardClusterUpdated":
+								break;
+								case "expandCluster":
+								break;
+								case "collapseCluster":
+								break;
+								case "sortCluster": 
+								break;
+								case "addVote":
+								break;
+								case "addCardToCluster":
+								break;
+								case "removeCardFromCluster":
+								break;
+								case "addClusterToCluster":
+								break;
+								case "removeClusterFromCluster":
+								break;
 			    			}
 			    		}	
 						catch (err) {

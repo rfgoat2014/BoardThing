@@ -307,7 +307,7 @@ function(Card_Services, Cluster_Services) {
 								that.model.yPos = (that.$el.position().top + that._workspace.$("#board-container").scrollTop());
 							}
 
-							Card_Services.UpdatePosition(that.model.boardId, that.model.id, that.model.xPos, that.model.yPos);
+							that.updateCardPosition(that.model.xPos,  that.model.yPos);
 
 					    	that._workspace.sortZIndexes(that.model.id,true);
 		        		}
@@ -317,7 +317,7 @@ function(Card_Services, Cluster_Services) {
 
 								if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCard(that.model.id, elementId);
 			           		}
-				        	else Card_Services.UpdatePosition(that.model.boardId, that.model.id, (that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
+				        	else that.updateCardPosition((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
 			        	}
 					}
 				});
@@ -419,11 +419,6 @@ function(Card_Services, Cluster_Services) {
 				this.model.xPos = left;
 				this.model.yPos = top;
 
-				if (this.$el.hasClass("new-card")) {
-					this.$el.removeClass("new-card");
-					this.$el.addClass("item-content-container");
-				}
-
 				this.render();
 			}	
 		},
@@ -431,25 +426,17 @@ function(Card_Services, Cluster_Services) {
 		updateCardPosition: function(left,top) {
 			var that = this;
 
-			this.model.xPos = left;
-			this.model.yPos = top;
-
-			Card_Services.UpdatePosition(this.model.boardId, this.model.id, left, top);
-
-			this._workspace.sendSocket(JSON.stringify({ 
-				action:"updateCardPosition", 
-				board: that.model.boardId, 
-				position: {
-		        	id: that.model.id,
-		        	xPos: left,
-		        	yPos: top
-		        } 
-			}));
-
-			if (this.$el.hasClass("new-card")) {
-				this.$el.removeClass("new-card");
-				this.$el.addClass("item-content-container");
-			}
+			Card_Services.UpdatePosition(this.model.boardId, this.model.id, left, top, function() {
+				that._workspace.sendSocket(JSON.stringify({ 
+					action:"updateCardPosition", 
+					workspace: that._workspace.getId(),
+					position: {
+			        	id: that.model.id,
+			        	xPos: left,
+			        	yPos: top
+			        } 
+				}));
+			});
 		},
 
 		// ---------- Actions to edit a card
@@ -596,7 +583,7 @@ function(Card_Services, Cluster_Services) {
 	        Card_Services.Resize(this.model.boardId, this.model.id, sizeValues, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"updateCardSize", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					size: sizeValues 
 				}));
 	        });
@@ -652,7 +639,7 @@ function(Card_Services, Cluster_Services) {
 	        Card_Services.Resize(this.model.boardId, this.model.id, sizeValues, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"undoCardResize", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					size: sizeValues 
 				}));
 	        });
@@ -686,7 +673,7 @@ function(Card_Services, Cluster_Services) {
 
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"boardCardAdded", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					card: response.card 
 				}));
 			});
@@ -706,7 +693,7 @@ function(Card_Services, Cluster_Services) {
         	Card_Services.Lock(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"lockCard", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					card: { 
 						id: that.model.id
 					} 
@@ -738,7 +725,7 @@ function(Card_Services, Cluster_Services) {
         	Card_Services.Unlock(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"unlockCard", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					card: { 
 						id: that.model.id
 					} 
@@ -774,7 +761,7 @@ function(Card_Services, Cluster_Services) {
 			Card_Services.Delete(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"boardCardDeleted", 
-					board: that.model.boardId, 
+					workspace: that._workspace.getId(),
 					card: cardToDelete 
 				}));
 			});
@@ -797,7 +784,7 @@ function(Card_Services, Cluster_Services) {
 			Cluster_Services.AddVote(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"addVote", 
-					board: that.model.boardId,
+					workspace: that._workspace.getId(),
 					vote: { 
 						cluster: that.model.parentId,
 						card: that.model.id

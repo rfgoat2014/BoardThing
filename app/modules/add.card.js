@@ -137,7 +137,7 @@ function(Card_Services, Cluster_Services) {
 
 						that._workspace.sendSocket(JSON.stringify({ 
 							action:"boardCardAdded", 
-							board: boardId, 
+							workspace: that._workspace.getId(), 
 							card: newCard 
 						}));
 					});
@@ -156,7 +156,7 @@ function(Card_Services, Cluster_Services) {
 						Card_Services.UpdateTextCard(boardId, this._cardModel.id, updateModel, function(response) {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"boardCardUpdated", 
-								board: boardId, 
+								workspace: that._workspace.getId(),
 								card: updateModel 
 							}));
 						});
@@ -175,7 +175,7 @@ function(Card_Services, Cluster_Services) {
 						Cluster_Services.Insert(boardId, this._cardModel.id, updateModel, function(response) {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"boardClusterUpdated", 
-								board: boardId, 
+								workspace: that._workspace.getId(),
 								cluster: updateModel 
 							}));
 						});
