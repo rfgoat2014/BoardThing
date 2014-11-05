@@ -947,12 +947,40 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 									}
 								break;
 								case "updateCardSize":
-								break;
-								case "undoCardResize":
-								break;
+		    						var size = socketPackage.size;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getId() == size.id) that._boardEntities[i].setCardSize(size.id,size.width,size.height);
+										}
+									}
+					    			break;
+					    		case "undoCardResize":
+		    						var size = socketPackage.size;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getId() == size.id) that._boardEntities[i].setCardUnsized();
+										}
+									}
+					    			break;
 								case "lockCard":
-								break;
-								case "unlockCard":
+		    						var card = socketPackage.card;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if ((that._boardEntities[i].getType() == "card") && (that._boardEntities[i].getId() == card.id)) that._boardEntities[i].setCardLocked();
+										}
+									}
+				    			break;
+								case "unlockCards":
+		    						var card = socketPackage.card;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if ((that._boardEntities[i].getType() == "card") && (that._boardEntities[i].getId() == card.id) && (that._boardEntities[i].getIsLocked())) that._cardViews[i].setCardUnlocked();
+										}
+									}
 								break;
 								case "boardClusterUpdated":
 		    						var cluster = socketPackage.cluster;

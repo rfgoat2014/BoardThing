@@ -688,7 +688,7 @@ function(Card_Services, Cluster_Services) {
 
 			var that = this;
 
-			this.disableResizeCard();
+			this.stopCardResize();
 
         	Card_Services.Lock(this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
