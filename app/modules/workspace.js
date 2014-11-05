@@ -1022,12 +1022,24 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 								case "addVote":
 								break;
 								case "addCardToCluster":
+		    						var updateDetail = socketPackage.updateDetail;
+
+		    						that.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
 								break;
 								case "removeCardFromCluster":
+		    						var updateDetail = socketPackage.updateDetail;
+
+		    						that.removeCardFromCluster(updateDetail);
 								break;
 								case "addClusterToCluster":
+		    						var updateDetail = socketPackage.updateDetail;
+
+		    						that.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
 								break;
 								case "removeClusterFromCluster":
+		    						var updateDetail = socketPackage.updateDetail;
+
+		    						that.removeClusterFromCluster(updateDetail);
 								break;
 			    			}
 			    		}	
