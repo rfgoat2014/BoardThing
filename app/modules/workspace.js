@@ -1040,8 +1040,6 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 								case "addVote":
 		    						var vote = socketPackage.vote;
 
-		    						console.log(vote)
-
 									if (that._boardEntities) {
 										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
 											if (that._boardEntities[i].getId() == vote.cluster) {
