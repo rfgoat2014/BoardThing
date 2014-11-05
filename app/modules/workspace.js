@@ -381,7 +381,8 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 
 		cardAdded: function(card) {
     		try {
-				var xPos = Math.floor(this.$("#board-cards").width()/2)+this.$("#board-container").scrollLeft()-90,
+				var that = this,
+					xPos = Math.floor(this.$("#board-cards").width()/2)+this.$("#board-container").scrollLeft()-90,
 					yPos = Math.floor(this.$("#board-cards").height()/2)+this.$("#board-container").scrollTop();
 
 				if (this._dropPosition) {
@@ -408,7 +409,18 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					color: card.color
 				};
 
-				Card_Services.UpdatePosition(this._selectedBoard.id, newCard.id, newCard.xPos, newCard.yPos);
+				Card_Services.UpdatePosition(this._selectedBoard.id, newCard.id, newCard.xPos, newCard.yPos, function() {
+					console.log(newCard.id)
+					that.sendSocket(JSON.stringify({ 
+						action:"updateCardPosition", 
+						workspace: that.model.id,
+						position: {
+				        	id: newCard.id,
+				        	xPos: newCard.xPos,
+				        	yPos: newCard.yPos
+				        } 
+					}));
+				});
 
 	        	this._cardsDroppedInPosition++;
 
@@ -890,10 +902,39 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 			    		try {
 			    			switch(socketPackage.action) {
 								case "boardCardAdded":
+			    					var card = socketPackage.card,
+			    						cardExists = false;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getId() == card.id) {
+												cardExists = true;
+												break;
+											}
+										}
+									}
+
+									if (!cardExists) that.addCardToBoard(card);
 								break;
 								case "boardCardUpdated":
+			    					var card = socketPackage.card;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											that._boardEntities[i].updateCardContent(card.id, card.content, card.title, card.color);
+										}
+									}
 								break;
 								case "boardCardDeleted":
+			    					var card = socketPackage.card;
+
+									that.removeCardFromBoard(card);
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (this._boardEntities[i].getType() == "cluster") that._boardEntities[i].removeCard(card);
+										}
+									}
 								break;
 								case "updateCardPosition":
 								case "updateClusterPosition":
@@ -914,7 +955,14 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 								case "unlockCard":
 								break;
 								case "boardClusterUpdated":
-								break;
+		    						var cluster = socketPackage.cluster;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getType() == "cluster") that._boardEntities[i].updateClusterTitle(cluster.id, cluster.title, cluster.content);
+										}
+									}
+				    			break;
 								case "expandCluster":
 								break;
 								case "collapseCluster":

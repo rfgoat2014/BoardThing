@@ -127,6 +127,7 @@ function(Card_Services, Cluster_Services) {
 			if (this.$("#card-text").val().trim().length > 0) {
 				if (!this._cardModel) {
 					var newCard = {
+						type: "text",
 						boardId: boardId,
 						content: this.$("#card-text").val(),
 						color: this.$("#card-color-select").spectrum("get").toString()
@@ -138,7 +139,7 @@ function(Card_Services, Cluster_Services) {
 						that._workspace.sendSocket(JSON.stringify({ 
 							action:"boardCardAdded", 
 							workspace: that._workspace.getId(), 
-							card: newCard 
+							card: response.card 
 						}));
 					});
 				}
@@ -148,6 +149,7 @@ function(Card_Services, Cluster_Services) {
 					if ((this._cardModel.cards == null)|| (this._cardModel.cards.length === 0)) {
 						var updateModel = {
 							id: this._cardModel.id,
+							type: "text",
 							parentId: this._cardModel.parentId,
 							content: this.$("#card-text").val(),
 							color: this.$("#card-color-select").spectrum("get").toString()
@@ -164,6 +166,7 @@ function(Card_Services, Cluster_Services) {
 					else {
 						updateModel = {
 							id: this._cardModel.id, 
+							type: "text",
 							boardId: boardId,
 			  				action: "update",
 							color: this.$("#card-color-select").spectrum("get").toString()
