@@ -963,10 +963,24 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 										}
 									}
 				    			break;
-								case "expandCluster":
-								break;
-								case "collapseCluster":
-								break;
+					    		case "expandCluster":
+									var cluster = socketPackage.cluster;
+
+									if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getType() == "cluster") that._boardEntities[i].expandCluster(cluster.id);
+										}
+									}
+				    			break;
+					    		case "collapseCluster":
+									var cluster = socketPackage.cluster;
+
+									if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getType() == "cluster") that._boardEntities[i].collapseCluster(cluster.id);
+										}
+									}
+				    			break;
 								case "sortCluster": 
 								break;
 								case "addVote":
