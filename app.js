@@ -946,7 +946,6 @@
 						console.log("Application: Error receiving messages: " + ex.toString());
 					}
 
-					console.log(packageData)
 					if ((packageData) && (packageData.workspace)) {
 						if (packageData.workspace in global.workspaceConnections) {
 							for (var i=0; i<global.workspaceConnections[packageData.workspace].connections.length; i++) {   
