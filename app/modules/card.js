@@ -316,6 +316,7 @@ function(Card_Services, Cluster_Services) {
 				        		var objectModel = that._workspace.getObjectModel(elementId);
 
 								if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCard(that.model.id, elementId);
+				        		else that.updateCardPosition((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));			           		
 			           		}
 				        	else that.updateCardPosition((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
 			        	}

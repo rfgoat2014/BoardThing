@@ -281,7 +281,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					    	that._workspace.addClusterToBoard(that.model);
 						}
-						else if (!that.model.parentId) {
+						else {
 							that.model.xPos = that._workspace.$("#board-container").scrollLeft()+that.$el.position().left;
 							that.model.yPos = that._workspace.$("#board-container").scrollTop()+that.$el.position().top;
 			        	}
@@ -294,6 +294,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		        		var objectModel = that._workspace.getObjectModel(elementId);
 
 						if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCluster(that.model.id, elementId);
+		        		else that.updateClusterPosition ((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));	
 		        	}
 				}
 			});
@@ -547,7 +548,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			this._workspace.sendSocket(JSON.stringify({
 				action:"updateClusterPosition",
-				workspace: that._workspace.getId(),
+				workspace: this._workspace.getId(),
 				position: {
 		        	id: this.model.id,
 		        	xPos: left,

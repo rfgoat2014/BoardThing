@@ -937,7 +937,6 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 									}
 								break;
 								case "updateCardPosition":
-								case "updateClusterPosition":
 		    						var position = socketPackage.position;
 
 		    						if (that._boardEntities) {
@@ -991,6 +990,15 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 										}
 									}
 				    			break;
+								case "updateClusterPosition":
+		    						var position = socketPackage.position;
+
+		    						if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getId() == position.id) that._boardEntities[i].setClusterPosition(position.id,position.xPos,position.yPos); 
+										}
+									}
+								break;
 					    		case "expandCluster":
 									var cluster = socketPackage.cluster;
 
