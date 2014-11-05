@@ -1017,7 +1017,14 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 										}
 									}
 				    			break;
-								case "sortCluster": 
+								case "sortCluster":
+					    			var sortOrder = socketPackage.sortOrder;
+
+									if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if ((that._boardEntities[i].getType() == "cluster") && (that._boardEntities[i].getId() == sortOrder.clusterId)) that._boardEntities[i].updateSortPosition(sortOrder.cards);
+										}
+									}
 								break;
 					    		case "startDotVoting":
 		    						var cluster = socketPackage.cluster;

@@ -139,7 +139,7 @@ function(Card_Services, Cluster_Services) {
 						that._workspace.sendSocket(JSON.stringify({ 
 							action:"boardCardAdded", 
 							workspace: that._workspace.getId(), 
-							card: response.card 
+							card: response.cards 
 						}));
 					});
 				}

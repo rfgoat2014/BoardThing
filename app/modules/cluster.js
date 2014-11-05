@@ -617,7 +617,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"sortCluster", 
 					workspace: that._workspace.getId(),
-					sortOrder: cardOrder 
+					sortOrder: {
+						clusterId: that.model.id,
+						cards: cardOrder
+					} 
 				}));
 			});
 
@@ -631,7 +634,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				var elementFound = false;
 
 				for (var j=0, existingCardsLength=this.model.cards.length; j<existingCardsLength; j+=1) {
-					if (this.model.cards[j].id == cards[i].id) {
+					if (this.model.cards[j].id == cards[i]) {
 						elementFound = true;
 
 						this.model.cards[j].zPos = (i+1);
@@ -640,7 +643,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 				if (!elementFound) {
 					for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-   						if (this.model.clusters[j].id == cards[i].id) this.model.clusters[j].zPos = i+1;
+   						if (this.model.clusters[j].id == cards[i]) this.model.clusters[j].zPos = i+1;
 		        	}
 		        }
 			}
