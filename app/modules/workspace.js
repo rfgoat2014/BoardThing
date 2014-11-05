@@ -1019,7 +1019,36 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 				    			break;
 								case "sortCluster": 
 								break;
+					    		case "startDotVoting":
+		    						var cluster = socketPackage.cluster;
+
+									if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if ((that._boardEntities[i].getType() == "cluster") && (that._boardEntities[i].getId() == cluster.id)) that._boardEntities[i].displayStartDotVoting();
+										}
+									}
+					    			break;
+					    		case "stopDotVoting":
+		    						var cluster = socketPackage.cluster;
+
+									if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if ((that._boardEntities[i].getType() == "cluster") && (that._boardEntities[i].getId() == cluster.id)) that._boardEntities[i].displayStopDotVoting();
+										}
+									}
+					    			break;
 								case "addVote":
+		    						var vote = socketPackage.vote;
+
+		    						console.log(vote)
+
+									if (that._boardEntities) {
+										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
+											if (that._boardEntities[i].getId() == vote.cluster) {
+												that._boardEntities[i].updateChildVotes(vote.card);
+											}
+										}
+									}
 								break;
 								case "addCardToCluster":
 		    						var updateDetail = socketPackage.updateDetail;

@@ -981,7 +981,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			Cluster_Services.StartDotVoting(this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"startDotVoting",
-					board: that.model.boardId,
+					workspace: that._workspace.getId(),
 					cluster: { 
 						id: that.model.id
 					} 
@@ -1031,7 +1031,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			Cluster_Services.StopDotVoting(this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"stopDotVoting",
-					board: that.model.boardId,
+					workspace: that._workspace.getId(),
 					cluster: { 
 						id: that.model.id
 					}
