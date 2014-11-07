@@ -248,6 +248,12 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			return null;
 		},
 
+		// {{ Setters }}
+
+		setCurrentMousePosition: function(currentMousePosition) {
+			this._currentMousePosition = currentMousePosition;
+		},
+
 		// {{ Board map }}
 
 		viewBoardMap: function() {
@@ -719,18 +725,22 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		//  ---- Check if an element exists at the specified position
-		checkPositionTaken: function(elementId) {
+		checkPositionTaken: function(elementId,defaultX,defaultY) {
 			try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
 					if (this._boardEntities[i].getId() != elementId) {
-						var xposStart = this._boardEntities[i].getXPos();
-						var xposEnd = xposStart + this._boardEntities[i].$el.width();
+						var xPos = this._currentMousePosition.x,
+							xPosStart = this._boardEntities[i].getXPos(),
+							xPosEnd = xPosStart + this._boardEntities[i].$el.width(),
+							yPos = this._currentMousePosition.y,
+							yPosStart = this._boardEntities[i].getYPos(),
+							yPosEnd = yPosStart + this._boardEntities[i].$el.height();
 
-						var yposStart = this._boardEntities[i].getYPos();
-						var yposEnd = yposStart + this._boardEntities[i].$el.height();
+						if (xPos === -1) xPos = defaultX;
+						if (yPos === -1) yPos = defaultY;
 
-	 					if (((this._currentMousePosition.x > xposStart) && (this._currentMousePosition.x < xposEnd)) && 
-	 						((this._currentMousePosition.y > yposStart) && (this._currentMousePosition.y < yposEnd))) {
+	 					if (((xPos > xPosStart) && (xPos < xPosEnd)) && 
+	 						((yPos > yPosStart) && (yPos < yPosEnd))) {
 							if ((!this._boardEntities[i].getWidth()) && (!this._boardEntities[i].getHeight())) return this._boardEntities[i].getId();
 	 					}
 					}

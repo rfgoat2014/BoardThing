@@ -34,8 +34,23 @@
 	z-index: 1;
 }
 
-#board-container .board-cards {
+#board-container .board {
+	margin: 0px auto !important;
+}
+
+#board-container .board .board-cards {
+	position: relative;
 	background-color: #ffffff;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#board-container .board .page-canvas {
+	position: relative;
+	width: 100%;
+	height: 100%;
 	margin: 0;
 	padding: 0;
 }

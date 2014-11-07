@@ -72,7 +72,7 @@ function(Card_Services, Cluster_Services) {
 				}
 
 				// Set the defined position
-				if ((!that._parent) && (that.model.xPos && that.model.yPos)) that.$el.css({top: that.model.yPos, left: that.model.xPos, position: 'absolute'});
+				if ((!that._parent) && ((that.model.xPos != null) && (that.model.yPos != null))) that.$el.css({top: that.model.yPos, left: that.model.xPos, position: 'absolute'});
 					
 				if ((!that._parent) && (that.model.zPos != null)) that.$el.zIndex(that.model.zPos);
 
@@ -266,6 +266,7 @@ function(Card_Services, Cluster_Services) {
 	        	startDragY = null;
 
 	        	that.$el.draggable({
+	        		containment: ".board-cards",
 					start: function(e,ui) {
 						that.$el.zIndex(999999999);
 
@@ -279,7 +280,6 @@ function(Card_Services, Cluster_Services) {
 					},
 					drag: function(e,ui) {
 						if (that._isMobile) {
-
 							var distanceFromStartX = e.clientX - startDragX;
 							var distanceFromStartY = e.clientY - startDragY;
 
@@ -289,7 +289,7 @@ function(Card_Services, Cluster_Services) {
 					stop: function(e,ui) {
 						e.stopPropagation();
 
-						var elementId = that._workspace.checkPositionTaken(that.model.id);
+						var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left, that.$el.position().top);
 
 						if (elementId == -1) {
 							if (that._parent) {

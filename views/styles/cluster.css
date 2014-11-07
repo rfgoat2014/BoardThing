@@ -1,7 +1,7 @@
 /* Cluster styles */
 
 .cluster-content-container {
-    position: relative;
+    position: absolute;
     vertical-align: top;
     min-width: 200px;
     background-color: rgba(43,53,52,0.10);

@@ -60,7 +60,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
     		this.$el.attr("object-type", "cluster");
 
 			if (!this._parent) {
-				if ((this.model.xPos) && (this.model.yPos)) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
+				if ((this.model.xPos != null) && (this.model.yPos != null)) this.$el.css({top: this.model.yPos, left: this.model.xPos, position: 'absolute'});
 				
 				if (this.model.zPos != null) this.$el.zIndex(this.model.zPos);
 			}
@@ -246,6 +246,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
         		startDragY = null;
 
         	this.$el.draggable({
+        		containment: ".board-cards",
 				start: function( e, ui ) {
 					startDragX = e.clientX;
         			startDragY = e.clientY;
@@ -265,7 +266,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				stop: function( e, ui ) {
 					e.stopPropagation();
 
-					var elementId = that._workspace.checkPositionTaken(that.model.id);
+					var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left, that.$el.position().top);
 
 					if (elementId == -1) {
 						if (that._parent) {

@@ -11,7 +11,7 @@ function() {
 		_boardRendered: false,
 	
 		initialize: function(options) {
-			this.el.id = "board-_" + this.model.id;
+			this.el.id = "board_" + this.model.id;
 			this.el.className = "board";
 
 			this._workspace = options.workspace;
@@ -28,17 +28,17 @@ function() {
 				that.$el.html(_.template(contents, that.model));
 
 				that.afterRender();
+
+				that.unbind();
+				that.bind();
 			}, "text");
 		},
 
 		afterRender: function() {
+			this.$el.width(this.model.width);
+			this.$el.height(this.model.height);
+
 			this.$("#board-cards_" + this.model.id).empty();
-
-			this.$("#board-cards_" + this.model.id).width(this.model.width);
-			this.$("#board-cards_" + this.model.id).height(this.model.height);
-
-			this.$("#page-canvas_" + this.model.id).width(this.model.width);
-			this.$("#page-canvas_" + this.model.id).height(this.model.height);
 
 			this._boardRendered = true;
 
@@ -46,6 +46,28 @@ function() {
 			this._workspace.bindBoard(this.model.id);		
 
 			if (this._renderItems) this._workspace.getBoardItems(this.model.id);
+		},
+
+		unbind: function() {
+			this.$el.unbind("mouseover");
+			this.$el.unbind("mousemove");
+			this.$el.unbind("mouseout");
+		},
+
+		bind: function() {
+			var that = this;
+		    
+		    this.$el.mouseover(function(event) {
+		    	that._workspace.setCurrentMousePosition({ x: event.offsetX, y: event.offsetY});
+		    });
+
+		    this.$el.mousemove(function(event) {
+		    	that._workspace.setCurrentMousePosition({ x: event.offsetX, y: event.offsetY});
+		    });
+
+		    this.$el.mouseout(function(event) {
+		    	that._workspace.setCurrentMousePosition({ x: -1, y: -1});
+		    });
 		},
 
 		getId: function() {
