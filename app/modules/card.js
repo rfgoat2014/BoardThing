@@ -289,22 +289,29 @@ function(Card_Services, Cluster_Services) {
 					stop: function(e,ui) {
 						e.stopPropagation();
 
-						var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left, that.$el.position().top);
+						var elementId = -1;
+
+						if (that._parent) {
+							var totalParentOffset = that._parent.getTotalParentOffset();
+
+							elementId = that._workspace.checkPositionTaken(that.model.id, totalParentOffset.x + that.$el.position().left, totalParentOffset.y + that.$el.position().top);
+						}
+						else elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left, that.$el.position().top);
 
 						if (elementId == -1) {
 							if (that._parent) {
 								var totalParentOffset = that._parent.getTotalParentOffset();
 
-								that.model.xPos = totalParentOffset.x + that.$el.position().left + that._workspace.$("#board-container").scrollLeft();
-								that.model.yPos = totalParentOffset.y + that.$el.position().top + that._workspace.$("#board-container").scrollTop();
+								that.model.xPos = totalParentOffset.x + that.$el.position().left;
+								that.model.yPos = totalParentOffset.y + that.$el.position().top;
 
 								that._parent.removeCard(that.model.id);
 
 						    	that._workspace.addCardToBoard(that.model);
 							}
 							else {
-								that.model.xPos = (that.$el.position().left + that._workspace.$("#board-container").scrollLeft());
-								that.model.yPos = (that.$el.position().top + that._workspace.$("#board-container").scrollTop());
+								that.model.xPos = that.$el.position().left;
+								that.model.yPos = that.$el.position().top;
 							}
 
 							that.updateCardPosition(that.model.xPos,  that.model.yPos);
