@@ -16,4 +16,4 @@ Initially the main board listing page was built using AngularJS and the main boa
 
 Initial Goals ---------------
 
-- Recreate the cards and clusters mechanism in SVG
+- Recreate the cards and clusters for the new board map
