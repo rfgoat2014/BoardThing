@@ -1,4 +1,5 @@
 define([
+	"modules/board",
 	"modules/board.model",
 	"modules/add.card",
 	"modules/card",
@@ -14,7 +15,7 @@ define([
 	"jquery"
 ],
 
-function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
+function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	// ===== View for viewing a workdspace
@@ -22,7 +23,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 	Workspace.Index = Backbone.View.extend({
 		el: "<div>",
 
-		_editing: false,
+		_mode: "individual",
 
 		_currentMousePosition: { x: -1, y: -1 },
 
@@ -47,86 +48,86 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 		render: function() {
 			var that = this;
 
-			$.get("/app/templates/workspace/index.html", function(contents) {
-				var boards = that.model.boards;
+			var template = "/app/templates/workspace/individual.html";
+			if (this._mode == "boardMap") template = "/app/templates/workspace/boardMap.html"; 
 
-				for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
-					if ((that.model.startBoardId) && (that.model.startBoardId.toString() == boards[i].id.toString())) that._selectedBoard = boards[i];
-					else if ((!that.model.startBoardId) && (boards[i].position == 1)) that._selectedBoard = boards[i];
-				
-					if (that._selectedBoard) break;
-				}
-
-				if ((!that._selectedBoard) && (boards.length > 0)) that._selectedBoard = boards[0];
-				else if (!that._selectedBoard) that._selectedBoard = { id: "", title: "", cards: [] };
-
-				that.$el.html(_.template(contents, that._selectedBoard));
+			$.get(template, function(contents) {
+				that.$el.html(_.template(contents, that.model));
 
 				that.connectSockets();
 
-				that.setupBoard();
+				that.setupWorkspace();
 
 				that.unbind();
 				that.bind();
 			}, "text");
 		},
 
-		setupBoard: function() {
-			this.$("#board-cards").empty();
+		setupWorkspace: function() {
+			if (this._mode == "boardMap") {
 
-			this.$("#board-cards").width(this._selectedBoard.width);
-			this.$("#board-cards").height(this._selectedBoard.height);
+			}
+			else if (this._mode == "individual") {
+				for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
+					if ((this.model.startBoardId) && (this.model.startBoardId.toString() == this.model.boards[i].id.toString())) this._selectedBoard = new Board.Item({ model: this.model.boards[i], workspace: this });
+					else if ((!this.model.startBoardId) && (this.model.boards[i].position == 1)) this._selectedBoard = new Board.Item({ model: this.model.boards[i], workspace: this });
+				
+					if (this._selectedBoard) break;
+				}
 
-			this.$("#page-canvas").width(this._selectedBoard.width);
-			this.$("#page-canvas").height(this._selectedBoard.height);
+				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new Board.Item({ model: this.model.boards[0], workspace: this });
+				else if (!this._selectedBoard) this._selectedBoard = new Board.Item({ model: { id: "", title: "", cards: [] }, workspace: this });
 
-			var overflowWidth = this._selectedBoard.width - $(window).width(),
-				overflowHeight = this._selectedBoard.height - $(window).height();
-
-			if (overflowWidth > 0) this.$("#board-container").scrollLeft(overflowWidth/2);
-			if (overflowHeight > 0) this.$("#board-container").scrollTop(overflowHeight/2);
+				this.$("#board-container").html(this._selectedBoard.$el);
+			}
 		},
 
 		unbind: function() {
-			this.$("#board-cards").unbind("mousemove");
+			this.$("#view-board-map").unbind("click");
 
-			if (this._isMobile) {
-      			this.$("#board-cards").unbind("click");
-			}
-			else {
-				var canvas = document.getElementById("page-canvas");
-
-				try {
-					canvas.removeEventListener('click');
-				}
-				catch (err) {}
-
-				try {
-					canvas.removeEventListener('dblclick');
-				}
-				catch (err) {}
-			}
+			this.$("#board-container").unbind("mousemove");
 
 			this.$("#card-create-overlay").unbind("click");
 		},
 
 		bind: function() {
+			var that = this;
+
+			this.$("#view-board-map").click(function(event) {
+				that.viewBoardMap();
+			});
+
+		    this.$("#board-container").mousemove(function(event) {
+		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
+		        that._currentMousePosition.y = that.$("#board-container").scrollTop() + event.pageY;
+		    });
+
+			this.$("#card-create-overlay").click(function(event) {
+				that.hideAddCard();
+			});
+		},
+
+      	// {{ Build Boards }}
+
+      	unbindBoard: function(boardId) {
+			var canvas = document.getElementById("page-canvas_" + boardId);
+
+			try {
+				canvas.removeEventListener('click');
+			}
+			catch (err) {}
+
+			try {
+				canvas.removeEventListener('dblclick');
+			}
+			catch (err) {}
+      	},
+
+      	bindBoard: function(boardId) {
 			var that = this,
-				canvas = document.getElementById("page-canvas");
+				canvas = document.getElementById("page-canvas_" + boardId);
 
 			if (this._isMobile) {
-      			this.$("#board-cards").click(function(e) {
-					var selectedPageTool = that.getSelectedPageTool();
-
-					if (selectedPageTool == "card") {
-	        			that._dropPosition = { x: ($(this).scrollLeft() + e.pageX),  y: ($(this).scrollTop() + e.pageY) };
-
-	        			that._cardsDroppedInPosition = 0;
-
-						that.showAddCard();
-					}
-		        });
-
 				canvas.addEventListener("touchstart", function(e) {
 				}, false);
 
@@ -157,45 +158,39 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 				canvas.onmouseup = function(e) {
 				}
 			}
+      	},
 
-			this.$("#view-board-map").click(function(event) {
-				that.viewBoardMap();
-			});
+		renderBoardsItems: function() {
+			if (this._mode == "boardMap") {
 
-		    this.$("#board-container").mousemove(function(event) {
-		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
-		        that._currentMousePosition.y = that.$("#board-container").scrollTop() + event.pageY;
-		    });
-
-			this.$("#card-create-overlay").click(function(event) {
-				that.hideAddCard();
-			});
-		},
-
-		getBoardItems: function() {
-			var that = this,
-				boards = this.model.boards;
-
-			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
-				if (boards[i].id == that._selectedBoard.id) {
-					Board_Services.GetCards(boards[i].id, function(response) {
-						if (response.code == 200) {
-							boards[i].cards = response.board.cards;
-							
-							that._selectedBoard.cards = response.board.cards;
-
-							that.drawBoardItems();
-						}
-					});
-
-					break;
-				}
 			}
-
-			this.createAddCardDialog();
+			else if (this._mode == "individual") {
+				this._selectedBoard.renderBoardItems();
+			}
 		},
 
-		drawBoardItems: function() {
+		getBoardItems: function(boardId) {
+			var that = this;
+
+			Board_Services.GetCards(boardId, function(response) {
+				if (response.code == 200) {
+					for (var i=0, boardsLength=that.model.boards.length; i<boardsLength; i+=1) {
+						if (that.model.boards[i].id == boardId) {
+							that.model.boards[i].cards = response.board.cards;
+
+							for (var j=0, boardCardsLength=that.model.boards[i].cards.length; j<boardCardsLength; j+=1) {
+								if (that.model.boards[i].cards[j].cards.length == 0) that.addCardToBoard(that.model.boards[i].cards[j]);
+								else that.addClusterToBoard(that.model.boards[i].cards[j]);
+							}
+						
+							break;
+						}
+					}
+				}
+			});
+		},
+
+		clearBoardItems: function() {
 			//Clear out the board entities array. Being really rigorous to stop memory leaks
 			if (this._boardEntities.length > 0) {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
@@ -204,16 +199,6 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 
 				this._boardEntities = [];
 			}
-
-			// Get all the cards the exist in the selected board and draw them;
-			if (this._selectedBoard.cards) {
-				for (var i=0, boardCardsLength=this._selectedBoard.cards.length; i<boardCardsLength; i+=1) {
-					if (this._selectedBoard.cards[i].cards.length == 0) this.addCardToBoard(this._selectedBoard.cards[i]);
-					else this.addClusterToBoard(this._selectedBoard.cards[i]);
-				}
-			}
-
-			this._boardContentLoaded = true;
 		},
 
 		// {{ Getters }}
@@ -247,7 +232,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 		},
 
 		getSelectedBoardId: function() {
-			return this._selectedBoard.id;
+			return this._selectedBoard.getId();
 		},
 
 		getObjectModel: function(id) {
@@ -288,8 +273,6 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 		setSelectedBoard: function(boardId) {
 			var that = this,
 				boards = this.model.boards;
-			
-			this._boardContentLoaded = false;
 
 			for (var i=0, boardsLength=boards.length; i<boardsLength; i+=1) {
 				if ((boardId) && (boards[i].id.toString() == boardId)) {
@@ -298,7 +281,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 
 					this._selectedBoard = boards[i];	
 
-					this.setupBoard();	
+					this.setupWorkspace();	
 
 					this.$("#board-title").html(this._selectedBoard.title);
 					
@@ -310,17 +293,12 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 							boards[i].cards = response.board.cards;
 
 							that._selectedBoard.cards = response.board.cards;
-
-							that.drawBoardItems();
 						}
 					});
 
 					break;
 				}
 			}
-
-
-			this.drawBoardItems();
 		},
 
 		// {{ Adding cards }}
@@ -382,8 +360,8 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 		cardAdded: function(card) {
     		try {
 				var that = this,
-					xPos = Math.floor(this.$("#board-cards").width()/2)+this.$("#board-container").scrollLeft()-90,
-					yPos = Math.floor(this.$("#board-cards").height()/2)+this.$("#board-container").scrollTop();
+					xPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).width()/2)+this.$("#board-container").scrollLeft()-90,
+					yPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).height()/2)+this.$("#board-container").scrollTop();
 
 				if (this._dropPosition) {
 					xPos = this._dropPosition.x;
@@ -394,7 +372,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					id: card.id, 
 					parentId: null,
 					type: card.type,  
-					boardId: this._selectedBoard.id,
+					boardId: this._selectedBoard.getId(),
 					boardOwner: this.model.owner,	
 					title: card.title, 
 					content: card.content, 
@@ -409,8 +387,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					color: card.color
 				};
 
-				Card_Services.UpdatePosition(this._selectedBoard.id, newCard.id, newCard.xPos, newCard.yPos, function() {
-					console.log(newCard.id)
+				Card_Services.UpdatePosition(this._selectedBoard.getId(), newCard.id, newCard.xPos, newCard.yPos, function() {
 					that.sendSocket(JSON.stringify({ 
 						action:"updateCardPosition", 
 						workspace: that.model.id,
@@ -478,7 +455,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 
 				card.render();
 
-				this.$("#board-cards").append(card.el);
+				this.$("#board-cards_" + cardModel.boardId).append(card.el);
 
 				this._boardEntities.push(card);
 
@@ -535,7 +512,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 
 				cluster.render();
 
-				this.$("#board-cards").append(cluster.el);
+				this.$("#board-cards_" + clusterModel.boardId).append(cluster.el);
 
 				this._boardEntities.push(cluster);
 
@@ -615,12 +592,12 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					if (targetCard) {
 			  			var clusterModel = {
 			  				id: targetCard.id,
-			  				boardId: this._selectedBoard.id,
+			  				boardId: this._selectedBoard.getId(),
 			  				action: "create",
 			  				cards: [{ id: sourceCard.id }]
 			  			};
 
-			  			Cluster_Services.Insert(this._selectedBoard.id, targetCard.id, clusterModel, function() {
+			  			Cluster_Services.Insert(this._selectedBoard.getId(), targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCard", 
 			  					workspace: that.model.id, 
@@ -676,12 +653,12 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					if (targetCard) {
 			  			var clusterModel = {
 			  				id: targetCard.id,
-			  				boardId: this._selectedBoard.id,
+			  				boardId: this._selectedBoard.getId(),
 			  				action: "create",
 			  				cards: [{ id: sourceCluster.id }]
 			  			};
 
-			  			Cluster_Services.Insert(this._selectedBoard.id, targetCard.id, clusterModel, function() {
+			  			Cluster_Services.Insert(this._selectedBoard.getId(), targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCluster", 
 			  					workspace: that.model.id, 
@@ -728,7 +705,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 							this._boardEntities[i] = null;
 							this._boardEntities.splice(i, 1);
 
-							Cluster_Services.StopDotVoting(this._selectedBoard.id, clusterId);
+							Cluster_Services.StopDotVoting(this._selectedBoard.getId(), clusterId);
 
 							this.addCardToBoard(cardModel);
 							break;
@@ -797,7 +774,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 					lockedElements[i].setZIndex(i);
 				}
 
-				$("#page-canvas").zIndex(lockedElements.length);
+				$("#page-canvas_" + this.model.id).zIndex(lockedElements.length);
 
 				for (var i=0; i<unlockedElements.length; i++) {
 					sortedCards.push({
@@ -809,10 +786,10 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 				}
 
 				if ((elementId) && (publish)) {
-					Board_Services.UpdateCardZIndexes(this._selectedBoard.id, sortedCards, function(response) {
+					Board_Services.UpdateCardZIndexes(this._selectedBoard.getId(), sortedCards, function(response) {
 		            	that._socket.send(JSON.stringify({ 
 		            		action:"sortZIndexes", 
-		            		board: that._selectedBoard.id, 
+		            		board: that._selectedBoard.getId(), 
 		            		card: { id: elementId } 
 		            	}));
 	            	});
@@ -880,8 +857,9 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 			  		if (!that._boardBuilt) {
 
 			      		// Render the board items
+			        	that.renderBoardsItems();
 
-			        	that.getBoardItems();
+						that.createAddCardDialog();
 
 			  			that._boardBuilt= true;
 			  		}
@@ -898,7 +876,7 @@ function(BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, 
 				    	catch (err) {}
 			    	}
 
-			    	if ((socketPackage != null) && (socketPackage.action != null) && (that._boardContentLoaded)) {
+			    	if ((socketPackage != null) && (socketPackage.action != null)) {
 			    		try {
 			    			switch(socketPackage.action) {
 								case "boardCardAdded":

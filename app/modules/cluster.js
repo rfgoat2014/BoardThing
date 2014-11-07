@@ -15,7 +15,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
     	_workspace: null,
     	_parent: null,
 
-    	_editing: false,
     	_editable: true,
 		_clusterClickCount: 0,
 
@@ -496,7 +495,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		// ---------- Actions for displaying edit icons
 
 		showHoverIcons: function () {
-			if ((this._editable) && (!this._editing)) this.$("#cluster-action-container_" + this.model.id).show();
+			if ((this._editable)) this.$("#cluster-action-container_" + this.model.id).show();
 		},
 
 	    hideHoverIcons: function() {

@@ -34,7 +34,7 @@
 	z-index: 1;
 }
 
-#board-container #board-cards {
+#board-container .board-cards {
 	background-color: #ffffff;
 	margin: 0;
 	padding: 0;

@@ -22,6 +22,8 @@ function() {
 	}
 
 	Utils.sendClientError = function(methodName, err) {
+		console.log(err);
+
 		var error = new Error(err);
 
 		$.ajax({
