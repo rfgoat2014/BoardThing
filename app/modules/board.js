@@ -58,11 +58,11 @@ function() {
 			var that = this;
 		    
 		    this.$el.mouseover(function(event) {
-		    	that._workspace.setCurrentMousePosition({ x: event.offsetX, y: event.offsetY});
+		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.$el.offset().left, y: event.pageY-that.$el.offset().top});
 		    });
 
 		    this.$el.mousemove(function(event) {
-		    	that._workspace.setCurrentMousePosition({ x: event.offsetX, y: event.offsetY});
+		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.$el.offset().left, y: event.pageY-that.$el.offset().top});
 		    });
 
 		    this.$el.mouseout(function(event) {

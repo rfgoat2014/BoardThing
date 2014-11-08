@@ -97,11 +97,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				that.viewBoardMap();
 			});
 
-		    this.$("#board-container").mousemove(function(event) {
-		        that._currentMousePosition.x = that.$("#board-container").scrollLeft() + event.pageX;
-		        that._currentMousePosition.y = that.$("#board-container").scrollTop() + event.pageY;
-		    });
-
 			this.$("#card-create-overlay").click(function(event) {
 				that.hideAddCard();
 			});
