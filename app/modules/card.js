@@ -267,17 +267,17 @@ function(Card_Services, Cluster_Services) {
 
 	        	that.$el.draggable({
 					start: function(e,ui) {
-						that.$el.zIndex(999999999);
-
 						startDragX = that.$el.css("left");
 	        			startDragY = that.$el.css("top");
 
 						if (!that._isMobile) that._isDragging = true;
+						
+						that.$el.zIndex(999999999);
 					},
 					drag: function(e,ui) {
 						if (that._isMobile) {
-							var distanceFromStartX = e.clientX - startDragX;
-							var distanceFromStartY = e.clientY - startDragY;
+							var distanceFromStartX = that.$el.css("left") - startDragX;
+							var distanceFromStartY = that.$el.css("top") - startDragY;
 
 							if (((distanceFromStartX > 5) || (distanceFromStartX < -5)) || ((distanceFromStartY > 5) || (distanceFromStartY < -5))) that._isDragging = true;
 						}
@@ -288,23 +288,27 @@ function(Card_Services, Cluster_Services) {
 						var totalParentOffset = { x:0, y: 0 };
 						if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-						var targetBoard = that._workspace.checkBoardPosition(e.pageX,e.pageY);
+						var targetBoard = that._workspace.checkBoardPosition(e.pageX + totalParentOffset.x,e.pageY + totalParentOffset.y);
 
-						if (targetBoard) {
-							var elementId = that._workspace.checkPositionTaken(that.model.id, totalParentOffset.x + that.$el.position().left, totalParentOffset.y + that.$el.position().top);
-							
+						// check if this is a drop on the same board which it originated from 
+						if ((targetBoard) && (targetBoard.getId() == that.model.boardId)) {
+							// this is the same board to hardle board actions
+							// check if the position the card is being dropped in is already taken
+							var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left + totalParentOffset.x, that.$el.position().top + totalParentOffset.y);
+
 							if (elementId == -1) {
+								// the position isn't taken so figure out what to do
 								if (that._parent) {
-									var totalParentOffset = that._parent.getTotalParentOffset();
-
-									that.model.xPos = totalParentOffset.x + that.$el.position().left;
-									that.model.yPos = totalParentOffset.y + that.$el.position().top;
+									// the dragged card has a parent so detach ot for adding back onto the board
+									that.model.xPos = that.$el.position().left + totalParentOffset.x;
+									that.model.yPos = that.$el.position().top + totalParentOffset.y;
 
 									that._parent.removeCard(that.model.id);
 
 							    	that._workspace.addCardToBoard(that.model);
 								}
 								else {
+									// it doesnt have a parent so we're just going to update the position
 									that.model.xPos = that.$el.position().left;
 									that.model.yPos = that.$el.position().top;
 								}
@@ -314,6 +318,7 @@ function(Card_Services, Cluster_Services) {
 						    	that._workspace.sortZIndexes(that.model.id,true);
 			        		}
 				        	else {
+				        		// the position is taken. Check if the position is taken by a resized card. Resized cards don't cluster
 	    						if (!that.$el.attr("is-resized")) {
 					        		var objectModel = that._workspace.getObjectModel(elementId);
 
@@ -322,6 +327,12 @@ function(Card_Services, Cluster_Services) {
 				           		}
 					        	else that.updateCardPosition((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
 				        	}
+				        }
+				        else if ((targetBoard) && (targetBoard.getId() != that.model.boardId)) {
+							that.model.xPos = that.$el.position().left;
+							that.model.yPos = that.$el.position().top;
+
+			        		that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), targetBoard.getXPos(), targetBoard.getYPos());
 				        }
 				        else {
 				        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });
@@ -373,6 +384,22 @@ function(Card_Services, Cluster_Services) {
 	    },
 
 	    // {{ Setters }}
+
+	    setBoardId: function(boardId) {
+	    	this.model.boardId = boardId;
+	    },
+
+	    setXPos: function(value) {
+	    	this.model.xPos = value;
+
+	    	this.$el.css({ left: this.model.xPos, position: 'absolute' });
+	    },
+
+	    setYPos: function(value) {
+	    	this.model.yPos = value;
+
+	    	this.$el.css({ top: this.model.yPos, position: 'absolute' });
+	    },
 
 	    setZPos: function(value) {
 	    	this.model.zPos = value;
@@ -817,6 +844,11 @@ function(Card_Services, Cluster_Services) {
     		this.model.zPos = zIndex;
 			
 			this.$el.zIndex(zIndex);
+		},
+
+		destroy: function() {
+			$(this.el).detach();
+			this.remove();
 		}
   	});
 

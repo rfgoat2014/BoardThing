@@ -43,14 +43,26 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			this._rows.push(boardRow);
 		},
 
-		getBoard: function(xPos, yPos) {
+		getBoard: function(boardId) {
+            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+            	var boards = this._rows[i].getBoards();
+
+            	for (var j=0, boardsLength = boards.length; j<boardsLength; j+=1) {
+            		if (boards[j].getId() == boardId) return boards[j];
+            	}
+            }
+
+            return null;
+		},
+
+		getBoardInPosition: function(xPos, yPos) {
             for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
             	var boards = this._rows[i].getBoards();
 
             	for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-            		var boardStartX = boards[i].$el.position().left,
+            		var boardStartX = boards[i].getXPos(),
             			boardEndX = boardStartX+boards[i].getWidth(),
-            			boardStartY = boards[i].$el.position().top,
+            			boardStartY = boards[i].getYPos(),
             			boardEndY = boardStartY+boards[i].getHeight();
 
  					if (((xPos > boardStartX) && (xPos < boardEndX)) && 
@@ -114,6 +126,100 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			this.remove();
 		}
 	});
+	
+  	BoardMap.Board = Backbone.View.extend({
+		el: "<div>",
+
+		_boardRendered: false,
+	
+		initialize: function(options) {
+			this.el.id = "board_" + this.model.id;
+			this.el.className = "board";
+
+			this._workspace = options.workspace;
+
+			this._mode = options.mode;
+
+			this._boardRendered = false;
+		},
+
+		render: function() {
+			var that = this;
+
+			$.get("/app/templates/board/item.html", function(contents) {
+				that.$el.html(_.template(contents, that.model));
+
+				that.afterRender();
+
+				that.unbind();
+				that.bind();
+			}, "text");
+		},
+
+		afterRender: function() {
+			this.$el.width(this.model.width);
+			this.$el.height(this.model.height);
+
+			this.$el.addClass("outlined")
+
+			if (this._mode == "boardMap") this.$el.addClass("cell");
+
+			this.$("#board-cards_" + this.model.id).empty();
+
+			this._boardRendered = true;
+
+			this._workspace.unbindBoard(this.model.id);
+			this._workspace.bindBoard(this.model.id);		
+
+			this._workspace.getBoardItems(this.model.id);
+		},
+
+		unbind: function() {
+			this.$el.unbind("mouseover");
+			this.$el.unbind("mousemove");
+			this.$el.unbind("mouseout");
+		},
+
+		bind: function() {
+			var that = this;
+		    
+		    this.$el.mouseover(function(event) {
+		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.$el.offset().left, y: event.pageY-that.$el.offset().top});
+		    });
+
+		    this.$el.mousemove(function(event) {
+		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.$el.offset().left, y: event.pageY-that.$el.offset().top});
+		    });
+
+		    this.$el.mouseout(function(event) {
+		    	that._workspace.setCurrentMousePosition({ x: -1, y: -1});
+		    });
+		},
+
+		getId: function() {
+			return this.model.id;
+		},
+
+		getXPos: function() {
+			return this.$el.position().left;
+		},
+
+		getYPos: function() {
+			return this.$el.position().top;
+		},
+
+		getWidth: function() {
+			return this.model.width;
+		},
+
+		getHeight: function() {
+			return this.model.height;
+		},
+
+		getPosition: function() {
+			return this.model.position;
+		}
+  	});
 
 	return BoardMap;
 });

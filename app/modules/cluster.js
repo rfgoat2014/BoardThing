@@ -256,8 +256,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				},
 				drag: function( e, ui ) {
 					if (that._isMobile) {
-						var distanceFromStartX = that.$el.position().left - startDragX,
-							distanceFromStartY = that.$el.position().top - startDragY;
+						var distanceFromStartX = that.$el.css("left") - startDragX,
+							distanceFromStartY = that.$el.css("top") - startDragY;
 
 						if (((distanceFromStartX > 5) || (distanceFromStartX < -5)) || ((distanceFromStartY > 5) || (distanceFromStartY < -5))) that._dragging = true;
 					}
@@ -268,17 +268,15 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					var totalParentOffset = { x:0, y: 0 };
 					if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-					var targetBoard = that._workspace.checkBoardPosition(e.pageX,e.pageY);
+					var targetBoard = that._workspace.checkBoardPosition(e.pageX + totalParentOffset.x, e.pageY + totalParentOffset.y);
 
-					if (targetBoard) {
-						var elementId = that._workspace.checkPositionTaken(that.model.id, totalParentOffset.x + that.$el.position().left, totalParentOffset.y + that.$el.position().top);
+					if ((targetBoard) && (targetBoard.getId() == that.model.boardId)) {
+						var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left + totalParentOffset.x, that.$el.position().top + totalParentOffset.y);
 					
 						if (elementId == -1) {
 							if (that._parent) {
-								var totalParentOffset = that._parent.getTotalParentOffset();
-
-								that.model.xPos = totalParentOffset.x + that.$el.position().left + that._workspace.$("#board-container").scrollLeft();
-								that.model.yPos = totalParentOffset.y + that.$el.position().top + that._workspace.$("#board-container").scrollTop();
+								that.model.xPos = that.$el.position().left + totalParentOffset.x + that._workspace.$("#board-container").scrollLeft();
+								that.model.yPos = that.$el.position().top + totalParentOffset.y + that._workspace.$("#board-container").scrollTop();
 
 								that._parent.removeCard(that.model.id);
 						    	
@@ -301,6 +299,12 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 							if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCluster(that.model.id, elementId);
 			        		else that.updateClusterPosition ((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));	
 			        	}
+			        }
+			        else if ((targetBoard) && (targetBoard.getId() != that.model.boardId)) {
+						that.model.xPos = that.$el.position().left;
+						that.model.yPos = that.$el.position().top;
+
+			        	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), targetBoard.getXPos(), targetBoard.getYPos());
 			        }
 			        else {
 			        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });
@@ -486,6 +490,22 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 	    // {{ Setters }}
+
+	    setBoardId: function(boardId) {
+	    	this.model.boardId = boardId;
+	    },
+
+	    setXPos: function(value) {
+	    	this.model.xPos = value;
+
+	    	this.$el.css({ left: this.model.xPos, position: 'absolute' });
+	    },
+
+	    setYPos: function(value) {
+	    	this.model.yPos = value;
+	    	
+	    	this.$el.css({ top: this.model.yPos, position: 'absolute' });
+	    },
 
 	    setZPos: function(value) {
 	    	this.model.zPos = value;
@@ -1112,6 +1132,11 @@ function(Card, Card_Services, Cluster_Services, Utils) {
     		this.model.zPos = zIndex;
 			
 			this.$el.zIndex(zIndex);
+		},
+
+		destroy: function() {
+			$(this.el).detach();
+			this.remove();
 		}
   	});
 

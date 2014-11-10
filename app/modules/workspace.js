@@ -73,7 +73,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			this.$("#board-container").empty();
 
 			for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
-				var board = new Board.Item({ model: this.model.boards[i], workspace: this, mode: this._mode }),
+				var board = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode }),
 					coordinates = board.getPosition().split(".");
 
 				if (coordinates[0] > maxColSize) maxRowSize = coordinates[0];
@@ -83,8 +83,8 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				boards[coordinates[0]][coordinates[1]] = board;
 			
 				// When we set up the workspace we should try to pick the starting board. This is mainly used for the single board view mode.
-				if ((this.model.startBoardId) && (this.model.startBoardId.toString() == this.model.boards[i].id.toString())) this._selectedBoard = new Board.Item({ model: this.model.boards[i], workspace: this, mode: this._mode });
-				else if ((!this.model.startBoardId) && (this.model.boards[i].position == "1.1")) this._selectedBoard = new Board.Item({ model: this.model.boards[i], workspace: this, mode: this._mode });
+				if ((this.model.startBoardId) && (this.model.startBoardId.toString() == this.model.boards[i].id.toString())) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode });
+				else if ((!this.model.startBoardId) && (this.model.boards[i].position == "1.1")) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode });
 			}
 
 			this._boardMap = new BoardMap.Index({ workspace: this });
@@ -178,7 +178,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
       	},
 
-		renderBoardsItems: function() {
+		renderBoards: function() {
 			// Now we have the board map we need to determine if we are looking at a single view or the entire map
 			if (this._mode == "boardMap") {
 				this._boardMap.render();
@@ -187,7 +187,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
 			else if (this._mode == "individual") {
 				// If we cant find the starting board then just take the first. If we still can't then set up a dummy
-				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new Board.Item({ model: this.model.boards[0], workspace: this, mode: this._mode });
+				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[0], workspace: this, mode: this._mode });
 				
 				this._selectedBoard.render();
 
@@ -202,11 +202,11 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				if (response.code == 200) {
 					for (var i=0, boardsLength=that.model.boards.length; i<boardsLength; i+=1) {
 						if (that.model.boards[i].id == boardId) {
-							that.model.boards[i].cards = response.board.cards;
+							var cards = response.board.cards;
 
-							for (var j=0, boardCardsLength=that.model.boards[i].cards.length; j<boardCardsLength; j+=1) {
-								if (that.model.boards[i].cards[j].cards.length == 0) that.addCardToBoard(that.model.boards[i].cards[j]);
-								else that.addClusterToBoard(that.model.boards[i].cards[j]);
+							for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+								if (cards[j].cards.length == 0) that.addCardToBoard(cards[j]);
+								else that.addClusterToBoard(cards[j]);
 							}
 						
 							break;
@@ -214,17 +214,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 					}
 				}
 			});
-		},
-
-		clearBoardItems: function() {
-			//Clear out the board entities array. Being really rigorous to stop memory leaks
-			if (this._boardEntities.length > 0) {
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-					this._boardEntities[i] = null;
-				}
-
-				this._boardEntities = [];
-			}
 		},
 
 		// {{ Getters }}
@@ -422,6 +411,21 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		// {{ Managing board cards }}
+
+		moveBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if (this._boardEntities[i].getId() == cardId) {
+					this._boardEntities[i].setBoardId(targetBoardId);
+					this._boardEntities[i].setXPos(this._boardEntities[i].getXPos()-targetBoardXPos);
+					this._boardEntities[i].setYPos(this._boardEntities[i].getYPos()-targetBoardYPos);
+
+					this._boardEntities[i].destroy();
+					this._boardEntities[i].render();
+
+					this.$("#board-cards_" + targetBoardId).append(this._boardEntities[i].el);
+				}
+			}
+		},
 
 		addCardToBoard: function(cardModel) {
 			try {
@@ -700,7 +704,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		checkBoardPosition: function(xPos,yPos) {
 			//try {
 				if (this._mode == "boardMap") {
-					return this._boardMap.getBoard(xPos,yPos);
+					return this._boardMap.getBoardInPosition(xPos,yPos);
 				}
 				else if (this._mode == "individual") {
 
@@ -856,7 +860,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			  		if (!that._boardBuilt) {
 
 			      		// Render the board items
-			        	that.renderBoardsItems();
+			        	that.renderBoards();
 
 						that.createAddCardDialog();
 
