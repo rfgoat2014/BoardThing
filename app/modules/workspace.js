@@ -101,21 +101,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 				this._boardMap.addRow(boardRow);
 			}
-
-			// Now we have the board map we need to determine if we are looking at a single view or the entire map
-			if (this._mode == "boardMap") {
-				this._boardMap.render();
-				
-				this.$("#board-container").html(this._boardMap.$el);	
-			}
-			else if (this._mode == "individual") {
-				// If we cant find the starting board then just take the first. If we still can't then set up a dummy
-				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new Board.Item({ model: this.model.boards[0], workspace: this, mode: this._mode });
-				
-				this._selectedBoard.render();
-
-				this.$("#board-container").html(this._selectedBoard.$el);
-			}
 		},
 
 		unbind: function() {
@@ -194,11 +179,19 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
       	},
 
 		renderBoardsItems: function() {
+			// Now we have the board map we need to determine if we are looking at a single view or the entire map
 			if (this._mode == "boardMap") {
-
+				this._boardMap.render();
+				
+				this.$("#board-container").html(this._boardMap.$el);
 			}
 			else if (this._mode == "individual") {
-				this._selectedBoard.renderBoardItems();
+				// If we cant find the starting board then just take the first. If we still can't then set up a dummy
+				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new Board.Item({ model: this.model.boards[0], workspace: this, mode: this._mode });
+				
+				this._selectedBoard.render();
+
+				this.$("#board-container").html(this._selectedBoard.$el);
 			}
 		},
 
@@ -702,6 +695,22 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			catch (err) {
 				Utils.sendClientError("createClusterFromCluster", err);
 			}
+		},
+
+		checkBoardPosition: function(xPos,yPos) {
+			//try {
+				if (this._mode == "boardMap") {
+					return this._boardMap.getBoard(xPos,yPos);
+				}
+				else if (this._mode == "individual") {
+
+				}
+
+				return -1;
+			//}
+			//catch (err) {
+			//	Utils.sendClientError("checkPositionTaken", err);
+			//}
 		},
 
 		//  ---- Check if an element exists at the specified position

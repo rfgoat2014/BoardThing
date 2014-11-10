@@ -266,7 +266,6 @@ function(Card_Services, Cluster_Services) {
 	        	startDragY = null;
 
 	        	that.$el.draggable({
-	        		containment: ".board-cards",
 					start: function(e,ui) {
 						that.$el.zIndex(999999999);
 

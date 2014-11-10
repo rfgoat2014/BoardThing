@@ -156,7 +156,7 @@ exports.get = function (req, res) {
 var getWorkspace = function(res, req, workspaceId, startingBoardId, callback) {
 	Workspace
 	.findById(workspaceId)
-	.select("_id owner title isPrivate password created")
+	.select("_id owner title isPrivate password created boardWidth boardHeight")
 	.exec(function(err, workspace) {
 		if (err) {
 			dataError.log({
@@ -192,6 +192,8 @@ var buildReturnWorkspace = function(res, req, workspace) {
 		    owner: workspace.owner,
 		    isOwner: ((req.isAuthenticated()) && (req.user._id.toString() == workspace.owner.toString())),
 		    title: workspace.title,
+		    boardWidth: workspace.boardWidth,
+		    boardHeight: workspace.boardHeight,
 		    boards: [],
 		    isPrivate: workspace.isPrivate,
 		    created: workspace.created,
@@ -203,7 +205,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 
 		Board
 		.find({ workspace: workspace._id })
-		.select("_id title position width height created lastModified")
+		.select("_id title position created lastModified")
 		.sort({ position: 'asc' })
 		.exec(function(err, boards) {
 			if (err) {
@@ -227,8 +229,8 @@ var buildReturnWorkspace = function(res, req, workspace) {
 						id: boards[i]._id,
 					    title: boards[i].title,
 					    position: boards[i].position,
-					    width: boards[i].width,
-					    height: boards[i].height,
+					    width: workspace.boardWidth,
+					    height: workspace.boardHeight,
 					    cards: [],
 					    created: boards[i].created,
 					    lastModified: lastModified

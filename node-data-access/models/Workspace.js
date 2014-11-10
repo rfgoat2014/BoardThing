@@ -14,7 +14,9 @@ var WorkspaceSchema = new Schema({
 	}], // any chat associated to the workspace
 	isPrivate: {type: Boolean, default: false }, // whether or not this is a private workspace (slightly redundant as only private workspaces have a password)
     password: { type: String, default: '' }, // the password for a private workspace
-	created: { type: Date, default: Date.now } // the datetime the workspace was created
+	created: { type: Date, default: Date.now }, // the datetime the workspace was created
+	boardWidth: {type: Number, default: 1366 }, // the width of the board
+	boardHeight: {type: Number, default: 695 } // the height of the board
 });
 
 module.exports = mongoose.model("Workspace", WorkspaceSchema);

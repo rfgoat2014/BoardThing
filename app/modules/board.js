@@ -16,9 +16,9 @@ function() {
 
 			this._workspace = options.workspace;
 
+			this._mode = options.mode;
+
 			this._boardRendered = false;
-		
-			this.render();
 		},
 
 		render: function() {
@@ -38,6 +38,10 @@ function() {
 			this.$el.width(this.model.width);
 			this.$el.height(this.model.height);
 
+			this.$el.addClass("outlined")
+
+			if (this._mode == "boardMap") this.$el.addClass("cell");
+
 			this.$("#board-cards_" + this.model.id).empty();
 
 			this._boardRendered = true;
@@ -45,7 +49,7 @@ function() {
 			this._workspace.unbindBoard(this.model.id);
 			this._workspace.bindBoard(this.model.id);		
 
-			if (this._renderItems) this._workspace.getBoardItems(this.model.id);
+			this._workspace.getBoardItems(this.model.id);
 		},
 
 		unbind: function() {
@@ -82,11 +86,20 @@ function() {
 			return this.model.height;
 		},
 
-		renderBoardItems: function() {
-			if (this._boardRendered) this._workspace.getBoardItems(this.model.id);
-			else this._renderItems = true;
+		getPosition: function() {
+			return this.model.position;
 		}
   	});
+	
+  	Board.Add = Backbone.View.extend({
+		el: "<div>",
+	
+		initialize: function(options) {
+			this.el.className = "cell";
+
+			this.render();
+		}
+	});
 
 	Board.List = Backbone.View.extend({
 		el: "<div>",

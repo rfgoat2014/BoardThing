@@ -117,6 +117,18 @@
 		cursor: pointer;
 	}
 
+	.table-container {
+		display: table;
+	}
+
+	.table-container .row {
+		display: table-row;
+	}
+
+	.table-container .row .cell {
+		display: table-cell;
+	}
+
 	.left {
 	    position: relative;
 	    float: left;

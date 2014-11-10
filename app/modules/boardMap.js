@@ -16,129 +16,98 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 	BoardMap.Index = Backbone.View.extend({
 		el: "<div>",
-		_boards: [],
+	
+		_rows: [],
 
 		initialize: function(options) {
-			this.el.id = "board-map-popup-container";
-			this.el.className = "popup-container";
-
 			this._workspace = options.workspace;
 
-			this.render();
+			this.el.className = "table-container";
 		},
 
-		render: function(){
-			var that = this;
+		render: function() {
+			var maxColCount = 0;
 
-			$.get("/app/templates/boardMap/index.html", function(contents) {
-				that.$el.html(_.template(contents, that.model));
+            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+            	this._rows[i].render();
 
-				that.afterRender();
+            	this.$el.append(this._rows[i].$el);
 
-				that.unbind();
-				that.bind();
-			}, "text");
-		},
-
-		afterRender: function() {
-            var boards = this._workspace.getBoards();
-
-            this._boards = [];
-
-            for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-            	this._boards.push(new Board.List({ model: boards[i], parent: this, workspace: this._workspace }));
+            	if (this._rows[i].getColumnCount() > maxColCount) maxColCount = this._rows[i].getColumnCount();
             }
 
-            this.drawBoardMap();
+            this.$el.css({ width: this._workspace.getBoardWidth()*maxColCount+(2*maxColCount) });
 		},
 
-		unbind: function() {
-			try {
-				this.$("#board-map-container").sortable("destroy");
-			}
-			catch (err) {}
+		addRow: function(boardRow) {
+			this._rows.push(boardRow);
 		},
 
-		bind: function() {
-			var that = this;
+		getBoard: function(xPos, yPos) {
+            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+            	var boards = this._rows[i].getBoards();
 
-    		this.$("#board-map-container").sortable({
-    			items: ".board-map-board-container",
-				stop: function( event, ui ) {
-					var allBoards = $(this).children(),
-						newBoardOrder = [];
+            	for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
+            		var boardStartX = boards[i].$el.position().left,
+            			boardEndX = boardStartX+boards[i].getWidth(),
+            			boardStartY = boards[i].$el.position().top,
+            			boardEndY = boardStartY+boards[i].getHeight();
 
-					for (var i=0, boardsLength=allBoards.length; i<boardsLength; i+=1) {
-						var boardIdParts = allBoards[i].id.split("_");
-
-						if (boardIdParts.length == 2) newBoardOrder.push(boardIdParts[1]);
-					}
-
-					for (var i=0, boardsLength=that._boards.length; i<boardsLength; i+=1) {
-						for (var j=0, newBoardOrderLength=newBoardOrder.length; j<newBoardOrderLength; j+=1) {
-							if (that._boards[i].getBoardId() == newBoardOrder[j]) {
-								that._boards[i].setBoardPosition((j+1));
-								that._boards[i].render();
-								break;
-							}
-						}
-					}
-
-					that._boards.sort(function (a, b) { return a.getBoardPosition() > b.getBoardPosition() ? 1 : a.getBoardPosition() < b.getBoardPosition() ? -1 : 0; });
-
-					that.storeBoardPositions();
-				}
-			});
-		},
-
-		drawBoardMap: function(unbind) {
-			this.$("#board-map-container").empty();
-
-			this._boards.sort(function (a, b) { return a.getBoardPosition() > b.getBoardPosition() ? 1 : a.getBoardPosition() < b.getBoardPosition() ? -1 : 0; });
-
-            for (var i=0, boardsLength = this._boards.length; i<boardsLength; i+=1) {
-            	this.$("#board-map-container").append(this._boards[i].el);
-            }	
-
-            if (this._addBoardMap) this._addBoardMap.destroy();
-
-            this._addBoardMap = new AddBoard.New({ parent: this });
-            this.$("#board-map-container").append(this._addBoardMap.el);
-		},
-
-		storeBoardPositions: function() {
-            var boardPositions = [];
-
-            for (var i=0, boardsLength = this._boards.length; i<boardsLength; i+=1) {
-            	boardPositions.push({
-            		boardId: this._boards[i].getBoardId(),
-            		position: this._boards[i].getBoardPosition()
-            	});
+ 					if (((xPos > boardStartX) && (xPos < boardEndX)) && 
+ 						((yPos > boardStartY) && (yPos < boardEndY))) return boards[i];
+        		}
             }
 
-            Workspace_Services.UpdateBoardPositions(this._workspace.getId(), boardPositions);
-		},
-
-		addBoard: function() {
-			var that = this;
-
-            Board_Services.Insert(this._workspace.getId(), "New Board", function(response) {
-            	if (response.code == 200) {
-	            	that._boards.push(new Board.List({ model: response.board, workspace: that._workspace, parent: that }));
-
-	            	that._workspace.addBoard(response.board);
-
-	            	that.drawBoardMap();
-
-					that.unbind();
-					that.bind();
-				}
-            });
+            return null;
 		},
 
 		destroy: function() {
-            for (var i=0, boardsLength = this._boards.length; i<boardsLength; i+=1) {
-            	this._boards[i].destroy();
+            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+            	this._rows[i].destroy();
+            }
+
+			$(this.el).detach();
+			this.remove();
+		}
+	});
+	
+  	BoardMap.Row = Backbone.View.extend({
+		el: "<div>",
+
+		_index: -1,
+
+		_columns: [],
+	
+		initialize: function(options) {
+			this._index = options.index;
+
+			this.el.id = "board-row_" + this._index;
+			this.el.className = "row";
+		},
+
+		render: function() {
+            for (var i=0, columnsLength = this._columns.length; i<columnsLength; i+=1) {
+            	this._columns[i].render();
+
+            	this.$el.append(this._columns[i].$el);
+            }
+        },
+
+        getBoards: function() {
+        	return this._columns;
+        },
+
+        getColumnCount: function() {
+        	return this._columns.length;
+        },
+
+		addColumn: function(boardColumn) {
+			this._columns.push(boardColumn);
+		},
+
+		destroy: function() {
+            for (var i=0, columnsLength = this._columns.length; i<columnsLength; i+=1) {
+            	this._columns[i].destroy();
             }
 
 			$(this.el).detach();
