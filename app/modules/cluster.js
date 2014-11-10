@@ -265,17 +265,13 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				stop: function(e,ui) {
 					e.stopPropagation();
 
-					var elementId = -1,
-						absoluteX = e.pageX,
-						absoluteY = e.pageY,
-						totalParentOffset = { x:0, y:0 };
-
+					var totalParentOffset = { x:0, y: 0 };
 					if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
 					var targetBoard = that._workspace.checkBoardPosition(e.pageX,e.pageY);
 
 					if (targetBoard) {
-						elementId = that._workspace.checkPositionTaken(that.model.id, totalParentOffset.x + that.$el.position().left, totalParentOffset.y + that.$el.position().top);
+						var elementId = that._workspace.checkPositionTaken(that.model.id, totalParentOffset.x + that.$el.position().left, totalParentOffset.y + that.$el.position().top);
 					
 						if (elementId == -1) {
 							if (that._parent) {
