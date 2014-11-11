@@ -133,7 +133,7 @@ function(Card_Services, Cluster_Services) {
 						color: this.$("#card-color-select").spectrum("get").toString()
 					};
 					
-					Card_Services.InsertTextCard(boardId, newCard, function(response) {
+					Card_Services.InsertTextCard(this._workspace.getId(), boardId, newCard, function(response) {
 						that._workspace.cardAdded(response.card);
 
 						that._workspace.sendSocket(JSON.stringify({ 
@@ -155,7 +155,7 @@ function(Card_Services, Cluster_Services) {
 							color: this.$("#card-color-select").spectrum("get").toString()
 						};
 
-						Card_Services.UpdateTextCard(boardId, this._cardModel.id, updateModel, function(response) {
+						Card_Services.UpdateTextCard(this._workspace.getId(), boardId, this._cardModel.id, updateModel, function(response) {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"boardCardUpdated", 
 								workspace: that._workspace.getId(),
@@ -175,7 +175,7 @@ function(Card_Services, Cluster_Services) {
 			  			if (this._cardModel.type == "text") updateModel.content = this.$("#card-text").val();
 			  			else updateModel.title = this.$("#card-text").val();
 
-						Cluster_Services.Insert(boardId, this._cardModel.id, updateModel, function(response) {
+						Cluster_Services.Insert(this._workspace.getId(), boardId, this._cardModel.id, updateModel, function(response) {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"boardClusterUpdated", 
 								workspace: that._workspace.getId(),
@@ -298,7 +298,7 @@ function(Card_Services, Cluster_Services) {
 			        	addedIdea.title = that.$("#photo-upload-title").val();
 			        	addedIdea.color = that.$("#upload-card-color-select").spectrum("get").toString();
 
-			        	Card_Services.UpdateImageCard(that.model.id, addedIdea.id, {
+			        	Card_Services.UpdateImageCard(that._workspace.getId(), that.model.id, addedIdea.id, {
 				        	title: that.$("#photo-upload-title").val(),
 							color: that.$("#upload-card-color-select").spectrum("get").toString()
 				        });
@@ -399,7 +399,7 @@ function(Card_Services, Cluster_Services) {
 			            imageLocation: that.$("#photo-url-location").val()
 			        };
 
-			        Card_Services.DownloadImage(that.model.id, imageValues, function(response) {
+			        Card_Services.DownloadImage(that._workspace.getId(), that.model.id, imageValues, function(response) {
 			        	if (response.message == "success") {
 							that._workspace.cardAdded(response.card);
 

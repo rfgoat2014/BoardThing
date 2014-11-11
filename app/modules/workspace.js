@@ -363,7 +363,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 					color: card.color
 				};
 
-				Card_Services.UpdatePosition(this._selectedBoard.getId(), newCard.id, newCard.xPos, newCard.yPos, function() {
+				Card_Services.UpdatePosition(this.model.id, this._selectedBoard.getId(), newCard.id, newCard.xPos, newCard.yPos, function() {
 					that.sendSocket(JSON.stringify({ 
 						action:"updateCardPosition", 
 						workspace: that.model.id,
@@ -599,7 +599,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			  				cards: [{ id: sourceCard.id }]
 			  			};
 
-			  			Cluster_Services.Insert(this._selectedBoard.getId(), targetCard.id, clusterModel, function() {
+			  			Cluster_Services.Insert(this.model.id, this._selectedBoard.getId(), targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCard", 
 			  					workspace: that.model.id, 
@@ -660,7 +660,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			  				cards: [{ id: sourceCluster.id }]
 			  			};
 
-			  			Cluster_Services.Insert(boardId, targetCard.id, clusterModel, function() {
+			  			Cluster_Services.Insert(this.model.id, boardId, targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCluster", 
 			  					workspace: that.model.id, 
@@ -707,7 +707,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 							this._boardEntities[i] = null;
 							this._boardEntities.splice(i, 1);
 
-							Cluster_Services.StopDotVoting(this._selectedBoard.getId(), clusterId);
+							Cluster_Services.StopDotVoting(this.model.id, this._selectedBoard.getId(), clusterId);
 
 							this.addCardToBoard(cardModel);
 							break;
@@ -801,7 +801,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				}
 
 				if ((elementId) && (publish)) {
-					Board_Services.UpdateCardZIndexes(this._selectedBoard.getId(), sortedCards, function(response) {
+					Board_Services.UpdateCardZIndexes(this.model.id, this._selectedBoard.getId(), sortedCards, function(response) {
 		            	that._socket.send(JSON.stringify({ 
 		            		action:"sortZIndexes", 
 		            		board: that._selectedBoard.getId(), 

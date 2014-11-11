@@ -5,10 +5,10 @@ define([
 function() {
 	var Cluster = {};
 
-	Cluster.Insert = function(boardId, clusterId, cluster, callback) {
+	Cluster.Insert = function(workspaceId, boardId, clusterId, cluster, callback) {
 		$.ajax({
 			type: "PUT",
-			url: "/workspace/boards/clusters/" + boardId + "/" + clusterId,
+			url: "/workspace/boards/clusters/" + workspaceId + "/" + boardId + "/" + clusterId,
 			data: cluster,
 			success: function(response) {
 				if (callback) callback(response);
@@ -16,9 +16,9 @@ function() {
 		});
 	};
 
-	Cluster.AttachCard = function(boardId, clusterId, cardId, callback) {
+	Cluster.AttachCard = function(workspaceId, boardId, clusterId, cardId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/cards/" + boardId + "/" + clusterId + "/" + cardId,
+            url: "/workspace/boards/clusters/cards/" + workspaceId + "/" + boardId + "/" + clusterId + "/" + cardId,
             type: 'POST',
             dataType: "json",
 			success: function(response) {
@@ -27,9 +27,9 @@ function() {
     	});
 	};
 
-	Cluster.DetachCard = function(boardId, clusterId, cardId, callback) {
+	Cluster.DetachCard = function(workspaceId, boardId, clusterId, cardId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/cards/" + boardId + "/" + clusterId + "/" + cardId,
+            url: "/workspace/boards/clusters/cards/" + workspaceId + "/" + boardId + "/" + clusterId + "/" + cardId,
             type: 'DELETE',
             dataType: "json",
 			success: function(response) {
@@ -38,9 +38,9 @@ function() {
     	});
 	};
 
-	Cluster.AttachCluster = function(boardId, targetClusterId, sourceClusterId, callback) {
+	Cluster.AttachCluster = function(workspaceId, boardId, targetClusterId, sourceClusterId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/clusters/" + boardId + "/" + targetClusterId + "/" + sourceClusterId,
+            url: "/workspace/boards/clusters/clusters/" + workspaceId + "/" + boardId + "/" + targetClusterId + "/" + sourceClusterId,
             type: 'POST',
             dataType: "json",
 			success: function(response) {
@@ -49,9 +49,9 @@ function() {
     	});
 	};
 
-	Cluster.DetachCluster = function(boardId, targetClusterId, sourceClusterId, callback) {
+	Cluster.DetachCluster = function(workspaceId, boardId, targetClusterId, sourceClusterId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/clusters/" + boardId + "/" + targetClusterId + "/" + sourceClusterId,
+            url: "/workspace/boards/clusters/clusters/" + workspaceId + "/" + boardId + "/" + targetClusterId + "/" + sourceClusterId,
             type: 'DELETE',
             dataType: "json",
 			success: function(response) {
@@ -60,9 +60,9 @@ function() {
     	});
 	};
 
-	Cluster.UpdatePosition = function(boardId, clusterId, xPos, yPos, callback) {
+	Cluster.UpdatePosition = function(workspaceId, boardId, clusterId, xPos, yPos, callback) {
         $.ajax({
-            url: "/workspace/boards/cards/position/" + boardId + "/" + clusterId,
+            url: "/workspace/boards/cards/position/" + workspaceId + "/" + boardId + "/" + clusterId,
             type: 'PUT',
             dataType: "json",
 			data: {
@@ -75,9 +75,9 @@ function() {
     	});
 	};
 
-	Cluster.Expand = function(boardId, clusterId, callback) {
+	Cluster.Expand = function(workspaceId, boardId, clusterId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/expand/" + boardId + "/" + clusterId,
+            url: "/workspace/boards/clusters/expand/" + workspaceId + "/" + boardId + "/" + clusterId,
             type: 'PUT',
             dataType: "json",
 			success: function(response) {
@@ -86,9 +86,9 @@ function() {
     	});
 	};
 
-	Cluster.Collapse = function(boardId, clusterId, callback) {
+	Cluster.Collapse = function(workspaceId, boardId, clusterId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/collapse/" + boardId + "/" + clusterId,
+            url: "/workspace/boards/clusters/collapse/" + workspaceId + "/" + boardId + "/" + clusterId,
             type: 'PUT',
             dataType: "json",
 			success: function(response) {
@@ -97,9 +97,9 @@ function() {
     	});
 	};
 
-	Cluster.StartDotVoting = function(boardId, clusterId, callback) {
+	Cluster.StartDotVoting = function(workspaceId, boardId, clusterId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/startVoting/" + boardId + "/" + clusterId,
+            url: "/workspace/boards/clusters/startVoting/" + workspaceId + "/" + boardId + "/" + clusterId,
             type: 'PUT',
             dataType: "json",
 			success: function(response) {
@@ -108,9 +108,9 @@ function() {
     	});
 	};
 
-	Cluster.StopDotVoting = function(boardId, clusterId, callback) {
+	Cluster.StopDotVoting = function(workspaceId, boardId, clusterId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/stopVoting/" + boardId + "/" + clusterId,
+            url: "/workspace/boards/clusters/stopVoting/" + workspaceId + "/" + boardId + "/" + clusterId,
             type: 'PUT',
             dataType: "json",
 			success: function(response) {
@@ -119,9 +119,9 @@ function() {
     	});
 	};
 
-	Cluster.AddVote = function(boardId, cardId, callback) {
+	Cluster.AddVote = function(workspaceId, boardId, cardId, callback) {
         $.ajax({
-            url: "/workspace/boards/clusters/addVote/" + boardId + "/" + cardId,
+            url: "/workspace/boards/clusters/addVote/" + workspaceId + "/" + boardId + "/" + cardId,
             type: "POST",
             dataType: "json",
 			success: function(response) {
@@ -130,9 +130,9 @@ function() {
     	});
 	};
 
-	Cluster.Sort = function(boardId, clusterId, cards, callback) {
+	Cluster.Sort = function(workspaceId, boardId, clusterId, cards, callback) {
 		$.ajax({
-		    url: "/workspace/boards/clusters/sort/" + boardId + "/" + clusterId,
+		    url: "/workspace/boards/clusters/sort/" + workspaceId + "/" + boardId + "/" + clusterId,
 		    type: 'PUT',
 		    dataType: "json",
 		    data: {

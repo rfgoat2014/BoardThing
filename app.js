@@ -766,46 +766,46 @@
 
 	app.get("/workspace/boards/cards/:boardId", boardCards.get);
 
-	app.post("/workspace/boards/cards/text/:boardId", boardCards.insertText);
-	app.put("/workspace/boards/cards/text/:boardId/:cardId", boardCards.updateText);
+	app.post("/workspace/boards/cards/text/:workspaceId/:boardId", boardCards.insertText);
+	app.put("/workspace/boards/cards/text/:workspaceId/:boardId/:cardId", boardCards.updateText);
 
-	app.get("/workspace/boards/cards/image/:boardId/:cardId", boardCards.getImage);
-	app.post("/workspace/boards/cards/image/:boardId", boardCards.insertImage);
-	app.put("/workspace/boards/cards/image/:boardId/:cardId", boardCards.updateImage);
-	app.post("/workspace/boards/cards/downloadImage/:boardId", boardCards.downloadImage);
+	app.get("/workspace/boards/cards/image/:workspaceId/:boardId/:cardId", boardCards.getImage);
+	app.post("/workspace/boards/cards/image/:workspaceId/:boardId", boardCards.insertImage);
+	app.put("/workspace/boards/cards/image/:workspaceId/:boardId/:cardId", boardCards.updateImage);
+	app.post("/workspace/boards/cards/downloadImage/:workspaceId/:boardId", boardCards.downloadImage);
 
-	app.post("/workspace/boards/cards/duplicate/:boardId/:cardId", boardCards.duplicate);
-	app.delete("/workspace/boards/cards/:boardId/:cardId", boardCards.delete);
+	app.post("/workspace/boards/cards/duplicate/:workspaceId/:boardId/:cardId", boardCards.duplicate);
+	app.delete("/workspace/boards/cards/:workspaceId/:boardId/:cardId", boardCards.delete);
 	
-	app.put("/workspace/boards/cards/board/:boardId/:cardId", boardCards.setBoard);
+	app.put("/workspace/boards/cards/board/:workspaceId/:boardId/:cardId", boardCards.setBoard);
 	
-	app.put("/workspace/boards/cards/lock/:boardId/:cardId", boardCards.lock);
-	app.put("/workspace/boards/cards/unlock/:boardId/:cardId", boardCards.unlock);
+	app.put("/workspace/boards/cards/lock/:workspaceId/:boardId/:cardId", boardCards.lock);
+	app.put("/workspace/boards/cards/unlock/:workspaceId/:boardId/:cardId", boardCards.unlock);
 
-	app.put("/workspace/boards/cards/resize/:boardId/:cardId", boardCards.updateDimensions);
-	app.put("/workspace/boards/cards/position/:boardId/:cardId", boardCards.updatePosition);
-	app.put("/workspace/boards/cards/zindex/:boardId", boardCards.updateZIndex);
+	app.put("/workspace/boards/cards/resize/:workspaceId/:boardId/:cardId", boardCards.updateDimensions);
+	app.put("/workspace/boards/cards/position/:workspaceId/:boardId/:cardId", boardCards.updatePosition);
+	app.put("/workspace/boards/cards/zindex/:workspaceId/:boardId", boardCards.updateZIndex);
 	
-	app.get("/boards/chat/:boardId", chat.get);
-	app.post("/boards/chat/:boardId", chat.insert);
+	app.get("/boards/chat/:workspaceId/:boardId", chat.get);
+	app.post("/boards/chat/:workspaceId/:boardId", chat.insert);
 	
-	app.post("/workspace/boards/clusters/:boardId/:clusterId", boardClusters.attachClusterToMain);
-	app.put("/workspace/boards/clusters/:boardId/:clusterId", boardClusters.update);
-	app.delete("/workspace/boards/clusters/:boardId/:clusterId", boardClusters.delete);
+	app.post("/workspace/boards/clusters/:workspaceId/:boardId/:clusterId", boardClusters.attachClusterToMain);
+	app.put("/workspace/boards/clusters/:workspaceId/:boardId/:clusterId", boardClusters.update);
+	app.delete("/workspace/boards/clusters/:workspaceId/:boardId/:clusterId", boardClusters.delete);
 	
-	app.post("/workspace/boards/clusters/cards/:boardId/:clusterId/:cardId", boardClusters.attachCard);
-	app.delete("/workspace/boards/clusters/cards/:boardId/:clusterId/:cardId", boardClusters.detachCard);
-	app.post("/workspace/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.attachCluster);
-	app.delete("/workspace/boards/clusters/clusters/:boardId/:parentclusterId/:childclusterId", boardClusters.detachCluster);
+	app.post("/workspace/boards/clusters/cards/:workspaceId/:boardId/:clusterId/:cardId", boardClusters.attachCard);
+	app.delete("/workspace/boards/clusters/cards/:workspaceId/:boardId/:clusterId/:cardId", boardClusters.detachCard);
+	app.post("/workspace/boards/clusters/clusters/:workspaceId/:boardId/:parentclusterId/:childclusterId", boardClusters.attachCluster);
+	app.delete("/workspace/boards/clusters/clusters/:workspaceId/:boardId/:parentclusterId/:childclusterId", boardClusters.detachCluster);
 	
-	app.put("/workspace/boards/clusters/expand/:boardId/:clusterId", boardClusters.expand);
-	app.put("/workspace/boards/clusters/collapse/:boardId/:clusterId", boardClusters.collapse);
-	app.put("/workspace/boards/clusters/sort/:boardId/:clusterId", boardClusters.sort);
+	app.put("/workspace/boards/clusters/expand/:workspaceId/:boardId/:clusterId", boardClusters.expand);
+	app.put("/workspace/boards/clusters/collapse/:workspaceId/:boardId/:clusterId", boardClusters.collapse);
+	app.put("/workspace/boards/clusters/sort/:workspaceId/:boardId/:clusterId", boardClusters.sort);
 
-	app.put("/workspace/boards/clusters/startVoting/:boardId/:clusterId", boardClusters.startDotVoting);
-	app.put("/workspace/boards/clusters/stopVoting/:boardId/:clusterId", boardClusters.stopDotVoting);
-	app.post("/workspace/boards/clusters/addVote/:boardId/:cardId", boardCards.addVote);
-	app.delete("/workspace/boards/clusters/removeVotes/:boardId/:cardId", boardCards.removeVotes);
+	app.put("/workspace/boards/clusters/startVoting/:workspaceId/:boardId/:clusterId", boardClusters.startDotVoting);
+	app.put("/workspace/boards/clusters/stopVoting/:workspaceId/:boardId/:clusterId", boardClusters.stopDotVoting);
+	app.post("/workspace/boards/clusters/addVote/:workspaceId/:boardId/:cardId", boardCards.addVote);
+	app.delete("/workspace/boards/clusters/removeVotes/:workspaceId/:boardId/:cardId", boardCards.removeVotes);
 
 	// Catch any occuring client errors
 

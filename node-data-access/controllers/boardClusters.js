@@ -1,4 +1,5 @@
-var Board = require(config.boardModel),
+var Workspace = require(config.workspaceModel),
+	Board = require(config.boardModel),
 	Card = require(config.cardModel);
 
 // ===== Actions for updating a cluster (this also covers creating a cluster as clusters are just a relationship between 2 cards)
@@ -797,11 +798,11 @@ exports.delete = function (req, res) {
 
 // ===== Attach a card to a selected cluster
 exports.attachCard = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = parseCookies(req);
 	
 	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
+	.find({ workspace: req.params.workspaceId })
+	.exec(function(err, boards) {
 		if (err) {
 			dataError.log({
 				model: __filename,
@@ -812,114 +813,117 @@ exports.attachCard = function (req, res) {
 				res: res
 			});
 		}
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve all the cards for a board
-				Card
-				.find({ board: board._id })
-				.exec(function(err, cards) {
-					var parentIndex = null,
-						childIndex = null;
+		else if (boards) {
+			for (var i=0, boardsLength=boards.length; i<boardsLength; i++) {
+				var board = boards[i];
 
-					// loop through the cards in the board. we need to create a relationship between the cluster being attached to and the new child card
-					for (var i = 0, cardsLength = cards.length; i < cardsLength; i += 1) {
-						// sanity check that there is a card
-						if (cards[i]) {
-							if (cards[i]._id.toString() == req.params.clusterId) {
-								// if this is the cluster that the new card is being attached to then add the new child card to its list of children
-								cards[i].children.push(req.params.cardId);
-								parentIndex = i;
-							}
-							else if (cards[i]._id.toString() == req.params.cardId) {
-								// if this is the card we want to make a child then set it's parent id to the cluster
-								cards[i].parentId = req.params.clusterId;
-								childIndex = i;
-							}
-							
-							// make sure that the card we are attaching isn't the child of another cluster and if so remove that clusters relationship to it
-							if (cards[i]._id != req.params.clusterId) {
-								for (var j = 0, cardsChildrenLength = cards[i].children.length; j < cardsChildrenLength; j+=1) {
-									if (cards[i].children[j] == req.params.cardId) cards[i].children.splice(j,1);
-								};
-							}
-						}
-					}
+				// Check if this board is private and if so check this user has access
+	    		if ((!board.isPrivate)||
+	    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+	    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+					// retrieve all the cards for a board
+					Card
+					.find({ board: board._id })
+					.exec(function(err, cards) {
+						var parentIndex = null,
+							childIndex = null;
 
-					// we've made  a new parent child relationship so we need to handle he change of there being dot voting on this cluster
-					if ((parentIndex != null) && (childIndex != null)) {
-						if (cards[parentIndex].isVoting) {
-							// we are dot voting on this cluster so we need to check if this cards text contains the existing votes syntax i.e. (+votesReceived)
-							var existingVotes = 0,
-								voteCountMatches = [];
-
-			  				if (cards[childIndex].type.trim().toLowerCase() == "text") {
-			  					voteCountMatches = cards[childIndex].content.match(/ \(\+(.*?)\)/g);
-
-			  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].content.match(/\(\+(.*?)\)/g);
-							}
-			  				else {
-			  					voteCountMatches = cards[childIndex].title.match(/ \(\+(.*?)\)/g);
-
-			  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].title.match(/\(\+(.*?)\)/g);
-			  				}
-
-							if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
-								existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
-
-			  					if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content.replace(voteCountMatches[0],"");
-			  					else cards[childIndex].title = cards[childIndex].title.replace(voteCountMatches[0],"");
-							}
-
-			      			cards[childIndex].votesReceived += parseInt(existingVotes);
-		      			}
-		      			else {
-		      				// we're not dot voting on this cluster so we need to convert any votes this card had previously received into the (+votesReceived) syntax
-							if (cards[childIndex].votesReceived > 0) {
-								if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content + " (+" + cards[childIndex].votesReceived + ")";
-								else cards[childIndex].title = cards[childIndex].title + " (+" + cards[childIndex].votesReceived + ")";
-
-								cards[childIndex].votesReceived = 0;
-							}
-		      			}
-
-						cards[childIndex].zPos = cards[parentIndex].children.length;
-					}
-
-					// update the last modified date timestamp for this board
-					board.lastModified = new Date();
-					board.save();
-
-					for (var i = 0, cardsLength = cards.length; i < cardsLength; i++) {
-						if (cards[i]) {
-							cards[i].save(function(err) {
-								if (err) {
-									dataError.log({
-										model: __filename,
-										action: "attachCard",
-										code: 500,
-										msg: "Error saving card",
-										err: err
-									});
+						// loop through the cards in the board. we need to create a relationship between the cluster being attached to and the new child card
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							// sanity check that there is a card
+							if (cards[j]) {
+								if (cards[j]._id.toString() == req.params.clusterId) {
+									// if this is the cluster that the new card is being attached to then add the new child card to its list of children
+									cards[j].children.push(req.params.cardId);
+									parentIndex = j;
 								}
-							});
+								else if (cards[j]._id.toString() == req.params.cardId) {
+									// if this is the card we want to make a child then set it's parent id to the cluster
+									cards[j].parentId = req.params.clusterId;
+									childIndex = j;
+								}
+								
+								// make sure that the card we are attaching isn't the child of another cluster and if so remove that clusters relationship to it
+								if (cards[j]._id != req.params.clusterId) {
+									for (var k=0, cardsChildrenLength=cards[j].children.length; k<cardsChildrenLength; k+=1) {
+										if (cards[j].children[k] == req.params.cardId) cards[j].children.splice(j,1);
+									};
+								}
+							}
 						}
-					}
 
-					res.send({ code: 200 });
-				});
-			}
-    		else {
-				dataError.log({
-					model: __filename,
-					action: "attachCard",
-					code: 401,
-					msg: "Invalid board authentication",
-					res: res
-				});
-    		}
+						// we've made  a new parent child relationship so we need to handle he change of there being dot voting on this cluster
+						if ((parentIndex != null) && (childIndex != null)) {
+							if (cards[parentIndex].isVoting) {
+								// we are dot voting on this cluster so we need to check if this cards text contains the existing votes syntax i.e. (+votesReceived)
+								var existingVotes = 0,
+									voteCountMatches = [];
+
+				  				if (cards[childIndex].type.trim().toLowerCase() == "text") {
+				  					voteCountMatches = cards[childIndex].content.match(/ \(\+(.*?)\)/g);
+
+				  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].content.match(/\(\+(.*?)\)/g);
+								}
+				  				else {
+				  					voteCountMatches = cards[childIndex].title.match(/ \(\+(.*?)\)/g);
+
+				  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].title.match(/\(\+(.*?)\)/g);
+				  				}
+
+								if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
+									existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
+
+				  					if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content.replace(voteCountMatches[0],"");
+				  					else cards[childIndex].title = cards[childIndex].title.replace(voteCountMatches[0],"");
+								}
+
+				      			cards[childIndex].votesReceived += parseInt(existingVotes);
+			      			}
+			      			else {
+			      				// we're not dot voting on this cluster so we need to convert any votes this card had previously received into the (+votesReceived) syntax
+								if (cards[childIndex].votesReceived > 0) {
+									if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content + " (+" + cards[childIndex].votesReceived + ")";
+									else cards[childIndex].title = cards[childIndex].title + " (+" + cards[childIndex].votesReceived + ")";
+
+									cards[childIndex].votesReceived = 0;
+								}
+			      			}
+
+							cards[childIndex].zPos = cards[parentIndex].children.length;
+						}
+
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							if (cards[j]) {
+								cards[j].save(function(err) {
+									if (err) {
+										dataError.log({
+											model: __filename,
+											action: "attachCard",
+											code: 500,
+											msg: "Error saving card",
+											err: err
+										});
+									}
+								});
+							}
+						}
+					});
+				}
+	    		else {
+					dataError.log({
+						model: __filename,
+						action: "attachCard",
+						code: 401,
+						msg: "Invalid board authentication"
+					});
+	    		}
+
+				// update the last modified date timestamp for this board
+				board.lastModified = new Date();
+				board.save();
+	    	}
+
+			res.send({ code: 200 });
 		}
 		else {
 			dataError.log({
@@ -1053,8 +1057,8 @@ exports.attachClusterToMain = function (req, res) {
 	var cookies = parseCookies(req);;
 	
 	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
+	.find({ workspace: req.params.workspaceId })
+	.exec(function(err, boards) {
 		if (err) {
 			dataError.log({
 				model: __filename,
@@ -1065,85 +1069,89 @@ exports.attachClusterToMain = function (req, res) {
 				res: res
 			});
 		}
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				Card
-				.find({ board: board._id })
-				.exec(function(err, cards) {
-					var boardUpdated = false;
+		else if (boards) {
+			for (var i=0, boardsLength=boards.length; i<boardsLength; i++) {
+				var boardUpdated = false,
+					board = boards[i];
 
-					for (var i = 0, cardsLength = cards.length; i < cardsLength; i++) {
-						// sanity check that we have a card
-						if (cards[i]) {
-							var cardUpdated = false;
+				// Check if this board is private and if so check this user has access
+	    		if ((!board.isPrivate)||
+	    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+	    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+					Card
+					.find({ board: board._id })
+					.exec(function(err, cards) {
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							// sanity check that we have a card
+							if (cards[j]) {
+								var cardUpdated = false;
 
-							// search through all the current cards children for any cards that have the selected cluster as a child and remove that relationship
-							for (var j = 0, cardsChildrenLength = cards[i].children.length; j < cardsChildrenLength; j++) {
-								if (cards[i].children[j] == req.params.clusterId) {
-									cards[i].children.splice(j, 1);
-									
+								// search through all the current cards children for any cards that have the selected cluster as a child and remove that relationship
+								for (var k=0, cardsChildrenLength = cards[j].children.length; k<cardsChildrenLength; k+=1) {
+									if (cards[j].children[k] == req.params.clusterId) {
+										cards[j].children.splice(k, 1);
+										
+										cardUpdated = true;
+									}
+								}
+
+								// check if this is the cluster we want to return to the main board
+								if (cards[j]._id.toString() == req.params.clusterId) {
+									// check if this cluster has received any votes as part of a dot vote and put them into the (+votesReceived) notationn
+									if (cards[j].votesReceived > 0) {
+										if (cards[j].type.trim().toLowerCase() == "text") cards[j].content = cards[j].content + " (+" + cards[j].votesReceived + ")";
+										else cards[j].title = cards[j].title + " (+" + cards[j].votesReceived + ")";
+
+										cards[j].votesReceived = 0;
+									}
+
+									// set the details of this cluster to being a vanilla unattached cluster
+									cards[j].parentId = null;
+									cards[j].xPos = req.body.xPos;
+									cards[j].yPos = req.body.yPos;
+									cards[j].collapsed = false;
+
+									if (cards[j].board.toString() != req.params.boardId) updateCardBoard(cards[j]._id, req.params.boardId);
+
 									cardUpdated = true;
 								}
-							}
 
-							// check if this is the cluster we want to return to the main board
-							if (cards[i]._id.toString() == req.params.clusterId) {
-								// check if this cluster has received any votes as part of a dot vote and put them into the (+votesReceived) notationn
-								if (cards[i].votesReceived > 0) {
-									if (cards[i].type.trim().toLowerCase() == "text") cards[i].content = cards[i].content + " (+" + cards[i].votesReceived + ")";
-									else cards[i].title = cards[i].title + " (+" + cards[i].votesReceived + ")";
+								if (cardUpdated) {
+									boardUpdated = true;
 
-									cards[i].votesReceived = 0;
+									cards[j].save(function(err) {
+										if (err) {
+											dataError.log({
+												model: __filename,
+												action: "attachClusterToMain",
+												code: 500,
+												msg: "Error saving card",
+												err: err
+											});
+										}
+									});
 								}
-
-								// set the details of this cluster to being a vanilla unattached cluster
-								cards[i].parentId = null;
-								cards[i].xPos = req.body.xPos;
-								cards[i].yPos = req.body.yPos;
-								cards[i].collapsed = false;
-
-								cardUpdated = true;
-							}
-
-							if (cardUpdated) {
-								boardUpdated = true;
-
-								cards[i].save(function(err) {
-									if (err) {
-										dataError.log({
-											model: __filename,
-											action: "attachClusterToMain",
-											code: 500,
-											msg: "Error saving card",
-											err: err
-										});
-									}
-								});
 							}
 						}
-					}
+					});
+				}
+	    		else {
+					dataError.log({
+						model: __filename,
+						action: "attachClusterToMain",
+						code: 401,
+						msg: "Invalid board authentication"
+					});
+	    		}
 
-					if (boardUpdated) {
-						// update the last modified timestamp for this board
-			        	board.lastModified = new Date();
-						board.save();
-					}
-					
-					res.send({ code: 200 });
-				});
-			}
-    		else {
-				dataError.log({
-					model: __filename,
-					action: "attachClusterToMain",
-					code: 401,
-					msg: "Invalid board authentication",
-					res: res
-				});
-    		}
+				if (boardUpdated) {
+					// update the last modified timestamp for this board
+		        	board.lastModified = new Date();
+					board.save();
+				}
+	    	}
+			
+			res.send({ code: 200 });
 		}
 		else {
 			dataError.log({
@@ -1159,11 +1167,11 @@ exports.attachClusterToMain = function (req, res) {
 
 // ===== Actions to attach one cluster to another cluster
 exports.attachCluster = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = parseCookies(req);
 	
 	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
+	.find({ workspace: req.params.workspaceId })
+	.exec(function(err, boards) {
 		if (err) { 
 			dataError.log({
 				model: __filename,
@@ -1174,112 +1182,115 @@ exports.attachCluster = function (req, res) {
 				res: res
 			});
 		}
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve all the cards for this board
-				Card
-				.find({ board: board._id })
-				.exec(function(err, cards) {
-					var parentIndex = null;
-					var childIndex = null;
+		else if (boards) {
+			for (var i=0, boardsLength=boards.length; i<boardsLength; i++) {
+				var board = boards[i];
+			
+				// Check if this board is private and if so check this user has access
+	    		if ((!board.isPrivate)||
+	    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+	    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+					// retrieve all the cards for this board
+					Card
+					.find({ board: board._id })
+					.exec(function(err, cards) {
+						var parentIndex = null;
+						var childIndex = null;
 
-					// loop through all the cards in this board
-					for (var i = 0, cardsLength = cards.length; i < cardsLength; i++) {
-						// sanity check that there is a card
-						if (cards[i]) {
-							// loop through all the the childre of the current card and remove any child relationships to the cluster we want to attach to another cluster
-							for (var j = 0, cardsChildrenLength = cards[i].children.length; j < cardsChildrenLength; j++) {
-								if (cards[i].children[j] == req.params.childclusterId) cards[i].children.splice(j, 1);
-							}
-
-							if (cards[i]._id.toString() == req.params.parentclusterId) {
-								// if this is if the card that we want to be the parent of the cluster we are attaching then create the relationship to the child cluster
-								cards[i].children.push(req.params.childclusterId);
-								parentIndex = i;
-							}
-							else if (cards[i]._id.toString() == req.params.childclusterId) {
-								// if this is the child cluster then collapse it (as clusters go into another cluster collapsed) and create the relationship to the parent
-								cards[i].collapsed = true;
-								cards[i].parentId = req.params.parentclusterId;
-								childIndex = i;
-							}
-						}
-					}
-
-					// we've created the parent child relationship and so we need to sort out any dot voting stuff
-					if ((parentIndex != null) && (childIndex != null)) {
-						if (cards[parentIndex].isVoting) {
-							// the parent cluster is voting so we need to convert previous votes store on the card in the (+votesReceived) syntax to actual votes
-							var existingVotes = 0; 
-							var voteCountMatches = [];
-
-			  				if (cards[childIndex].type.trim().toLowerCase() == "text") {
-			  					voteCountMatches = cards[childIndex].content.match(/ \(\+(.*?)\)/g);
-			  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].content.match(/\(\+(.*?)\)/g);
-							}
-			  				else {
-			  					voteCountMatches = cards[childIndex].title.match(/ \(\+(.*?)\)/g);
-			  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].title.match(/\(\+(.*?)\)/g);
-			  				}
-
-							if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
-								existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
-
-			  					if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content.replace(voteCountMatches[0],"");
-			  					else cards[childIndex].title = cards[childIndex].title.replace(voteCountMatches[0],"");
-							}
-
-			      			cards[childIndex].votesReceived += parseInt(existingVotes);
-		      			}
-		      			else {
-		      				// the parent cluster isn't dot voting so convert any votes stored on the cluster into the (+votes received syntax)
-							if (cards[childIndex].votesReceived > 0) {
-								if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content + " (+" + cards[childIndex].votesReceived + ")";
-								else cards[childIndex].title = cards[childIndex].title + " (+" + cards[childIndex].votesReceived + ")";
-								
-								cards[childIndex].votesReceived = 0;
-							}
-		      			}
-
-						cards[childIndex].zPos = cards[parentIndex].children.length;
-					}
-
-					// save the changes we've made to the cards structure
-					for (var i = 0, cardsLength = cards.length; i < cardsLength; i++) {
-						if (cards[i]) {
-							cards[i].save(function(err) {
-								if (err) {
-									dataError.log({
-										model: __filename,
-										action: "attachCluster",
-										code: 500,
-										msg: "Error saving card",
-										err: err
-									});
+						// loop through all the cards in this boards
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							// sanity check that there is a card
+							if (cards[j]) {
+								// loop through all the the childre of the current card and remove any child relationships to the cluster we want to attach to another cluster
+								for (var k=0, cardsChildrenLength=cards[j].children.length; k<cardsChildrenLength; k+=1) {
+									if (cards[j].children[j] == req.params.childclusterId) cards[j].children.splice(k, 1);
 								}
-							});
-						}
-					}
 
-					// update the last modified time stamp for the board
-		        	board.lastModified = new Date();
-					board.save();
-					
-					res.send({ code: 200 });
-				});
-			}
-    		else {
-				dataError.log({
-					model: __filename,
-					action: "attachCluster",
-					code: 401,
-					msg: "Invalid board authentication",
-					res: res
-				});
-    		}
+								if (cards[j]._id.toString() == req.params.parentclusterId) {
+									// if this is if the card that we want to be the parent of the cluster we are attaching then create the relationship to the child cluster
+									cards[j].children.push(req.params.childclusterId);
+									parentIndex = i;
+								}
+								else if (cards[j]._id.toString() == req.params.childclusterId) {
+									// if this is the child cluster then collapse it (as clusters go into another cluster collapsed) and create the relationship to the parent
+									cards[j].collapsed = true;
+									cards[j].parentId = req.params.parentclusterId;
+									childIndex = i;
+								}
+							}
+						}
+
+						// we've created the parent child relationship and so we need to sort out any dot voting stuff
+						if ((parentIndex != null) && (childIndex != null)) {
+							if (cards[parentIndex].isVoting) {
+								// the parent cluster is voting so we need to convert previous votes store on the card in the (+votesReceived) syntax to actual votes
+								var existingVotes = 0; 
+								var voteCountMatches = [];
+
+				  				if (cards[childIndex].type.trim().toLowerCase() == "text") {
+				  					voteCountMatches = cards[childIndex].content.match(/ \(\+(.*?)\)/g);
+				  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].content.match(/\(\+(.*?)\)/g);
+								}
+				  				else {
+				  					voteCountMatches = cards[childIndex].title.match(/ \(\+(.*?)\)/g);
+				  					if ((voteCountMatches == null) || (voteCountMatches.length == 0)) voteCountMatches = cards[childIndex].title.match(/\(\+(.*?)\)/g);
+				  				}
+
+								if ((voteCountMatches != null) && (voteCountMatches.length > 0)) {
+									existingVotes = voteCountMatches[0].trim().replace("(+","").replace(")","");
+
+				  					if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content.replace(voteCountMatches[0],"");
+				  					else cards[childIndex].title = cards[childIndex].title.replace(voteCountMatches[0],"");
+								}
+
+				      			cards[childIndex].votesReceived += parseInt(existingVotes);
+			      			}
+			      			else {
+			      				// the parent cluster isn't dot voting so convert any votes stored on the cluster into the (+votes received syntax)
+								if (cards[childIndex].votesReceived > 0) {
+									if (cards[childIndex].type.trim().toLowerCase() == "text") cards[childIndex].content = cards[childIndex].content + " (+" + cards[childIndex].votesReceived + ")";
+									else cards[childIndex].title = cards[childIndex].title + " (+" + cards[childIndex].votesReceived + ")";
+									
+									cards[childIndex].votesReceived = 0;
+								}
+			      			}
+
+							cards[childIndex].zPos = cards[parentIndex].children.length;
+						}
+
+						// save the changes we've made to the cards structure
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							if (cards[j]) {
+								cards[j].save(function(err) {
+									if (err) {
+										dataError.log({
+											model: __filename,
+											action: "attachCluster",
+											code: 500,
+											msg: "Error saving card",
+											err: err
+										});
+									}
+								});
+							}
+						}
+
+						// update the last modified time stamp for the board
+			        	board.lastModified = new Date();
+						board.save();
+					});
+				}
+	    		else {
+					dataError.log({
+						model: __filename,
+						action: "attachCluster",
+						code: 401,
+						msg: "Invalid board authentication"
+					});
+	    		}
+	    	}
+						
+			res.send({ code: 200 });
 		}
 		else { 
 			dataError.log({
@@ -1298,8 +1309,8 @@ exports.detachCluster = function (req, res) {
 	var cookies = parseCookies(req);;
 	
 	Board
-	.findById(req.params.boardId)
-	.exec(function(err, board) {
+	.find({ workspace: req.params.workspaceId })
+	.exec(function(err, boards) {
 		if (err) {
 			dataError.log({
 				model: __filename,
@@ -1310,62 +1321,66 @@ exports.detachCluster = function (req, res) {
 				res: res
 			});
 		}
-		else if (board) {
-			// Check if this board is private and if so check this user has access
-    		if ((!board.isPrivate)||
-    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
-    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
-				// retrieve all the cards for this board
-				Card
-				.find({ board: board._id })
-				.exec(function(err, cards) {
-					for (var i = 0, cardsLength = cards.length; i < cardsLength; i++) {
-						// sanity check we have a card
-						if (cards[i]) {
-							// check if this card is the parent to the cluster we are detaching. IF so then remove the cluster from its list of children
-							if (cards[i]._id.toString() == req.params.parentclusterId) {
-								for (var j=0, cardsChildrenLength = cards[i].children.length; j<cardsChildrenLength; j++) {
-									if (cards[i].children[j] == req.params.childclusterId) cards[i].children.splice(j,1);
+		else if (boards) {
+			for (var i=0, boardsLength=boards.length; i<boardsLength; i++) {
+				var board = boards[i];
+				
+				// Check if this board is private and if so check this user has access
+	    		if ((!board.isPrivate)||
+	    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+	    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+					// retrieve all the cards for this board
+					Card
+					.find({ board: board._id })
+					.exec(function(err, cards) {
+						for (var j=0, cardsLength=cards.length; j<cardsLength; j+=1) {
+							// sanity check we have a card
+							if (cards[j]) {
+								// check if this card is the parent to the cluster we are detaching. IF so then remove the cluster from its list of children
+								if (cards[j]._id.toString() == req.params.parentclusterId) {
+									for (var k=0, cardsChildrenLength = cards[j].children.length; k<cardsChildrenLength; k+=1) {
+										if (cards[j].children[k] == req.params.childclusterId) cards[j].children.splice(k,1);
+									}
 								}
-							}
 
-							// if this is the cluster we are attempting to detach then remove the relationship to a parent
-							if (cards[i]._id.toString() == req.params.childclusterId) {
-								cards[i].parentId = null;
-								cards[i].zPos = null;
-								cards[i].collapsed = false;
-							}
-
-							cards[i].save(function(err) {
-								if (err) {
-									dataError.log({
-										model: __filename,
-										action: "detachCluster",
-										code: 500,
-										msg: "Error saving card",
-										err: err
-									});
+								// if this is the cluster we are attempting to detach then remove the relationship to a parent
+								if (cards[j]._id.toString() == req.params.childclusterId) {
+									cards[j].parentId = null;
+									cards[j].zPos = null;
+									cards[j].collapsed = false;
 								}
-							});
+
+								cards[j].save(function(err) {
+									if (err) {
+										dataError.log({
+											model: __filename,
+											action: "detachCluster",
+											code: 500,
+											msg: "Error saving card",
+											err: err
+										});
+									}
+								});
+							}
 						}
-					}
 
-					// update the last modified time stamp for the current board
-		        	board.lastModified = new Date();
-					board.save();
-					
-					res.send({ code: 200 });
-				});
-			}
-    		else {
-				dataError.log({
-					model: __filename,
-					action: "detachCluster",
-					code: 401,
-					msg: "Invalid board authentication",
-					res: res
-				});
-    		}
+						// update the last modified time stamp for the current board
+			        	board.lastModified = new Date();
+						board.save();
+					});
+				}
+	    		else {
+					dataError.log({
+						model: __filename,
+						action: "detachCluster",
+						code: 401,
+						msg: "Invalid board authentication",
+						res: res
+					});
+	    		}
+	    	}
+						
+			res.send({ code: 200 });
 		}
 		else {
 			dataError.log({
@@ -1464,4 +1479,30 @@ exports.sort = function (req, res) {
 			});
 		}
    	});
+}
+
+function updateCardBoard(cardId, boardId) {
+	// retrieve the selected card
+	Card
+	.findById(cardId)
+	.exec(function(err, card) {
+		// set the cards board property to the selected board
+		card.board = boardId;
+
+		for (var i=0, cardChildrenLength=card.children.length; i<cardChildrenLength; i+=1) {
+			updateCardBoard(card.children[i], boardId);
+		}
+
+		card.save(function(err) {
+			if (err) {
+				dataError.log({
+					model: __filename,
+					action: "setBoard",
+					code: 500,
+					msg: "Error saving card: " + cardId,
+					err: err
+				});
+			}
+  		});
+	});
 }

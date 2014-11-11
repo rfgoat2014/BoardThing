@@ -465,7 +465,7 @@ function(Card_Services, Cluster_Services) {
 		updateCardPosition: function(left,top) {
 			var that = this;
 
-			Card_Services.UpdatePosition(this.model.boardId, this.model.id, left, top, function() {
+			Card_Services.UpdatePosition(this._workspace.getId(), this.model.boardId, this.model.id, left, top, function() {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"updateCardPosition", 
 					workspace: that._workspace.getId(),
@@ -619,7 +619,7 @@ function(Card_Services, Cluster_Services) {
 	        	height: height
 	        };
 
-	        Card_Services.Resize(this.model.boardId, this.model.id, sizeValues, function(response) {
+	        Card_Services.Resize(this._workspace.getId(), this.model.boardId, this.model.id, sizeValues, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"updateCardSize", 
 					workspace: that._workspace.getId(),
@@ -675,7 +675,7 @@ function(Card_Services, Cluster_Services) {
 	        	height: null
 	        };
 
-	        Card_Services.Resize(this.model.boardId, this.model.id, sizeValues, function(response) {
+	        Card_Services.Resize(this._workspace.getId(), this.model.boardId, this.model.id, sizeValues, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"undoCardResize", 
 					workspace: that._workspace.getId(),
@@ -707,7 +707,7 @@ function(Card_Services, Cluster_Services) {
 		duplicateCard: function(e) {
 			var that = this;
 
-			Card_Services.Duplicate(this.model.boardId, this.model.id, function(response) {
+			Card_Services.Duplicate(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.addCardToBoard(response.card);
 
 				that._workspace.sendSocket(JSON.stringify({ 
@@ -729,7 +729,7 @@ function(Card_Services, Cluster_Services) {
 
 			this.stopCardResize();
 
-        	Card_Services.Lock(this.model.boardId, this.model.id, function(response) {
+        	Card_Services.Lock(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"lockCard", 
 					workspace: that._workspace.getId(),
@@ -761,7 +761,7 @@ function(Card_Services, Cluster_Services) {
 		},
 
 		unlockCard: function() {
-        	Card_Services.Unlock(this.model.boardId, this.model.id, function(response) {
+        	Card_Services.Unlock(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"unlockCard", 
 					workspace: that._workspace.getId(),
@@ -797,7 +797,7 @@ function(Card_Services, Cluster_Services) {
 				parentId: this.model.parentId
 			};
 
-			Card_Services.Delete(this.model.boardId, this.model.id, function(response) {
+			Card_Services.Delete(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"boardCardDeleted", 
 					workspace: that._workspace.getId(),
@@ -820,7 +820,7 @@ function(Card_Services, Cluster_Services) {
 
 			var that = this;
 
-			Cluster_Services.AddVote(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.AddVote(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"addVote", 
 					workspace: that._workspace.getId(),

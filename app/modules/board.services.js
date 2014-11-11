@@ -15,9 +15,9 @@ function() {
 		});
 	};
 
-	Board.UpdateCardZIndexes = function(boardId, sortedCards, callback) {
+	Board.UpdateCardZIndexes = function(workspaceId, boardId, sortedCards, callback) {
         $.ajax({
-            url: "/workspace/boards/cards/zindex/" + boardId,
+            url: "/workspace/boards/cards/zindex/" + workspaceId + "/" + boardId,
             type: 'PUT',
             dataType: "json",
             data: { 

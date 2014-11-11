@@ -309,7 +309,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						that.model.yPos = clusterPosition.y;
 
 			        	if (targetBoard.getId() != currentBoardId) {
-							Card_Services.SetBoard(targetBoard.getId(), that.model.id, that.model.xPos, that.model.yPos);
+							Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id, that.model.xPos, that.model.yPos);
 
 					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
 			        	}
@@ -377,7 +377,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				       					if (!isChild) {	
 											that._workspace.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
 
-											Cluster_Services.AttachCard(that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
+											Cluster_Services.AttachCard(that._workspace.getId(), that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
 												that._workspace.sendSocket(JSON.stringify({ 
 													action:"addCardToCluster", 
 													workspace: that._workspace.getId(),
@@ -401,7 +401,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
 									that._workspace.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
 
-		       						Cluster_Services.AttachCluster(that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
+		       						Cluster_Services.AttachCluster(that._workspace.getId(), that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
 		       							that._workspace.sendSocket(JSON.stringify({ 
 		       								action:"addClusterToCluster", 
 											workspace: that._workspace.getId(),
@@ -620,7 +620,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		// ---------- Actions for setting cluster position
 
 		updateClusterPosition: function(left,top) {
-			Cluster_Services.UpdatePosition(this.model.boardId, this.model.id, left, top);
+			Cluster_Services.UpdatePosition(this._workspace.getId(), this.model.boardId, this.model.id, left, top);
 
 			this._workspace.sendSocket(JSON.stringify({
 				action:"updateClusterPosition",
@@ -689,7 +689,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 				}
 			}
 
-			Cluster_Services.Sort(this.model.boardId, this.model.id, cardOrder, function(response) {
+			Cluster_Services.Sort(this._workspace.getId(), this.model.boardId, this.model.id, cardOrder, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"sortCluster", 
 					workspace: that._workspace.getId(),
@@ -732,7 +732,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		saveAndCollapseCluster: function() {
 			var that = this;
 
-			Cluster_Services.Collapse(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.Collapse(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"collapseCluster", 
 					workspace: that._workspace.getId(),
@@ -767,7 +767,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		saveAndExpandCluster: function() {
 			var that = this;
 
-			Cluster_Services.Expand(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.Expand(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"expandCluster", 
 					workspace: that._workspace.getId(), 
@@ -871,7 +871,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					if (cardModel.cards.length === 0) {
 						// This is a card so call the detach card method
-						Cluster_Services.DetachCard(that.model.boardId, that.model.id, cardId, function(response) {
+						Cluster_Services.DetachCard(that._workspace.getId(), that.model.boardId, that.model.id, cardId, function(response) {
 			            	if (response.code == 200) {
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeCardFromCluster", 
@@ -886,7 +886,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					}
 					else {
 						// This is a card so call the detach cluster method
-						Cluster_Services.DetachCluster(that.model.boardId, that.model.id, cardId, function(response) {
+						Cluster_Services.DetachCluster(that._workspace.getId(), that.model.boardId, that.model.id, cardId, function(response) {
 			            	if (response.code == 200) {
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeClusterFromCluster", 
@@ -1057,7 +1057,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			var that = this;
 
-			Cluster_Services.StartDotVoting(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.StartDotVoting(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"startDotVoting",
 					workspace: that._workspace.getId(),
@@ -1107,7 +1107,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			var that = this;
 
-			Cluster_Services.StopDotVoting(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.StopDotVoting(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace._socket.send(JSON.stringify({ 
 					action:"stopDotVoting",
 					workspace: that._workspace.getId(),
@@ -1141,7 +1141,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			var that = this;
 
-			Cluster_Services.AddVote(this.model.boardId, this.model.id, function(response) {
+			Cluster_Services.AddVote(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"addVote", 
 					workspace: that._workspace.getId(),
