@@ -282,10 +282,18 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						if (targetBoard.getId() != that.model.boardId) {
 							var boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId());
 
-							clusterPosition = {
-								x: that.$el.position().left + totalParentOffset.x + that._workspace.getBoardScrollWidth() - boardDistance.x,
-								y: that.$el.position().top + totalParentOffset.y + that._workspace.getBoardScrollHeight() - boardDistance.y
-							};
+							if (that._parent) {
+								clusterPosition = {
+									x: that.$el.position().left + totalParentOffset.x + that._workspace.getBoardScrollWidth() - boardDistance.x,
+									y: that.$el.position().top + totalParentOffset.y + that._workspace.getBoardScrollHeight() - boardDistance.y
+								};
+							}
+							else {
+								clusterPosition = {
+									x: that.$el.position().left - boardDistance.x,
+									y: that.$el.position().top - boardDistance.y
+								};
+							}
 
 							mousePosition = {
 								x: e.pageX + that._workspace.getBoardScrollWidth()-boardDistance.x,
