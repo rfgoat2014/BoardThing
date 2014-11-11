@@ -777,6 +777,8 @@
 	app.post("/workspace/boards/cards/duplicate/:boardId/:cardId", boardCards.duplicate);
 	app.delete("/workspace/boards/cards/:boardId/:cardId", boardCards.delete);
 	
+	app.put("/workspace/boards/cards/board/:boardId/:cardId", boardCards.setBoard);
+	
 	app.put("/workspace/boards/cards/lock/:boardId/:cardId", boardCards.lock);
 	app.put("/workspace/boards/cards/unlock/:boardId/:cardId", boardCards.unlock);
 

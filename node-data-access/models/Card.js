@@ -4,7 +4,7 @@ var mongoose = require('mongoose')
 
 var CardSchema = new Schema({
     id: ObjectId, // the id of the card
-	board: { type: ObjectId, ref: 'User' }, // the board that this card is attached to
+	board: { type: ObjectId, ref: 'Board' }, // the board that this card is attached to
     parentId: { type: String }, // the id of the card that is the parent to this one
 	title: { type: String, default: '' }, // used for image cards, it's the text description for it
     content: { type: String, default: '' }, // in text cards this is the card content. In image cards this is the file name in the Amazong bucket

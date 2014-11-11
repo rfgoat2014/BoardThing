@@ -66,6 +66,21 @@ function() {
     	});
 	};
 
+	Card.SetBoard = function(boardId, cardId, xPos, yPos, callback) {
+        $.ajax({
+            url: "/workspace/boards/cards/board/" + boardId + "/" + cardId,
+            type: "PUT",
+            dataType: "json",
+			data: {
+	        	xPos: xPos,
+	        	yPos: yPos
+	        },
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	};
+
 	Card.Resize = function(boardId, cardId, card, callback) {
         $.ajax({
             url: "/workspace/boards/cards/resize/" + boardId + "/" + cardId,

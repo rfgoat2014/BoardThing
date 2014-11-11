@@ -3,6 +3,19 @@ var Board = require(config.boardModel),
 
 // ===== Method to retrieve all the cards on a board
 exports.get = function (req, res) {
+	// ===== A recursive method which builds up the cluster structure
+	var attachChildCards = function(currentNode,childNodes) {
+		for (var i=0, currentNodeChildLength = currentNode.children.length; i<currentNodeChildLength; i += 1) {
+			for (var j=0, childNodesLength = childNodes.length; j<childNodesLength; j++) {
+				if (currentNode.children[i] == childNodes[j].id) {
+					childNodes[j].collapsed = true;
+					currentNode.cards.push(childNodes[j]);
+					attachChildCards(currentNode.cards[(currentNode.cards.length-1)], childNodes);
+				}
+			}
+		}
+	};
+
 	var cookies = parseCookies(req);;
 
 	// Attempting to retrieve board
@@ -128,19 +141,6 @@ exports.get = function (req, res) {
 			});
 		}
 	});
-};
-
-// ===== A recursive method which builds up the cluster structure
-function attachChildCards(currentNode,childNodes) {
-	for (var i=0, currentNodeChildLength = currentNode.children.length; i<currentNodeChildLength; i += 1) {
-		for (var j=0, childNodesLength = childNodes.length; j<childNodesLength; j++) {
-			if (currentNode.children[i] == childNodes[j].id) {
-				childNodes[j].collapsed = true;
-				currentNode.cards.push(childNodes[j]);
-				attachChildCards(currentNode.cards[(currentNode.cards.length-1)], childNodes);
-			}
-		}
-	}
 };
 
 // ===== Retrieve a cards image from it's amazon bucket
@@ -1271,6 +1271,107 @@ exports.updateZIndex = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateZIndex",
+				code: 404,
+				msg: "Error finding board " + req.params.boardId,
+				res: res
+			});
+		}
+	});
+};
+
+// ===== Action for changing the board a card is attached to
+exports.setBoard = function (req, res) {
+	var updateCardBoard = function(cardId, boardId) {
+		// retrieve the selected card
+		Card
+		.findById(cardId)
+		.exec(function(err, card) {
+			// set the cards board property to the selected board
+			card.board = boardId;
+
+			for (var i=0, cardChildrenLength=card.children.length; i<cardChildrenLength; i+=1) {
+				updateCardBoard(card.children[i], boardId);
+			}
+
+			card.save(function(err) {
+				if (err) {
+					dataError.log({
+						model: __filename,
+						action: "setBoard",
+						code: 500,
+						msg: "Error saving card: " + cardId,
+						err: err
+					});
+				}
+	  		});
+		});
+	}
+
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.boardId)
+	.exec(function(err, board) {
+        if (err) {
+	        dataError.log({
+				model: __filename,
+				action: "setBoard",
+				code: 500,
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});	
+        } 
+		else if (board) {
+			// Check if this board is private and if so check this user has access
+    		if ((!board.isPrivate)||
+    			((req.isAuthenticated()) && (board.owner.toString() == req.user._id.toString())) || 
+    			(cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.password.trim())) {
+				
+				// retrieve the selected card
+				Card
+				.findById(req.params.cardId)
+				.exec(function(err, card) {
+					// set the x/y position of the card on the board
+					card.xPos = req.body.xPos;
+					card.yPos = req.body.yPos;
+
+					updateCardBoard(req.params.cardId, req.params.boardId);
+
+					card.save(function(err) {
+						if (err) {
+							dataError.log({
+								model: __filename,
+								action: "setBoard",
+								code: 500,
+								msg: "Error saving card: " + cardId,
+								err: err
+							});
+						}
+						else {
+							// update the last modified timestamp for the board
+							board.lastModified = new Date();
+							board.save();
+
+				  			res.send({ code: 200 });
+						}
+			  		});
+				});
+			}
+			else {
+				dataError.log({
+					model: __filename,
+					action: "setBoard",
+					code: 401,
+					msg: "Invalid board authentication",
+					res: res
+				});
+			}
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "setBoard",
 				code: 404,
 				msg: "Error finding board " + req.params.boardId,
 				res: res

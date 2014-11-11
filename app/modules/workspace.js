@@ -411,18 +411,33 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		// {{ Managing board cards }}
+		setBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if (this._boardEntities[i].getId() == cardId) {
+					var xPos = this._boardEntities[i].getXPos()-targetBoardXPos,
+						yPos = this._boardEntities[i].getYPos()-targetBoardYPos;
+
+					Card_Services.SetBoard(targetBoardId,cardId,xPos,yPos);
+
+					this.moveBoardCard(cardId,targetBoardId,xPos,yPos);
+					break;
+				}
+			}
+		},
 
 		moveBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 				if (this._boardEntities[i].getId() == cardId) {
 					this._boardEntities[i].setBoardId(targetBoardId);
-					this._boardEntities[i].setXPos(this._boardEntities[i].getXPos()-targetBoardXPos);
-					this._boardEntities[i].setYPos(this._boardEntities[i].getYPos()-targetBoardYPos);
+					this._boardEntities[i].setXPos(targetBoardXPos);
+					this._boardEntities[i].setYPos(targetBoardYPos);
 
 					this._boardEntities[i].destroy();
 					this._boardEntities[i].render();
 
 					this.$("#board-cards_" + targetBoardId).append(this._boardEntities[i].el);
+
+					break;
 				}
 			}
 		},

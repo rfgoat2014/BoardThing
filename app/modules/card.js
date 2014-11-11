@@ -271,7 +271,7 @@ function(Card_Services, Cluster_Services) {
 	        			startDragY = that.$el.css("top");
 
 						if (!that._isMobile) that._isDragging = true;
-						
+
 						that.$el.zIndex(999999999);
 					},
 					drag: function(e,ui) {
@@ -332,7 +332,7 @@ function(Card_Services, Cluster_Services) {
 							that.model.xPos = that.$el.position().left;
 							that.model.yPos = that.$el.position().top;
 
-			        		that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), targetBoard.getXPos(), targetBoard.getYPos());
+			        		that._workspace.setBoardCard(that.model.id, targetBoard.getId(), targetBoard.getXPos(), targetBoard.getYPos());
 				        }
 				        else {
 				        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });
