@@ -35,6 +35,7 @@
 }
 
 #board-container .board {
+	position: relative;
 	margin: 0px auto !important;
 }
 

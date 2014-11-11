@@ -162,6 +162,12 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 			this.$el.addClass("outlined")
 
+			this.$("#board-cards_" + this.model.id).width(this.model.width);
+			this.$("#board-cards_" + this.model.id).height(this.model.height);
+
+			this.$("#page-canvas_" + this.model.id).width(this.model.width);
+			this.$("#page-canvas_" + this.model.id).height(this.model.height);
+
 			if (this._mode == "boardMap") this.$el.addClass("cell");
 
 			this.$("#board-cards_" + this.model.id).empty();
@@ -184,11 +190,11 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			var that = this;
 		    
 		    this.$el.mouseover(function(event) {
-		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.$el.offset().left, y: event.pageY-that.$el.offset().top});
+		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.getXPos(), y: event.pageY-that.getYPos() });
 		    });
 
 		    this.$el.mousemove(function(event) {
-		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.$el.offset().left, y: event.pageY-that.$el.offset().top});
+		    	that._workspace.setCurrentMousePosition({ x: event.pageX-that.getXPos(), y: event.pageY-that.getYPos() });
 		    });
 
 		    this.$el.mouseout(function(event) {
@@ -201,11 +207,11 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		},
 
 		getXPos: function() {
-			return this.$el.position().left;
+			return this.$el.position().left+this._workspace.getBoardScrollWidth();
 		},
 
 		getYPos: function() {
-			return this.$el.position().top;
+			return this.$el.position().top+this._workspace.getBoardScrollHeight();
 		},
 
 		getWidth: function() {

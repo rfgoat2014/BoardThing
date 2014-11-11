@@ -419,26 +419,19 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		// {{ Managing board cards }}
-		setBoardCard: function(cardId, sourceBoardId,targetBoardId) {
+		getBoardDistance: function(sourceBoardId,targetBoardId) {
 			var sourceBoard = this._boardMap.getBoard(sourceBoardId),
 				targetBoard = this._boardMap.getBoard(targetBoardId);
 
-			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if (this._boardEntities[i].getId() == cardId) {
-					var xPos = this._boardEntities[i].getXPos()-(targetBoard.getXPos()-sourceBoard.getXPos()),
-						yPos = this._boardEntities[i].getYPos()-(targetBoard.getYPos()-sourceBoard.getYPos());
-
-					Card_Services.SetBoard(targetBoardId,cardId,xPos,yPos);
-
-					this.moveBoardCard(cardId,targetBoardId,xPos,yPos);
-					break;
-				}
-			}
+			return {
+				x: (targetBoard.getXPos()-sourceBoard.getXPos()),
+				y: (targetBoard.getYPos()-sourceBoard.getYPos())
+			};
 		},
 
 		moveBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if (this._boardEntities[i].getId() == cardId) {
+				if (this._boardEntities[i].getId() == cardId) {								
 					this._boardEntities[i].setBoardId(targetBoardId);
 					this._boardEntities[i].setXPos(targetBoardXPos);
 					this._boardEntities[i].setYPos(targetBoardYPos);
@@ -625,7 +618,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
 		},
 
-		createClusterFromCluster: function(sourceClusterId, targetCardId) {
+		createClusterFromCluster: function(boardId, sourceClusterId, targetCardId) {
 			try {
 				var that = this,
 					sourceCluster = null,
@@ -662,12 +655,12 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 					if (targetCard) {
 			  			var clusterModel = {
 			  				id: targetCard.id,
-			  				boardId: this._selectedBoard.getId(),
+			  				boardId: boardId,
 			  				action: "create",
 			  				cards: [{ id: sourceCluster.id }]
 			  			};
 
-			  			Cluster_Services.Insert(this._selectedBoard.getId(), targetCard.id, clusterModel, function() {
+			  			Cluster_Services.Insert(boardId, targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCluster", 
 			  					workspace: that.model.id, 
@@ -742,19 +735,14 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		//  ---- Check if an element exists at the specified position
-		checkPositionTaken: function(elementId,defaultX,defaultY) {
+		checkPositionTaken: function(boardId,elementId,xPos,yPos) {
 			try {
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
-					if (this._boardEntities[i].getId() != elementId) {
-						var xPos = this._currentMousePosition.x,
-							xPosStart = this._boardEntities[i].getXPos(),
+					if ((this._boardEntities[i].getBoardId() == boardId) && (this._boardEntities[i].getId() != elementId)) {
+						var xPosStart = this._boardEntities[i].getXPos(),
 							xPosEnd = xPosStart + this._boardEntities[i].$el.width(),
-							yPos = this._currentMousePosition.y,
 							yPosStart = this._boardEntities[i].getYPos(),
 							yPosEnd = yPosStart + this._boardEntities[i].$el.height();
-
-						if (xPos === -1) xPos = defaultX;
-						if (yPos === -1) yPos = defaultY;
 
 	 					if (((xPos > xPosStart) && (xPos < xPosEnd)) && 
 	 						((yPos > yPosStart) && (yPos < yPosEnd))) {

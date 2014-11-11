@@ -299,7 +299,7 @@ function(Card_Services, Cluster_Services) {
 							if (elementId == -1) {
 								// the position isn't taken so figure out what to do
 								if (that._parent) {
-									// the dragged card has a parent so detach ot for adding back onto the board
+									// the dragged card has a parent so detach to for adding back onto the board
 									that.model.xPos = that.$el.position().left + totalParentOffset.x;
 									that.model.yPos = that.$el.position().top + totalParentOffset.y;
 
@@ -332,7 +332,7 @@ function(Card_Services, Cluster_Services) {
 							that.model.xPos = that.$el.position().left;
 							that.model.yPos = that.$el.position().top;
 
-			        		that._workspace.setBoardCard(that.model.id, that.model.boardId, targetBoard.getId());
+			        		that._workspace.setCardBoard(that.model.id, that.model.boardId, targetBoard.getId());
 				        }
 				        else {
 				        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });
@@ -353,6 +353,10 @@ function(Card_Services, Cluster_Services) {
 
 	    getId: function() {
 	    	return this.model.id;
+	    },
+
+	    getBoardId: function() {
+	    	return this.model.boardId;
 	    },
 
 	    getXPos: function() {

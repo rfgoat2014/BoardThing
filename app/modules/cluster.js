@@ -270,42 +270,72 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(),e.pageY + that._workspace.getBoardScrollHeight());
 
-					if ((targetBoard) && (targetBoard.getId() == that.model.boardId)) {
-						var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left + totalParentOffset.x, that.$el.position().top + totalParentOffset.y);
-					
+					if (targetBoard) {
+						var clusterPosition = {
+							x: that.$el.position().left + totalParentOffset.x,
+							y: that.$el.position().top + totalParentOffset.y
+						}, mousePosition = {
+							x: that.$el.position().left + totalParentOffset.x,
+							y: that.$el.position().top + totalParentOffset.y
+						};
+
+						if (targetBoard.getId() != that.model.boardId) {
+							var boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId());
+
+							clusterPosition = {
+								x: that.$el.position().left + totalParentOffset.x + that._workspace.getBoardScrollWidth() - boardDistance.x,
+								y: that.$el.position().top + totalParentOffset.y + that._workspace.getBoardScrollHeight() - boardDistance.y
+							};
+
+							mousePosition = {
+								x: e.pageX + that._workspace.getBoardScrollWidth()-boardDistance.x,
+								y: e.pageY + that._workspace.getBoardScrollHeight()-boardDistance.y
+							};
+						}
+
+						var elementId = that._workspace.checkPositionTaken(targetBoard.getId(), that.model.id, mousePosition.x, mousePosition.y),
+							currentBoardId = that.model.boardId;
+
+						that.model.boardId = targetBoard.getId();
+						that.model.xPos = clusterPosition.x;
+						that.model.yPos = clusterPosition.y;
+
+			        	if (targetBoard.getId() != currentBoardId) {
+							Card_Services.SetBoard(targetBoard.getId(), that.model.id, that.model.xPos, that.model.yPos);
+
+					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
+			        	}
+
 						if (elementId == -1) {
 							if (that._parent) {
-								that.model.xPos = that.$el.position().left + totalParentOffset.x + that._workspace.getBoardScrollWidth();
-								that.model.yPos = that.$el.position().top + totalParentOffset.y + that._workspace.getBoardScrollHeight();
-
 								that._parent.removeCard(that.model.id);
 						    	
 								that.model.collapsed = false;
 
 						    	that._workspace.addClusterToBoard(that.model);
 							}
-							else {
-								that.model.xPos = that._workspace.getBoardScrollWidth()+that.$el.position().left;
-								that.model.yPos = that._workspace.getBoardScrollHeight()+that.$el.position().top;
-				        	}
-				        	
-				        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
-					    	
-					    	that._workspace.sortZIndexes(that.model.id,true);
+
+							if (targetBoard.getId() == currentBoardId) {
+					        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
+						    	
+						    	that._workspace.sortZIndexes(that.model.id, true);
+						    }
 			        	}
 			        	else {
 			        		var objectModel = that._workspace.getObjectModel(elementId);
 
-							if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCluster(that.model.id, elementId);
-			        		else that.updateClusterPosition ((that.$el.position().left + that._workspace.getBoardScrollWidth()), (that.$el.position().top + that._workspace.getBoardScrollHeight()));	
+							if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) { 
+								that._workspace.createClusterFromCluster(targetBoard.getId(), that.model.id, elementId);
+							}
+			        		else {
+					        	if (targetBoard.getId() == currentBoardId) {
+						        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
+							    	
+							    	that._workspace.sortZIndexes(that.model.id, true);
+							    }
+			        		}
 			        	}
-			        }
-			        else if ((targetBoard) && (targetBoard.getId() != that.model.boardId)) {
-						that.model.xPos = that.$el.position().left;
-						that.model.yPos = that.$el.position().top;
-
-			        	that._workspace.setBoardCard(that.model.id, that.model.boardId, targetBoard.getId());
-			        }
+				    }
 			        else {
 			        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });
 			        	else that.$el.css({top: startDragY, left: startDragX, position: "absolute" });
@@ -425,6 +455,10 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 	    getId: function() {
 	    	return this.model.id;
+	    },
+
+	    getBoardId: function() {
+	    	return this.model.boardId;
 	    },
 
 	    getXPos: function() {
