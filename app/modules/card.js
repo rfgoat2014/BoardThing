@@ -332,7 +332,7 @@ function(Card_Services, Cluster_Services) {
 							that.model.xPos = that.$el.position().left;
 							that.model.yPos = that.$el.position().top;
 
-			        		that._workspace.setBoardCard(that.model.id, targetBoard.getId(), targetBoard.getXPos(), targetBoard.getYPos());
+			        		that._workspace.setBoardCard(that.model.id, that.model.boardId, targetBoard.getId());
 				        }
 				        else {
 				        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });

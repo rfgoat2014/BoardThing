@@ -411,11 +411,14 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		// {{ Managing board cards }}
-		setBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
+		setBoardCard: function(cardId, sourceBoardId,targetBoardId) {
+			var sourceBoard = this._boardMap.getBoard(sourceBoardId),
+				targetBoard = this._boardMap.getBoard(targetBoardId);
+
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 				if (this._boardEntities[i].getId() == cardId) {
-					var xPos = this._boardEntities[i].getXPos()-targetBoardXPos,
-						yPos = this._boardEntities[i].getYPos()-targetBoardYPos;
+					var xPos = this._boardEntities[i].getXPos()-(targetBoard.getXPos()-sourceBoard.getXPos()),
+						yPos = this._boardEntities[i].getYPos()-(targetBoard.getYPos()-sourceBoard.getYPos());
 
 					Card_Services.SetBoard(targetBoardId,cardId,xPos,yPos);
 
