@@ -71,10 +71,6 @@ function() {
             url: "/workspace/boards/cards/board/" + workspaceId + "/" + boardId + "/" + cardId,
             type: "PUT",
             dataType: "json",
-			data: {
-	        	xPos: xPos,
-	        	yPos: yPos
-	        },
 			success: function(response) {
 				if (callback) callback(response);
 			}

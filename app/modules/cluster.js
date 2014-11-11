@@ -309,7 +309,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						that.model.yPos = clusterPosition.y;
 
 			        	if (targetBoard.getId() != currentBoardId) {
-							Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id, that.model.xPos, that.model.yPos);
+							Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id);
 
 					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
 			        	}
@@ -323,11 +323,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						    	that._workspace.addClusterToBoard(that.model);
 							}
 
-							if (targetBoard.getId() == currentBoardId) {
-					        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
+					        that.updateClusterPosition(that.model.xPos, that.model.yPos);
 						    	
-						    	that._workspace.sortZIndexes(that.model.id, true);
-						    }
+					    	that._workspace.sortZIndexes(that.model.id, true);
 			        	}
 			        	else {
 			        		var objectModel = that._workspace.getObjectModel(elementId);
@@ -336,11 +334,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 								that._workspace.createClusterFromCluster(targetBoard.getId(), that.model.id, elementId);
 							}
 			        		else {
-					        	if (targetBoard.getId() == currentBoardId) {
-						        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
-							    	
-							    	that._workspace.sortZIndexes(that.model.id, true);
-							    }
+					        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
+						    	
+						    	that._workspace.sortZIndexes(that.model.id, true);
 			        		}
 			        	}
 				    }

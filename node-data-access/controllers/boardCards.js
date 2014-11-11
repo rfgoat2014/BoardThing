@@ -1281,6 +1281,32 @@ exports.updateZIndex = function (req, res) {
 
 // ===== Action for changing the board a card is attached to
 exports.setBoard = function (req, res) {
+	var updateCardBoard = function(cardId, boardId) {
+		// retrieve the selected card
+		Card
+		.findById(cardId)
+		.exec(function(err, card) {
+			// set the cards board property to the selected board
+			card.board = boardId;
+
+			for (var i=0, cardChildrenLength=card.children.length; i<cardChildrenLength; i+=1) {
+				updateCardBoard(card.children[i], boardId);
+			}
+
+			card.save(function(err) {
+				if (err) {
+					dataError.log({
+						model: __filename,
+						action: "updateCardBoard",
+						code: 500,
+						msg: "Error saving card: " + cardId,
+						err: err
+					});
+				}
+	  		});
+		});
+	}
+
 	var cookies = parseCookies(req);;
 	
 	Board
@@ -1306,10 +1332,6 @@ exports.setBoard = function (req, res) {
 				Card
 				.findById(req.params.cardId)
 				.exec(function(err, card) {
-					// set the x/y position of the card on the board
-					card.xPos = req.body.xPos;
-					card.yPos = req.body.yPos;
-
 					updateCardBoard(req.params.cardId, req.params.boardId);
 
 					card.save(function(err) {
@@ -1663,29 +1685,3 @@ exports.unlock = function (req, res) {
 		}
 	});
 };
-
-function updateCardBoard(cardId, boardId) {
-	// retrieve the selected card
-	Card
-	.findById(cardId)
-	.exec(function(err, card) {
-		// set the cards board property to the selected board
-		card.board = boardId;
-
-		for (var i=0, cardChildrenLength=card.children.length; i<cardChildrenLength; i+=1) {
-			updateCardBoard(card.children[i], boardId);
-		}
-
-		card.save(function(err) {
-			if (err) {
-				dataError.log({
-					model: __filename,
-					action: "updateCardBoard",
-					code: 500,
-					msg: "Error saving card: " + cardId,
-					err: err
-				});
-			}
-  		});
-	});
-}
