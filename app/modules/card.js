@@ -288,7 +288,7 @@ function(Card_Services, Cluster_Services) {
 						var totalParentOffset = { x:0, y: 0 };
 						if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-						var targetBoard = that._workspace.checkBoardPosition(e.pageX + totalParentOffset.x,e.pageY + totalParentOffset.y);
+						var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(),e.pageY + that._workspace.getBoardScrollHeight());
 
 						// check if this is a drop on the same board which it originated from 
 						if ((targetBoard) && (targetBoard.getId() == that.model.boardId)) {
@@ -323,9 +323,9 @@ function(Card_Services, Cluster_Services) {
 					        		var objectModel = that._workspace.getObjectModel(elementId);
 
 									if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCard(that.model.id, elementId);
-					        		else that.updateCardPosition((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));			           		
+					        		else that.updateCardPosition((that.$el.position().left + that._workspace.getBoardScrollWidth()), (that.$el.position().top + that._workspace.getBoardScrollHeight()));			           		
 				           		}
-					        	else that.updateCardPosition((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));
+					        	else that.updateCardPosition((that.$el.position().left + that._workspace.getBoardScrollWidth()), (that.$el.position().top + that._workspace.getBoardScrollHeight()));
 				        	}
 				        }
 				        else if ((targetBoard) && (targetBoard.getId() != that.model.boardId)) {
@@ -574,7 +574,7 @@ function(Card_Services, Cluster_Services) {
 				if (!isStartSize) {
 					this.saveCardSize(this.$el.width(), this.$el.height());
 
-		        	this.updateCardPosition((this.$el.position().left + this._workspace.$("#board-container").scrollLeft()), (this.$el.position().top + this._workspace.$("#board-container").scrollTop()));
+		        	this.updateCardPosition((this.$el.position().left + this._workspace.getBoardScrollWidth()), (this.$el.position().top + this._workspace.getBoardScrollHeight()));
 				}
 				else this.saveUndoResizing();
 			}

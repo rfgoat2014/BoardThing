@@ -59,14 +59,14 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
             	var boards = this._rows[i].getBoards();
 
-            	for (var i=0, boardsLength = boards.length; i<boardsLength; i+=1) {
-            		var boardStartX = boards[i].getXPos(),
-            			boardEndX = boardStartX+boards[i].getWidth(),
-            			boardStartY = boards[i].getYPos(),
-            			boardEndY = boardStartY+boards[i].getHeight();
+            	for (var j=0, boardsLength = boards.length; j<boardsLength; j+=1) {
+            		var boardStartX = boards[j].getXPos(),
+            			boardEndX = boardStartX+boards[j].getWidth(),
+            			boardStartY = boards[j].getYPos(),
+            			boardEndY = boardStartY+boards[j].getHeight();
 
  					if (((xPos > boardStartX) && (xPos < boardEndX)) && 
- 						((yPos > boardStartY) && (yPos < boardEndY))) return boards[i];
+ 						((yPos > boardStartY) && (yPos < boardEndY))) return boards[j];
         		}
             }
 

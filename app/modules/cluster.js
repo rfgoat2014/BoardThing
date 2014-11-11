@@ -268,15 +268,15 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					var totalParentOffset = { x:0, y: 0 };
 					if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-					var targetBoard = that._workspace.checkBoardPosition(e.pageX + totalParentOffset.x, e.pageY + totalParentOffset.y);
+					var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(),e.pageY + that._workspace.getBoardScrollHeight());
 
 					if ((targetBoard) && (targetBoard.getId() == that.model.boardId)) {
 						var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left + totalParentOffset.x, that.$el.position().top + totalParentOffset.y);
 					
 						if (elementId == -1) {
 							if (that._parent) {
-								that.model.xPos = that.$el.position().left + totalParentOffset.x + that._workspace.$("#board-container").scrollLeft();
-								that.model.yPos = that.$el.position().top + totalParentOffset.y + that._workspace.$("#board-container").scrollTop();
+								that.model.xPos = that.$el.position().left + totalParentOffset.x + that._workspace.getBoardScrollWidth();
+								that.model.yPos = that.$el.position().top + totalParentOffset.y + that._workspace.getBoardScrollHeight();
 
 								that._parent.removeCard(that.model.id);
 						    	
@@ -285,8 +285,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						    	that._workspace.addClusterToBoard(that.model);
 							}
 							else {
-								that.model.xPos = that._workspace.$("#board-container").scrollLeft()+that.$el.position().left;
-								that.model.yPos = that._workspace.$("#board-container").scrollTop()+that.$el.position().top;
+								that.model.xPos = that._workspace.getBoardScrollWidth()+that.$el.position().left;
+								that.model.yPos = that._workspace.getBoardScrollHeight()+that.$el.position().top;
 				        	}
 				        	
 				        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
@@ -297,7 +297,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			        		var objectModel = that._workspace.getObjectModel(elementId);
 
 							if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCluster(that.model.id, elementId);
-			        		else that.updateClusterPosition ((that.$el.position().left + that._workspace.$("#board-container").scrollLeft()), (that.$el.position().top + that._workspace.$("#board-container").scrollTop()));	
+			        		else that.updateClusterPosition ((that.$el.position().left + that._workspace.getBoardScrollWidth()), (that.$el.position().top + that._workspace.getBoardScrollHeight()));	
 			        	}
 			        }
 			        else if ((targetBoard) && (targetBoard.getId() != that.model.boardId)) {

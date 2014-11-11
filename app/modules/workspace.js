@@ -234,6 +234,14 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			return this.model.id;
 		},
 
+		getBoardScrollWidth: function() {
+			return this.$("#board-container").scrollLeft();
+		},
+
+		getBoardScrollHeight: function() {
+			return this.$("#board-container").scrollTop();
+		},
+
 		getBoardWidth: function() {
 			return this.model.boardWidth;
 		},
@@ -328,8 +336,8 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		cardAdded: function(card) {
     		try {
 				var that = this,
-					xPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).width()/2)+this.$("#board-container").scrollLeft()-90,
-					yPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).height()/2)+this.$("#board-container").scrollTop();
+					xPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).width()/2)+this.getBoardScrollWidth()-90,
+					yPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).height()/2)+this.getBoardScrollHeight();
 
 				if (this._dropPosition) {
 					xPos = this._dropPosition.x;
@@ -721,9 +729,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 		checkBoardPosition: function(xPos,yPos) {
 			//try {
-				if (this._mode == "boardMap") {
-					return this._boardMap.getBoardInPosition(xPos,yPos);
-				}
+				if (this._mode == "boardMap") return this._boardMap.getBoardInPosition(xPos,yPos);
 				else if (this._mode == "individual") {
 
 				}
