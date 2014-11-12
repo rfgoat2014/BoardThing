@@ -734,17 +734,12 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		checkBoardPosition: function(xPos,yPos) {
-			//try {
-				if (this._mode == "boardMap") return this._boardMap.getBoardInPosition(xPos,yPos);
-				else if (this._mode == "individual") {
-
-				}
-
-				return -1;
-			//}
-			//catch (err) {
-			//	Utils.sendClientError("checkPositionTaken", err);
-			//}
+			try {
+				return this._boardMap.getBoardInPosition(xPos,yPos);
+			}
+			catch (err) {
+				Utils.sendClientError("checkPositionTaken", err);
+			}
 		},
 
 		//  ---- Check if an element exists at the specified position

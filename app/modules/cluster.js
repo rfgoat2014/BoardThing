@@ -23,7 +23,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
     	// {{ Contructor }}
 
 		initialize: function(options) {
-			this.el.id = "cluster-content-container_" + this.model.id;
+			this.el.id = "cluster_" + this.model.id;
 
 			this._isMobile = options.isMobile;
 			this._workspace = options.workspace;
