@@ -477,12 +477,14 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
 		},
 
-		addCardToCluster: function(clusterId, cardId) {
+		addCardToCluster: function(boardId, clusterId, cardId) {
 			try {
 				var card = null;
 				
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					if ((this._boardEntities[i].getType() == "card") && (this._boardEntities[i].getId() == cardId)) {
+						this._boardEntities[i].setBoardId(boardId);
+						
 						card = this._boardEntities[i].getModel();
 
 						this._boardEntities[i].remove();
@@ -536,12 +538,14 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
 		},
 
-		addClusterToCluster: function(sourceClusterId, targetClusterId) {
+		addClusterToCluster: function(boardId, sourceClusterId, targetClusterId) {
 			try {
 				var cluster = null;
 				
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					if ((this._boardEntities[i].getType() == "cluster") && (this._boardEntities[i].getId() == sourceClusterId)) {
+						this._boardEntities[i].setBoardId(boardId);
+
 						cluster = this._boardEntities[i].getModel();
 
 						this._boardEntities[i].remove();
@@ -752,7 +756,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 							xPosEnd = xPosStart + this._boardEntities[i].$el.width(),
 							yPosStart = this._boardEntities[i].getYPos(),
 							yPosEnd = yPosStart + this._boardEntities[i].$el.height();
-							
+
 	 					if (((xPos > xPosStart) && (xPos < xPosEnd)) && 
 	 						((yPos > yPosStart) && (yPos < yPosEnd))) {
 							if ((!this._boardEntities[i].getWidth()) && (!this._boardEntities[i].getHeight())) return this._boardEntities[i].getId();
@@ -1070,7 +1074,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 								case "addClusterToCluster":
 		    						var updateDetail = socketPackage.updateDetail;
 
-		    						that.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
+		    						that.addClusterToCluster(updateDetail.boardId, updateDetail.sourceClusterId, updateDetail.targetClusterId);
 								break;
 								case "removeClusterFromCluster":
 		    						var updateDetail = socketPackage.updateDetail;

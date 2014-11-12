@@ -355,32 +355,34 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 		       				if  ($(ui.draggable).attr("object-type") == "card") {
 		       					var updateDetail = {
+									boardId: that.model.boardId,
 									clusterId: that.model.id,
 									cardId: $(ui.draggable).attr("element-id")
 								};
 
-		       					if (updateDetail) {
-		       						if ((!$(ui.draggable).attr("is-resized")) || ($(ui.draggable).attr("is-resized") == "false")) {
-				       					for (var i=0; i<that._childViews.length; i++) {
-				       						if ((that._childViews[i].getType() == "card") && (that._childViews[i].model.id.toString()== updateDetail.cardId.toString())) isChild = true;
-				       					}
+	       						if ((!$(ui.draggable).attr("is-resized")) || ($(ui.draggable).attr("is-resized") == "false")) {
+			       					for (var i=0; i<that._childViews.length; i++) {
+			       						if ((that._childViews[i].getType() == "card") && (that._childViews[i].model.id.toString()== updateDetail.cardId.toString())) isChild = true;
+			       					}
 
-				       					if (!isChild) {	
-											that._workspace.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
+			       					if (!isChild) {	
+										Card_Services.SetBoard(that._workspace.getId(), that.model.boardId, updateDetail.cardId);
 
-											Cluster_Services.AttachCard(that._workspace.getId(), that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
-												that._workspace.sendSocket(JSON.stringify({ 
-													action:"addCardToCluster", 
-													workspace: that._workspace.getId(),
-													updateDetail: updateDetail
-												}));
-											});
-										}
+										that._workspace.addCardToCluster(that.model.boardId, updateDetail.clusterId, updateDetail.cardId);
+
+										Cluster_Services.AttachCard(that._workspace.getId(), that.model.boardId, updateDetail.clusterId, updateDetail.cardId, function(response) {
+											that._workspace.sendSocket(JSON.stringify({ 
+												action:"addCardToCluster", 
+												workspace: that._workspace.getId(),
+												updateDetail: updateDetail
+											}));
+										});
 									}
 								}
 		       				}
 		       				else if ($(ui.draggable).attr("object-type") == "cluster") {
 		       					var updateDetail = {
+									boardId: that.model.boardId,
 									sourceClusterId: $(ui.draggable).attr("element-id"),
 									targetClusterId: that.model.id
 								};
@@ -390,7 +392,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       					}
 
 		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
-									that._workspace.addClusterToCluster(updateDetail.sourceClusterId, updateDetail.targetClusterId);
+									Card_Services.SetBoard(that._workspace.getId(), that.model.boardId, updateDetail.sourceClusterId);
+
+									that._workspace.addClusterToCluster(that.model.boardId, updateDetail.sourceClusterId, updateDetail.targetClusterId);
 
 		       						Cluster_Services.AttachCluster(that._workspace.getId(), that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
 		       							that._workspace.sendSocket(JSON.stringify({ 
