@@ -38,6 +38,7 @@ exports.update = function (req, res) {
 
 								// check if this is the card that we want to be the parent of the cluster
 								if (cards[i]._id == req.params.clusterId) {
+									cards[i].collapsed = false;
 									cards[i].isVoting = false;
 									cards[i].children = [];
 
