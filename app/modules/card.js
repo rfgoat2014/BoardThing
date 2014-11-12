@@ -50,8 +50,8 @@ function(Card_Services, Cluster_Services) {
 	    afterRender: function() {
 	    	var that = this;
 
-			if (this.model.parentId) this.el.className = "box clustered-item-content-container";
-			else this.el.className = "box item-content-container";
+			if (this.model.parentId) this.el.className = "box clustered-card-container";
+			else this.el.className = "box card-container";
 
 			_.defer(function() { 
 	    		that.$el.attr("element-id", that.model.id);

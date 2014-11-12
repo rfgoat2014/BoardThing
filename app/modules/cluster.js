@@ -344,7 +344,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 			if (!that.model.collapsed) {
 	        	this.$el.droppable({
-	        		accept: ".item-content-container,.clustered-item-content-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
+	        		accept: ".card-container,.clustered-card-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
 	        		tolerance: "pointer",
 	            	greedy:true,
 	           		drop: function(e, ui) {

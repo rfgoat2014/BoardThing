@@ -1,6 +1,6 @@
 /* Item content styles */
 
-.clustered-item-content-container {
+.clustered-card-container {
     position: relative;
     width: 180px;
     background-color: #FDFDFD;
@@ -14,7 +14,7 @@
     z-index: 4;
 }
 
-.item-content-container {
+.card-container {
     position: absolute;
     width: 180px;
     background-color: #FDFDFD;
@@ -26,7 +26,7 @@
     z-index: 2;
 }
 
-.item-content-container.locked {
+.card-container.locked {
     -webkit-box-shadow: 0 0px 0px #ffffff;
     -moz-box-shadow: 0 0px 0px #ffffff;
     box-shadow: 0 0px 0px #ffffff;
@@ -135,7 +135,7 @@
     bottom: -4px;
 }
 
-.item-content {
+.card-content {
     position: relative;
     color: #222222;
     padding:10px;
