@@ -438,10 +438,12 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			};
 		},
 
-		moveBoardCard: function(cardId,targetBoardId) {
+		moveBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 				if (this._boardEntities[i].getId() == cardId) {								
 					this._boardEntities[i].setBoardId(targetBoardId);
+					this._boardEntities[i].setXPos(targetBoardXPos);
+					this._boardEntities[i].setYPos(targetBoardYPos);
 
 					this._boardEntities[i].destroy();
 					this._boardEntities[i].render();

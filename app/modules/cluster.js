@@ -272,6 +272,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					if (targetBoard) {
 						var boardDistanceFromSource = that._workspace.getBoardDistanceFromSource(that.model.boardId, targetBoard.getId()),
+							boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId()),
 							clusterPosition = {
 								x: that.$el.position().left + totalParentOffset.x,
 								y: that.$el.position().top + totalParentOffset.y
@@ -281,8 +282,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 							};
 
 						if (targetBoard.getId() != that.model.boardId) {
-								var boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId());
-
 							if (that._parent) {
 								clusterPosition = {
 									x: that.$el.position().left + totalParentOffset.x - boardDistance.x,
@@ -307,7 +306,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			        	if (targetBoard.getId() != currentBoardId) {
 							Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id);
 
-					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId());
+					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
 			        	}
 
 						if (elementId == -1) {
