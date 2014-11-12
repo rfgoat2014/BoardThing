@@ -419,6 +419,15 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		// {{ Managing board cards }}
+		getBoardDistanceFromSource: function(sourceBoardId,targetBoardId) {
+			var targetBoard = this._boardMap.getBoard(targetBoardId);
+
+			return {
+				x: targetBoard.getXPos(),
+				y: targetBoard.getYPos()
+			};
+		},
+
 		getBoardDistance: function(sourceBoardId,targetBoardId) {
 			var sourceBoard = this._boardMap.getBoard(sourceBoardId),
 				targetBoard = this._boardMap.getBoard(targetBoardId);
@@ -429,12 +438,10 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			};
 		},
 
-		moveBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
+		moveBoardCard: function(cardId,targetBoardId) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 				if (this._boardEntities[i].getId() == cardId) {								
 					this._boardEntities[i].setBoardId(targetBoardId);
-					this._boardEntities[i].setXPos(targetBoardXPos);
-					this._boardEntities[i].setYPos(targetBoardYPos);
 
 					this._boardEntities[i].destroy();
 					this._boardEntities[i].render();
@@ -557,7 +564,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
 		},
 
-		createClusterFromCard: function(sourceCardId, targetCardId) {
+		createClusterFromCard: function(boardId, sourceCardId, targetCardId) {
 			try {
 				var that = this,
 					sourceCard = null,
@@ -594,12 +601,12 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 					if (targetCard) {
 			  			var clusterModel = {
 			  				id: targetCard.id,
-			  				boardId: this._selectedBoard.getId(),
+			  				boardId: boardId,
 			  				action: "create",
 			  				cards: [{ id: sourceCard.id }]
 			  			};
 
-			  			Cluster_Services.Insert(this.model.id, this._selectedBoard.getId(), targetCard.id, clusterModel, function() {
+			  			Cluster_Services.Insert(this.model.id, boardId, targetCard.id, clusterModel, function() {
 			  				that._socket.send(JSON.stringify({ 
 			  					action:"createClusterFromCard", 
 			  					workspace: that.model.id, 
@@ -743,7 +750,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 							xPosEnd = xPosStart + this._boardEntities[i].$el.width(),
 							yPosStart = this._boardEntities[i].getYPos(),
 							yPosEnd = yPosStart + this._boardEntities[i].$el.height();
-
+							
 	 					if (((xPos > xPosStart) && (xPos < xPosEnd)) && 
 	 						((yPos > yPosStart) && (yPos < yPosEnd))) {
 							if ((!this._boardEntities[i].getWidth()) && (!this._boardEntities[i].getHeight())) return this._boardEntities[i].getId();

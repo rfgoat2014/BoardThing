@@ -288,52 +288,75 @@ function(Card_Services, Cluster_Services) {
 						var totalParentOffset = { x:0, y: 0 };
 						if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-						var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(),e.pageY + that._workspace.getBoardScrollHeight());
+						var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(), e.pageY + that._workspace.getBoardScrollHeight());
 
-						// check if this is a drop on the same board which it originated from 
-						if ((targetBoard) && (targetBoard.getId() == that.model.boardId)) {
-							// this is the same board to hardle board actions
-							// check if the position the card is being dropped in is already taken
-							var elementId = that._workspace.checkPositionTaken(that.model.id, that.$el.position().left + totalParentOffset.x, that.$el.position().top + totalParentOffset.y);
+						if (targetBoard) {
+							var boardDistanceFromSource = that._workspace.getBoardDistanceFromSource(that.model.boardId, targetBoard.getId()),
+								cardPosition = {
+									x: that.$el.position().left + totalParentOffset.x,
+									y: that.$el.position().top + totalParentOffset.y
+								}, mousePosition = {
+									x: e.pageX + that._workspace.getBoardScrollWidth() - boardDistanceFromSource.x,
+									y: e.pageY + that._workspace.getBoardScrollHeight() - boardDistanceFromSource.y
+								};
+
+							if (targetBoard.getId() != that.model.boardId) {
+								var boardDistanceFromSource = that._workspace.getBoardDistanceFromSource(that.model.boardId, targetBoard.getId()),
+									boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId());
+
+								if (that._parent) {
+									cardPosition = {
+										x: that.$el.position().left + totalParentOffset.x - boardDistance.x,
+										y: that.$el.position().top + totalParentOffset.y - boardDistance.y
+									};
+								}
+								else {
+									cardPosition = {
+										x: that.$el.position().left - boardDistance.x,
+										y: that.$el.position().top - boardDistance.y
+									};
+								}
+							}
+
+							var elementId = that._workspace.checkPositionTaken(targetBoard.getId(), that.model.id, mousePosition.x, mousePosition.y),
+								currentBoardId = that.model.boardId;
+
+							that.model.boardId = targetBoard.getId();
+							that.model.xPos = cardPosition.x;
+							that.model.yPos = cardPosition.y;
+
+				        	if (targetBoard.getId() != currentBoardId) {
+								Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id);
+
+						    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId());
+				        	}
 
 							if (elementId == -1) {
-								// the position isn't taken so figure out what to do
 								if (that._parent) {
-									// the dragged card has a parent so detach to for adding back onto the board
-									that.model.xPos = that.$el.position().left + totalParentOffset.x;
-									that.model.yPos = that.$el.position().top + totalParentOffset.y;
-
 									that._parent.removeCard(that.model.id);
+							    	
+									that.model.collapsed = false;
 
 							    	that._workspace.addCardToBoard(that.model);
 								}
-								else {
-									// it doesnt have a parent so we're just going to update the position
-									that.model.xPos = that.$el.position().left;
-									that.model.yPos = that.$el.position().top;
-								}
 
-								that.updateCardPosition(that.model.xPos,  that.model.yPos);
-
-						    	that._workspace.sortZIndexes(that.model.id,true);
-			        		}
-				        	else {
-				        		// the position is taken. Check if the position is taken by a resized card. Resized cards don't cluster
-	    						if (!that.$el.attr("is-resized")) {
-					        		var objectModel = that._workspace.getObjectModel(elementId);
-
-									if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) that._workspace.createClusterFromCard(that.model.id, elementId);
-					        		else that.updateCardPosition((that.$el.position().left + that._workspace.getBoardScrollWidth()), (that.$el.position().top + that._workspace.getBoardScrollHeight()));			           		
-				           		}
-					        	else that.updateCardPosition((that.$el.position().left + that._workspace.getBoardScrollWidth()), (that.$el.position().top + that._workspace.getBoardScrollHeight()));
+						        that.updateCardPosition(that.model.xPos, that.model.yPos);
+							    	
+						    	that._workspace.sortZIndexes(that.model.id, true);
 				        	}
-				        }
-				        else if ((targetBoard) && (targetBoard.getId() != that.model.boardId)) {
-							that.model.xPos = that.$el.position().left;
-							that.model.yPos = that.$el.position().top;
+				        	else {
+				        		var objectModel = that._workspace.getObjectModel(elementId);
 
-			        		that._workspace.setCardBoard(that.model.id, that.model.boardId, targetBoard.getId());
-				        }
+								if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) { 
+									that._workspace.createClusterFromCard(targetBoard.getId(), that.model.id, elementId);
+								}
+				        		else {
+						        	that.updateCardPosition(that.model.xPos, that.model.yPos);
+							    	
+							    	that._workspace.sortZIndexes(that.model.id, true);
+				        		}
+				        	}
+					    }
 				        else {
 				        	if (that._parent) that.$el.css({top: 0, left: 0, position: "relative" });
 				        	else that.$el.css({top: startDragY, left: startDragX, position: "absolute" });

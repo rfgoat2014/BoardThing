@@ -268,24 +268,25 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					var totalParentOffset = { x:0, y: 0 };
 					if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-					var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(),e.pageY + that._workspace.getBoardScrollHeight());
+					var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(), e.pageY + that._workspace.getBoardScrollHeight());
 
 					if (targetBoard) {
-						var clusterPosition = {
-							x: that.$el.position().left + totalParentOffset.x,
-							y: that.$el.position().top + totalParentOffset.y
-						}, mousePosition = {
-							x: that.$el.position().left + totalParentOffset.x,
-							y: that.$el.position().top + totalParentOffset.y
-						};
+						var boardDistanceFromSource = that._workspace.getBoardDistanceFromSource(that.model.boardId, targetBoard.getId()),
+							clusterPosition = {
+								x: that.$el.position().left + totalParentOffset.x,
+								y: that.$el.position().top + totalParentOffset.y
+							}, mousePosition = {
+								x: e.pageX + that._workspace.getBoardScrollWidth() - boardDistanceFromSource.x,
+								y: e.pageY + that._workspace.getBoardScrollHeight() - boardDistanceFromSource.y
+							};
 
 						if (targetBoard.getId() != that.model.boardId) {
-							var boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId());
+								var boardDistance = that._workspace.getBoardDistance(that.model.boardId, targetBoard.getId());
 
 							if (that._parent) {
 								clusterPosition = {
-									x: that.$el.position().left + totalParentOffset.x + that._workspace.getBoardScrollWidth() - boardDistance.x,
-									y: that.$el.position().top + totalParentOffset.y + that._workspace.getBoardScrollHeight() - boardDistance.y
+									x: that.$el.position().left + totalParentOffset.x - boardDistance.x,
+									y: that.$el.position().top + totalParentOffset.y - boardDistance.y
 								};
 							}
 							else {
@@ -294,11 +295,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 									y: that.$el.position().top - boardDistance.y
 								};
 							}
-
-							mousePosition = {
-								x: e.pageX + that._workspace.getBoardScrollWidth()-boardDistance.x,
-								y: e.pageY + that._workspace.getBoardScrollHeight()-boardDistance.y
-							};
 						}
 
 						var elementId = that._workspace.checkPositionTaken(targetBoard.getId(), that.model.id, mousePosition.x, mousePosition.y),
@@ -311,7 +307,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			        	if (targetBoard.getId() != currentBoardId) {
 							Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id);
 
-					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
+					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId());
 			        	}
 
 						if (elementId == -1) {
