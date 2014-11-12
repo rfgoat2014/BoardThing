@@ -394,7 +394,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		       					if ((!isChild) && (updateDetail.targetClusterId != updateDetail.sourceClusterId)) {
 									Card_Services.SetBoard(that._workspace.getId(), that.model.boardId, updateDetail.sourceClusterId);
 
-									that._workspace.addClusterToCluster(that.model.boardId, updateDetail.sourceClusterId, updateDetail.targetClusterId);
+									that._workspace.addClusterToCluster(that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId);
 
 		       						Cluster_Services.AttachCluster(that._workspace.getId(), that.model.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId, function(response) {
 		       							that._workspace.sendSocket(JSON.stringify({ 

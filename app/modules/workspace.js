@@ -538,7 +538,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			}
 		},
 
-		addClusterToCluster: function(boardId, sourceClusterId, targetClusterId) {
+		addClusterToCluster: function(boardId, targetClusterId, sourceClusterId) {
 			try {
 				var cluster = null;
 				
@@ -1074,7 +1074,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 								case "addClusterToCluster":
 		    						var updateDetail = socketPackage.updateDetail;
 
-		    						that.addClusterToCluster(updateDetail.boardId, updateDetail.sourceClusterId, updateDetail.targetClusterId);
+		    						that.addClusterToCluster(updateDetail.boardId, updateDetail.targetClusterId, updateDetail.sourceClusterId);
 								break;
 								case "removeClusterFromCluster":
 		    						var updateDetail = socketPackage.updateDetail;
