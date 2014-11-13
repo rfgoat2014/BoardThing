@@ -19,12 +19,16 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 	
 		_rows: [],
 
+    	// {{ Contructor }}
+
 		initialize: function(options) {
 			this._workspace = options.workspace;
 
 			this.el.id = "table-container";
 			this.el.className = "table-container";
 		},
+
+		// {{ Object Building }}
 
 		render: function() {
 			var maxColCount = 0;
@@ -43,9 +47,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             this.$el.center();
 		},
 
-		addRow: function(boardRow) {
-			this._rows.push(boardRow);
-		},
+		// {{ Getters }}
 
 		getBoard: function(boardId) {
             for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
@@ -77,6 +79,12 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             return null;
 		},
 
+		// {{ Public Methods }}
+
+		addRow: function(boardRow) {
+			this._rows.push(boardRow);
+		},
+
 		destroy: function() {
             for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
             	this._rows[i].destroy();
@@ -93,6 +101,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		_index: -1,
 
 		_columns: [],
+
+    	// {{ Contructor }}
 	
 		initialize: function(options) {
 			this._index = options.index;
@@ -100,6 +110,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			this.el.id = "board-row_" + this._index;
 			this.el.className = "row";
 		},
+
+		// {{ Object Building }}
 
 		render: function() {
             for (var i=0, columnsLength = this._columns.length; i<columnsLength; i+=1) {
@@ -109,6 +121,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             }
         },
 
+		// {{ Getters }}
+
         getBoards: function() {
         	return this._columns;
         },
@@ -116,6 +130,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
         getColumnCount: function() {
         	return this._columns.length;
         },
+
+		// {{ Public Methods }}
 
 		addColumn: function(boardColumn) {
 			this._columns.push(boardColumn);
@@ -134,7 +150,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
   	BoardMap.Board = Backbone.View.extend({
 		el: "<div>",
 
-		_boardRendered: false,
+    	// {{ Contructor }}
 	
 		initialize: function(options) {
 			this.el.id = "board_" + this.model.id;
@@ -143,9 +159,9 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			this._workspace = options.workspace;
 
 			this._mode = options.mode;
-
-			this._boardRendered = false;
 		},
+
+		// {{ Object Building }}
 
 		render: function() {
 			var that = this;
@@ -176,8 +192,6 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 			this.$("#board-cards_" + this.model.id).empty();
 
-			this._boardRendered = true;
-
 			this._workspace.unbindBoard(this.model.id);
 			this._workspace.bindBoard(this.model.id);		
 
@@ -185,6 +199,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 			if (this._workspace.getMode() == "individual") this.center();
 		},
+
+		// {{ Event Binding }}
 
 		unbind: function() {
 			this.$el.unbind("mouseover");
@@ -207,6 +223,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		    	that._workspace.setCurrentMousePosition({ x: -1, y: -1});
 		    });
 		},
+
+		// {{ Getters }}
 
 		getId: function() {
 			return this.model.id;
@@ -231,6 +249,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		getPosition: function() {
 			return this.model.position;
 		},
+
+		// {{ Public Methods }}
 
 		center: function() {
 			this.$el.center();

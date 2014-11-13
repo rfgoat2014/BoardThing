@@ -11,6 +11,8 @@ function( Workspace_Services) {
 	AddWorkspace.New = Backbone.View.extend({
     	el: "<div>",
 
+    	// {{ Contructor }}
+
 		initialize: function(options) {
 			this.el.id = "add-workspace";
 			this.el.className = "popup-container";
@@ -25,22 +27,39 @@ function( Workspace_Services) {
 			this.render();
       	},
 
-      	events: {
-      		"click #cancel-button": "cancel",
-      		"click #add-button": "create"
-      	},
+		// {{ Object Building }}
 
 		render: function() {
 			var that = this;
 
 			$.get("/app/templates/workspace/add.html", function(contents) {
 				that.$el.html(_.template(contents));
+
+				that.unbind();
+				that.bind()
 			}, "text");
 		},
 
-		cancel: function() {
-			this._parent.cancelAddWorkspace();
+		// {{ Event Binding }}
+
+		unbind: function() {
+			this.$("#add-button").unbind("click");
+			this.$("#cancel-button").unbind("click");
 		},
+
+		bind: function() {
+			var that = this;
+
+			this.$("#add-button").click(function(e) {
+				that.create();
+			});
+
+			this.$("#cancel-button").click(function(e) {
+				that.cancel();
+			});
+		},
+
+		// {{ Public Methods }}
 
 		create: function() {
 			var that = this,
@@ -59,7 +78,11 @@ function( Workspace_Services) {
 			}
 		},
 
-		removeDialog: function() {
+		cancel: function() {
+			this._parent.cancelAddWorkspace();
+		},
+
+		destroy: function() {
 			$(this.el).detach();
 			this.remove();
 		}

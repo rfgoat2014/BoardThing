@@ -306,7 +306,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			        	if (targetBoard.getId() != currentBoardId) {
 							Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id);
 
-					    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
+					    	that._workspace.moveCardBoard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
 			        	}
 
 						if (elementId == -1) {
@@ -450,7 +450,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 	    // {{ Getters }}
 
-	    // ----- Global card view getters
+	    // ********** Global card view getters **********
 
 	    getModel: function() {
 	    	return this.model;
@@ -492,7 +492,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	return "cluster";
 	    },
 
-	    // ----- Cluster specific getters
+	    // ********** Cluster specific getters **********
 
 	    getChildCardCount: function() {
 	    	return this.model.cards.length;
@@ -528,6 +528,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 	    // {{ Setters }}
 
+	    // ********** Global card view setters **********
+
 	    setBoardId: function(boardId) {
 	    	this.model.boardId = boardId;
 
@@ -552,7 +554,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	this.model.zPos = value;
 	    },
 
-	    // ----- Cluster specific setters
+	    // ********** Cluster specific setters **********
 
 	    addCard: function(cardModel) {
 	    	this.model.cards.push(cardModel);
@@ -562,9 +564,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	this.model.collapsed = collapsed;
 	    },
 
-	    // {{ Methods }}
+	    // {{ Public Methods }}
 
-		// ---------- Actions for displaying edit icons
+		// ********** Actions for displaying edit icons **********
 
 		showHoverIcons: function () {
 			if ((this._editable)) this.$("#cluster-action-container_" + this.model.id).show();
@@ -574,7 +576,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	if (!this._showSettingsIcon) this.$("#cluster-action-container_" + this.model.id).hide();
 	    },
 
-		// ---------- Actions for showing the settings menu
+		// ********** Actions for showing the settings menu **********
 
 		showSettingsMenu: function(e) {
 			e.stopPropagation();
@@ -612,7 +614,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		// ---------- Actions for setting cluster position
+		// ********** Actions for setting cluster position **********
 
 		updateClusterPosition: function(left,top) {
 			Cluster_Services.UpdatePosition(this._workspace.getId(), this.model.boardId, this.model.id, left, top);
@@ -638,7 +640,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		// ----- Set switch the clusters collapsed position
-
 		toggleCollapsed: function() {
 	        if (this.model.parentId) {
 				if (this.model.collapsed) this.expandCluster();
@@ -650,7 +651,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		// ---------- Actions to update sort position
+		// ********** Actions to update sort position **********
 
 		changeSortPosition: function(selectedElement) {
 			var newIndex = -1
@@ -722,7 +723,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			this.render();
 		},
 
-		// ---------- Actions for collapse and expand clusters
+		// ********** Actions for collapse and expand clusters **********
 
 		saveAndCollapseCluster: function() {
 			var that = this;
@@ -794,7 +795,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		// ---------- Actions for editing cluster
+		// ********** Actions for editing cluster **********
 
 		editCluster: function(e) {
 			e.stopPropagation();
@@ -808,6 +809,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		editImage: function(e) {
+			// TODO
 		},
 
 		updateClusterTitle: function(clusterId, title, content) {
@@ -831,7 +833,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		// ---------- Actions for deleting cards
+		// ********** Actions for deleting cards **********
 
 		deleteCard: function(cardId) {
 			var that = this,
@@ -934,7 +936,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			if (clusterUpdated) this.render();
 		},
 
-		// ---------- Actions for managing attached cards
+		// ********** Actions for managing attached cards **********
 
 		addCardToCluster: function(clusterId, cardModel) {
 			if (this.model.id == clusterId) {
@@ -996,7 +998,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		// ---------- Actions for managing attached clusters
+		// ********** Actions for managing attached clusters **********
 
 		addClusterToCluster: function(targetCluster, newCluster) {
 			if (this.model.id == targetCluster) {
@@ -1045,7 +1047,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		// ---------- Actions for Dot Voting
+		// ********** Actions for Dot Voting **********
 
 		startDotVoting: function(e) {
 			e.stopPropagation();
@@ -1167,7 +1169,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
       		}
 		},
 
-		// ---------- Actions for setting z-index
+		// ********** Actions for setting z-index **********
 
 		setZIndex: function(zIndex) {
     		this.model.zPos = zIndex;

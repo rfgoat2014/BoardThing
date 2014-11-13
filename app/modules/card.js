@@ -121,6 +121,8 @@ function(Card_Services, Cluster_Services) {
 		    });
 	    },
 
+		// {{ Event Binding }}
+
 	    unbind: function() {
 			if (!this._isMobile) {
 				this.$el.unbind("click");
@@ -326,7 +328,7 @@ function(Card_Services, Cluster_Services) {
 				        	if (targetBoard.getId() != currentBoardId) {
 								Card_Services.SetBoard(that._workspace.getId(), targetBoard.getId(), that.model.id);
 
-						    	that._workspace.moveBoardCard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
+						    	that._workspace.moveCardBoard(that.model.id, targetBoard.getId(), that.model.xPos, that.model.yPos);
 				        	}
 
 							if (elementId == -1) {
@@ -430,9 +432,9 @@ function(Card_Services, Cluster_Services) {
 	    	this.model.zPos = value;
 	    },
 
-	    // {{ Methods }}
+	    // {{ Public Methods }}
 
-		// ---------- Actions for displaying edit icons
+		// ********** Actions for displaying edit icons **********
 
 		showHoverIcons: function (e) {
 			e.stopPropagation();
@@ -444,7 +446,7 @@ function(Card_Services, Cluster_Services) {
 	    	if (!this._showSettingsIcon) this.$("#card-action-container_" + this.model.id).hide();
 	    },
 
-		// ---------- Actions for displaying sthe settings menu
+		// ********** Actions for displaying the settings menu **********
 
 		showSettingsMenu: function(e) {
 			e.stopPropagation();
@@ -472,7 +474,7 @@ function(Card_Services, Cluster_Services) {
 			this.$("#card-action-container_" + this.model.id).hide();
 		},
 
-		// ---------- Actions for setting card position
+		// ********** Actions for setting card position **********
 
 		setCardPosition: function(cardId,left,top) { 
 			if (this.model.id == cardId) {
@@ -499,7 +501,7 @@ function(Card_Services, Cluster_Services) {
 			});
 		},
 
-		// ---------- Actions to edit a card
+		// ********** Actions to edit a card **********
 
 		editItem: function(e) {
 			e.stopPropagation();
@@ -533,7 +535,7 @@ function(Card_Services, Cluster_Services) {
 			}
 		},
 
-		// ---------- Actions to resize a card
+		// ********** Actions to resize a card **********
 
 		resizeCard: function(e) {
 			e.stopPropagation();
@@ -673,7 +675,7 @@ function(Card_Services, Cluster_Services) {
 			}	
 		},
 
-		// ---------- Actions to undo a resize
+		// ********** Actions to undo a resize **********
 
 		undoResizing: function(e) {
 			e.stopPropagation();
@@ -723,7 +725,7 @@ function(Card_Services, Cluster_Services) {
 			}
 		},
 
-		// ---------- Actions for card duplicate
+		// ********** Actions for card duplicate **********
 
 		duplicateCard: function(e) {
 			var that = this;
@@ -741,7 +743,7 @@ function(Card_Services, Cluster_Services) {
 			this.clearSettingsmenu();
 		},
 
-		// ---------- Actions for card locking
+		// ********** Actions for card locking **********
 
 		lockCard: function(e) {
 			e.stopPropagation();
@@ -803,7 +805,7 @@ function(Card_Services, Cluster_Services) {
 			this.render();
 		},
 
-		// ---------- Actions to delete a card
+		// ********** Actions to delete a card **********
 
 		deleteCard: function(e) {
 			e.stopPropagation();
@@ -834,7 +836,7 @@ function(Card_Services, Cluster_Services) {
 			else  this._workspace.removeCardFromBoard(cardToDelete);
 		},
 
-		// ---------- Actions for dot voting
+		// ********** Actions for dot voting **********
 
 		addVote: function(e) {
 			e.stopPropagation();
@@ -863,7 +865,7 @@ function(Card_Services, Cluster_Services) {
 			this.$("#vote-count").html(this.model.votesReceived);
 		},
 
-		// ---------- Actions to set the card z index
+		// ********** Actions to set the card z index **********
 
 		setZIndex: function(zIndex) {
     		this.model.zPos = zIndex;

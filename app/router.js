@@ -2,7 +2,9 @@ define([
   "require", 
   "exports", 
   "module",
-  "modules/home",
+  "modules/splash",
+  "modules/login",
+  "modules/signUp",
   "modules/main",
   "modules/workspace",
   "modules/user.services",
@@ -11,7 +13,7 @@ define([
   "cookies"
 ],
 
-function(require, exports, module, Home, Main, Workspace, User_Services, Workspace_Services, Utils_Services) {
+function(require, exports, module, Splash, Login, SignUp, Main, Workspace, User_Services, Workspace_Services, Utils_Services) {
   "use strict";
 
   // External dependencies.
@@ -28,19 +30,19 @@ function(require, exports, module, Home, Main, Workspace, User_Services, Workspa
     },
 
     splash: function() {
-      var splashView = new Home.Splash();
+      var splashView = new Splash.Index();
       
       $("#page-content").html(splashView.el);
     },
 
     login: function() {
-      var loginView = new Home.Login();
+      var loginView = new Login.Index();
       
       $("#page-content").html(loginView.el);
     },
 
     signup: function() {
-      var signUpView = new Home.SignUp();
+      var signUpView = new SignUp.Index();
       
       $("#page-content").html(signUpView.el);
     },

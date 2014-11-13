@@ -5,6 +5,8 @@ function() {
 
 	AddBoard.New = Backbone.View.extend({
 		el: "<div>",
+
+    	// {{ Contructor }}
 	
 		initialize: function(options) {
 			this.el.id = "add-board-map-board";
@@ -13,6 +15,8 @@ function() {
 		
 			this.render()
 		},
+
+		// {{ Object Building }}
 
 		render: function() {
 			var that = this;
@@ -24,15 +28,22 @@ function() {
 			}, "text");
 		},
 
+		// {{ Event Binding }}
+
+		bind: function() {
+			this.$("#add-board").unbind("click");
+		},
+
+
 		bind: function() {
 			var that = this;
-
-			this.$("#add-board").unbind("click");
 
 			this.$("#add-board").click(function(e) {
 				that._parent.addBoard();
 			});
 		},
+
+		// {{ Public Methods }}
 
 		destroy: function() {
 			$(this.el).detach();

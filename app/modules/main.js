@@ -14,9 +14,13 @@ function(AddWorkspace, Workspace, Workspace_Services) {
     	el: "<div>",
     	_workspaces: [],
 
+    	// {{ Contructor }}
+
 		initialize: function() {
 			this.render();
       	},
+
+		// {{ Object Building }}
 
 		render: function(){
 			var that = this;
@@ -47,6 +51,8 @@ function(AddWorkspace, Workspace, Workspace_Services) {
 			});
 		},
 
+		// {{ Event Binding }}
+
 		unbind: function() {
   			this.$("#create-workspace-button").unbind("click");
 		},
@@ -59,7 +65,9 @@ function(AddWorkspace, Workspace, Workspace_Services) {
   			});
 		},
 
-		// ----- Sort and render workspaces
+	    // {{ Public Methods }}
+
+		//  ********** Actions for managing workspaces **********
 
 		renderWorkspaces: function() {
 			this.$("#workspace-list-body").empty();
@@ -77,7 +85,7 @@ function(AddWorkspace, Workspace, Workspace_Services) {
   			Backbone.history.navigate("workspace/" + workspaceId, true);
 		},
 
-		// ------ Actions to create a new workspace
+		// ********** Actions to create a new workspace **********
 
 		createWorkspace: function() {
 			this._addWorkspace = new AddWorkspace.New({ parent: this });
@@ -87,7 +95,7 @@ function(AddWorkspace, Workspace, Workspace_Services) {
 		},
 
 		workspaceAdded: function(workspace) {
-			this._addWorkspace.removeDialog();
+			this._addWorkspace.destroy();
 
 			this.$("#modal-overlay").empty();
 			this.$("#modal-overlay").hide();
@@ -100,7 +108,7 @@ function(AddWorkspace, Workspace, Workspace_Services) {
 		},
 
 		cancelAddWorkspace: function() {
-			this._addWorkspace.removeDialog();
+			this._addWorkspace.destroy();
 
 			this.$("#modal-overlay").empty();
 			this.$("#modal-overlay").hide();
