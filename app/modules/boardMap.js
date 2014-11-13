@@ -22,6 +22,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		initialize: function(options) {
 			this._workspace = options.workspace;
 
+			this.el.id = "table-container";
 			this.el.className = "table-container";
 		},
 
@@ -37,6 +38,9 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             }
 
             this.$el.css({ width: this._workspace.getBoardWidth()*maxColCount+(2*maxColCount) });
+            this.$el.css({ height: this._workspace.getBoardHeight()*this._rows.length+(2*this._rows.length) });
+
+            this.$el.center();
 		},
 
 		addRow: function(boardRow) {
@@ -178,6 +182,8 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			this._workspace.bindBoard(this.model.id);		
 
 			this._workspace.getBoardItems(this.model.id);
+
+			if (this._workspace.getMode() == "individual") this.center();
 		},
 
 		unbind: function() {
@@ -224,6 +230,10 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 		getPosition: function() {
 			return this.model.position;
+		},
+
+		center: function() {
+			this.$el.center();
 		}
   	});
 

@@ -62,6 +62,22 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				that.unbind();
 				that.bind();
 			}, "text");
+
+			jQuery.fn.center = function ()
+			{
+			    this.css("position","absolute");
+
+			    var top = ($(window).height() / 2) - (this.outerHeight() / 2),
+			    	left = ($(window).width() / 2) - (this.outerWidth() / 2);
+
+			    if (top < 0) top = 0;
+			    if (left < 0) left = 0;
+
+			    this.css("top", top);
+			    this.css("left", left);
+			    
+			    return this;
+			}
 		},
 
 		setupWorkspace: function() {
@@ -179,6 +195,8 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
       	},
 
 		renderBoards: function() {
+			var that = this;
+
 			// Now we have the board map we need to determine if we are looking at a single view or the entire map
 			if (this._mode == "boardMap") {
 				this._boardMap.render();
@@ -192,6 +210,10 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				this._selectedBoard.render();
 
 				this.$("#board-container").html(this._selectedBoard.$el);
+
+				$(window).resize(function(){
+				   that._selectedBoard.center();
+				});
 			}
 		},
 
@@ -230,8 +252,39 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			return "card";
 		},
 
+		getMode: function() {
+			return this._mode;
+		},
+
 		getId: function() {
 			return this.model.id;
+		},
+
+		getBoardDistanceFromSource: function(sourceBoardId,targetBoardId) {
+			if (this._mode == "individual") {
+				return {
+					x: this._selectedBoard.getXPos(),
+					y: this._selectedBoard.getYPos()
+				};
+			}
+			else {
+				var targetBoard = this._boardMap.getBoard(targetBoardId);
+
+				return {
+					x: targetBoard.getXPos()+this.$("#table-container").position().left,
+					y: targetBoard.getYPos()+this.$("#table-container").position().top
+				};
+			}
+		},
+
+		getBoardDistance: function(sourceBoardId,targetBoardId) {
+			var sourceBoard = this._boardMap.getBoard(sourceBoardId),
+				targetBoard = this._boardMap.getBoard(targetBoardId);
+
+			return {
+				x: (targetBoard.getXPos()-sourceBoard.getXPos()),
+				y: (targetBoard.getYPos()-sourceBoard.getYPos())
+			};
 		},
 
 		getBoardScrollWidth: function() {
@@ -419,25 +472,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		// {{ Managing board cards }}
-		getBoardDistanceFromSource: function(sourceBoardId,targetBoardId) {
-			var targetBoard = this._boardMap.getBoard(targetBoardId);
-
-			return {
-				x: targetBoard.getXPos(),
-				y: targetBoard.getYPos()
-			};
-		},
-
-		getBoardDistance: function(sourceBoardId,targetBoardId) {
-			var sourceBoard = this._boardMap.getBoard(sourceBoardId),
-				targetBoard = this._boardMap.getBoard(targetBoardId);
-
-			return {
-				x: (targetBoard.getXPos()-sourceBoard.getXPos()),
-				y: (targetBoard.getYPos()-sourceBoard.getYPos())
-			};
-		},
-
 		moveBoardCard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 				if (this._boardEntities[i].getId() == cardId) {								
@@ -735,7 +769,8 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 		checkBoardPosition: function(xPos,yPos) {
 			try {
-				return this._boardMap.getBoardInPosition(xPos,yPos);
+				if (this._mode == "individual") return this._boardMap.getBoardInPosition(xPos-this._selectedBoard.getXPos(), yPos-this._selectedBoard.getYPos());
+				else return this._boardMap.getBoardInPosition(xPos-this.$("#table-container").position().left,yPos-this.$("#table-container").position().top);
 			}
 			catch (err) {
 				Utils.sendClientError("checkPositionTaken", err);
