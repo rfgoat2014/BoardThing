@@ -234,6 +234,11 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 		center: function() {
 			this.$el.center();
+		},
+
+		destroy: function() {
+			$(this.el).detach();
+			this.remove();
 		}
   	});
 

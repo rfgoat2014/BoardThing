@@ -86,8 +86,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				maxRowSize = 0,
 				maxColSize = 0;
 
-			this.$("#board-container").empty();
-
 			for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
 				var board = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode }),
 					coordinates = board.getPosition().split(".");
@@ -131,7 +129,10 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			var that = this;
 
 			this.$("#view-board-map").click(function(event) {
-				that.viewBoardMap();
+				if (that._mode == "boardMap") that._mode = "individual";
+				else that._mode = "boardMap";
+
+				that.renderBoards();
 			});
 
 			this.$("#card-create-overlay").click(function(event) {
@@ -197,13 +198,18 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		renderBoards: function() {
 			var that = this;
 
+			this.$("#board-container").empty();
+
 			// Now we have the board map we need to determine if we are looking at a single view or the entire map
 			if (this._mode == "boardMap") {
+				this._boardMap.destroy();
 				this._boardMap.render();
 				
 				this.$("#board-container").html(this._boardMap.$el);
 			}
 			else if (this._mode == "individual") {
+				if (this._selectedBoard) this._selectedBoard.destroy();
+
 				// If we cant find the starting board then just take the first. If we still can't then set up a dummy
 				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[0], workspace: this, mode: this._mode });
 				
@@ -218,7 +224,21 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		getBoardItems: function(boardId) {
-			var that = this;
+			var that = this,
+				indexesToRemove = [];
+
+			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+				if (this._boardEntities[i].getBoardId() == boardId) {
+					this._boardEntities[i].destroy();
+					this._boardEntities[i] = null;
+
+					indexesToRemove.push(i);
+				}
+			}
+
+			for (var i = indexesToRemove.length-1; i >= 0; i--) {
+   				this._boardEntities.splice(indexesToRemove[i], 1);
+   			}
 
 			Board_Services.GetCards(boardId, function(response) {
 				if (response.code == 200) {
