@@ -53,10 +53,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		render: function() {
 			var that = this;
 
-			var template = "/app/templates/workspace/individual.html";
-			if (this._mode == "boardMap") template = "/app/templates/workspace/boardMap.html"; 
-
-			$.get(template, function(contents) {
+			$.get("/app/templates/workspace/index.html", function(contents) {
 				that.$el.html(_.template(contents, that.model));
 
 				that.connectSockets();
