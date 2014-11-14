@@ -8,6 +8,7 @@ define([
 	"modules/cluster.model",
 	"modules/boardMap",
 	"modules/utils",
+	"modules/CSS.helpers",
 	"modules/workspace.services",
 	"modules/board.services",
 	"modules/card.services",
@@ -15,7 +16,7 @@ define([
 	"jquery"
 ],
 
-function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
+function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, CSSHelpers, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	// ===== View for viewing a workdspace
@@ -26,6 +27,8 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		_mode: "boardMap",
 
 		_currentMousePosition: { x: -1, y: -1 },
+
+		_zoom: 1,
 
 		_boardMap: null,
 		_selectedBoard: null,
@@ -101,6 +104,14 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 			this.$("#card-create-overlay").click(function(event) {
 				that.hideAddCard();
+			});
+
+			this.$("#zoom-in-container").click(function(event) {
+				that.zoomIn();
+			});
+
+			this.$("#zoom-out-container").click(function(event) {
+				that.zoomOut();
 			});
 		},
 
@@ -197,6 +208,10 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 		getId: function() {
 			return this.model.id;
+		},
+
+		getZoom: function() {
+			return this._zoom;
 		},
 
 		getBoardDistanceFromSource: function(sourceBoardId,targetBoardId) {
@@ -374,6 +389,28 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 					}
 				}
 			});
+		},
+
+		// ********** Zooming **********
+
+		zoomIn: function() {
+			if (this._zoom < 1.5) {
+				this._zoom += 0.1;
+				this._zoom = Math.round(this._zoom * 100) / 100;
+
+				CSSHelpers.setZoom("#table-container", this._zoom);
+				this._boardMap.center();
+			}
+		},
+
+		zoomOut: function() {
+			if (this._zoom > 0.4) {
+				this._zoom -= 0.1;
+				this._zoom = Math.round(this._zoom * 100) / 100;
+
+				CSSHelpers.setZoom("#table-container", this._zoom);
+				this._boardMap.center();
+			}
 		},
 
 		// ********** Adding cards **********

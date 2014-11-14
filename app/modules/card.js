@@ -264,33 +264,49 @@ function(Card_Services, Cluster_Services) {
 			});
 
 			if (!that.model.isLocked) {
-	        	var startDragX = null,
-	        	startDragY = null;
+	        	var startPageX = null,
+	        		startPageY = null,
+	        		startDragX = null,
+	        		startDragY = null;
 
 	        	that.$el.draggable({
 					start: function(e,ui) {
-						startDragX = that.$el.css("left");
-	        			startDragY = that.$el.css("top");
+						that._isDragging = true;
 
-						if (!that._isMobile) that._isDragging = true;
+					    startPageX = e.pageX;
+					    startPageY = e.pageY;
+
+					    if (that._parent) {
+							startDragX = 0;
+		        			startDragY = 0;
+					    }
+					    else {
+							startDragX = that.$el.position().left;
+		        			startDragY = that.$el.position().top;
+					    }
 
 						that.$el.zIndex(999999999);
 					},
 					drag: function(e,ui) {
-						if (that._isMobile) {
-							var distanceFromStartX = that.$el.css("left") - startDragX;
-							var distanceFromStartY = that.$el.css("top") - startDragY;
+						var zoom = that._workspace.getZoom();
 
-							if (((distanceFromStartX > 5) || (distanceFromStartX < -5)) || ((distanceFromStartY > 5) || (distanceFromStartY < -5))) that._isDragging = true;
-						}
+				        ui.position.left = startDragX-(startPageX-e.pageX)/zoom;
+				        ui.position.top = startDragY-(startPageY-e.pageY)/zoom;
 					},
 					stop: function(e,ui) {
 						e.stopPropagation();
 
+						that._isDragging = true;
+
+						var zoom = that._workspace.getZoom();
+
+				        ui.position.left = startDragX-(startPageX-e.pageX)/zoom;
+				        ui.position.top = startDragY-(startPageY-e.pageY)/zoom;
+        
 						var totalParentOffset = { x:0, y: 0 };
 						if (that._parent) totalParentOffset = that._parent.getTotalParentOffset();
 
-						var targetBoard = that._workspace.checkBoardPosition(e.pageX + that._workspace.getBoardScrollWidth(), e.pageY + that._workspace.getBoardScrollHeight());
+						var targetBoard = that._workspace.checkBoardPosition((e.pageX/zoom) + that._workspace.getBoardScrollWidth(), (e.pageY/zoom) + that._workspace.getBoardScrollHeight());
 
 						if (targetBoard) {
 							var boardDistanceFromSource = that._workspace.getBoardDistanceFromSource(that.model.boardId, targetBoard.getId()),
@@ -299,8 +315,8 @@ function(Card_Services, Cluster_Services) {
 									x: that.$el.position().left + totalParentOffset.x,
 									y: that.$el.position().top + totalParentOffset.y
 								}, mousePosition = {
-									x: e.pageX + that._workspace.getBoardScrollWidth() - boardDistanceFromSource.x,
-									y: e.pageY + that._workspace.getBoardScrollHeight() - boardDistanceFromSource.y
+									x: (e.pageX/zoom) + that._workspace.getBoardScrollWidth() - boardDistanceFromSource.x,
+									y: (e.pageY/zoom) + that._workspace.getBoardScrollHeight() - boardDistanceFromSource.y
 								};
 
 							if (targetBoard.getId() != that.model.boardId) {

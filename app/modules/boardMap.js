@@ -44,7 +44,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             this.$el.css({ width: this._workspace.getBoardWidth()*maxColCount+(2*maxColCount) });
             this.$el.css({ height: this._workspace.getBoardHeight()*this._rows.length+(2*this._rows.length) });
 
-            this.$el.center();
+            this.center();
 		},
 
 		// {{ Getters }}
@@ -83,6 +83,10 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 
 		addRow: function(boardRow) {
 			this._rows.push(boardRow);
+		},
+
+		center: function() {
+			this.$el.center();
 		},
 
 		destroy: function() {
