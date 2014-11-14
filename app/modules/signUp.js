@@ -27,6 +27,9 @@ function(User_Services) {
 
 			$.get("/app/templates/home/signUp.html", function(contents) {
 				that.$el.html(_.template(contents));
+
+				that.unbind();
+				that.bind();
 			}, "text");
 		},
 
@@ -40,7 +43,7 @@ function(User_Services) {
 		},
 
 		bind: function() {
-			vat that = this;
+			var that = this;
 
 			this.$("#splash-logo").click(function(e) {
   				Backbone.history.navigate("", true);
