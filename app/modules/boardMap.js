@@ -86,7 +86,18 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		},
 
 		center: function() {
-			this.$el.center();
+		    this.$el.css("position","absolute");
+
+		    var top = (($(window).height()/this._workspace.getZoom()) / 2) - (this.$el.outerHeight() / 2),
+		    	left = (($(window).width()/this._workspace.getZoom()) / 2) - (this.$el.outerWidth() / 2);
+
+		    if (top < 0) top = 0;
+		    if (left < 0) left = 0;
+
+		    this.$el.css("top", top);
+		    this.$el.css("left", left);
+		    
+		    return this;
 		},
 
 		destroy: function() {

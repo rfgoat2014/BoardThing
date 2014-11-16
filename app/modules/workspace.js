@@ -66,22 +66,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				that.unbind();
 				that.bind();
 			}, "text");
-
-			jQuery.fn.center = function ()
-			{
-			    this.css("position","absolute");
-
-			    var top = ($(window).height() / 2) - (this.outerHeight() / 2),
-			    	left = ($(window).width() / 2) - (this.outerWidth() / 2);
-
-			    if (top < 0) top = 0;
-			    if (left < 0) left = 0;
-
-			    this.css("top", top);
-			    this.css("left", left);
-			    
-			    return this;
-			}
 		},
 
 		// {{ Event Binding }}
@@ -409,7 +393,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		zoomOut: function() {
-			if (this._zoom > 0.4) {
+			if (this._zoom > 0.2) {
 				this._zoom -= 0.1;
 				this._zoom = Math.round(this._zoom * 100) / 100;
 
