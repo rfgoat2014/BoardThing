@@ -361,16 +361,16 @@ function(Card_Services, Cluster_Services) {
 						    	that._workspace.sortZIndexes(that.model.id, true);
 				        	}
 				        	else {
-				        		var objectModel = that._workspace.getObjectModel(elementId);
+				        		var entity = that._workspace.getBoardEntity(elementId);
 
-								if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) { 
-									that._workspace.createClusterFromCard(targetBoard.getId(), that.model.id, elementId);
-								}
-				        		else {
-						        	that.updateCardPosition(that.model.xPos, that.model.yPos);
-							    	
-							    	that._workspace.sortZIndexes(that.model.id, true);
-				        		}
+								if (entity.getType() == "card") {
+									if (!entity.getIsLocked()) that._workspace.createClusterFromCard(targetBoard.getId(), that.model.id, elementId);
+									else {
+							        	that.updateCardPosition(that.model.xPos, that.model.yPos);
+								    	
+								    	that._workspace.sortZIndexes(that.model.id, true);
+					        		}
+					        	}
 				        	}
 					    }
 				        else {

@@ -265,13 +265,13 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			return this._selectedBoard.getId();
 		},
 
-		getObjectModel: function(id) {
+		getBoardEntity: function(id) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-				if (this._boardEntities[i].getId() == id) return this._boardEntities[i].getModel();
+				if (this._boardEntities[i].getId() == id) return this._boardEntities[i];
 				else if (this._boardEntities[i].getType() == "cluster") {
-					var objType = this._boardEntities[i].getObjectModel(id);
+					var obj = this._boardEntities[i].getChild(id);
 
-					if (objType) return objType;
+					if (obj) return obj;
 				}
 			}
 
@@ -400,6 +400,11 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 				CSSHelpers.setZoom("#table-container", this._zoom);
 				this._boardMap.center();
+
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					this._boardEntities[i].unbind();
+					this._boardEntities[i].bind();
+				}
 			}
 		},
 
@@ -410,6 +415,11 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 				CSSHelpers.setZoom("#table-container", this._zoom);
 				this._boardMap.center();
+
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					this._boardEntities[i].unbind();
+					this._boardEntities[i].bind();
+				}
 			}
 		},
 

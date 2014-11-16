@@ -339,16 +339,16 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 					    	that._workspace.sortZIndexes(that.model.id, true);
 			        	}
 			        	else {
-			        		var objectModel = that._workspace.getObjectModel(elementId);
+			        		var entity = that._workspace.getBoardEntity(elementId);
 
-							if (((objectModel.cards == null) || (objectModel.cards.length == 0)) && (!objectModel.isLocked)) { 
-								that._workspace.createClusterFromCluster(targetBoard.getId(), that.model.id, elementId);
-							}
-			        		else {
-					        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
-						    	
-						    	that._workspace.sortZIndexes(that.model.id, true);
-			        		}
+							if (entity.getType() == "card") {
+								if (!entity.getIsLocked()) that._workspace.createClusterFromCluster(targetBoard.getId(), that.model.id, elementId);
+								else {
+						        	that.updateClusterPosition(that.model.xPos, that.model.yPos);
+							    	
+							    	that._workspace.sortZIndexes(that.model.id, true);
+				        		}
+				        	}
 			        	}
 				    }
 			        else {
@@ -362,6 +362,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	        	this.$el.droppable({
 	        		accept: ".card-container,.clustered-card-container,.clustered-cluster-content-container-collapsed,.clustered-cluster-content-container,.cluster-content-container-collapsed,.cluster-content-container",
 	        		tolerance: "pointer",
+	            	zoom: this._workspace.getZoom(),
 	            	greedy:true,
 	           		drop: function(e, ui) {
 						e.stopPropagation();
@@ -514,13 +515,13 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	return this.model.cards.length;
 	    },
 
-		getObjectModel: function(id) {
+		getChild: function(id) {
 			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
-				if (this._childViews[i].getId() == id) return this._childViews[i].getModel();
+				if (this._childViews[i].getId() == id) return this._childViews[i];
 				else if (this._childViews[i].getType() == "cluster") {
-					var objType = this._childViews[i].getObjectModel(id);
+					var obj = this._childViews[i].getChild(id);
 
-					if (objType) return objType;
+					if (obj) return obj;
 				}
 			}
 
