@@ -323,6 +323,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				this._boardMap.render();
 				
 				this.$("#board-container").html(this._boardMap.$el);
+
 			}
 			else if (this._mode == "individual") {
 				if (this._selectedBoard) this._selectedBoard.destroy();
@@ -338,6 +339,8 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				   that._selectedBoard.center();
 				});
 			}
+
+			this.renderZoom();
 		},
 
 		getBoardItems: function(boardId) {
@@ -382,13 +385,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				this._zoom += 0.1;
 				this._zoom = Math.round(this._zoom * 100) / 100;
 
-				CSSHelpers.setZoom("#table-container", this._zoom);
-				this._boardMap.center();
-
-				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
-					this._boardEntities[i].unbind();
-					this._boardEntities[i].bind();
-				}
+				this.renderZoom();
 			}
 		},
 
@@ -397,13 +394,26 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				this._zoom -= 0.1;
 				this._zoom = Math.round(this._zoom * 100) / 100;
 
-				CSSHelpers.setZoom("#table-container", this._zoom);
+				this.renderZoom();
+			}
+		},
+
+		renderZoom: function() {
+			if (this._mode == "boardMap") {
+				this._boardMap.setZoom(this._zoom);
 				this._boardMap.center();
 
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 					this._boardEntities[i].unbind();
 					this._boardEntities[i].bind();
 				}
+			}
+			else if (this._mode == "individual") {
+				this._selectedBoard.setZoom(this._zoom);
+				this._selectedBoard.center();
+
+			   	this._selectedBoard.unbind();
+			   	this._selectedBoard.unbind();
 			}
 		},
 

@@ -5,8 +5,8 @@ define([
 function() {
 	var CSSHelpers = {};
 
-	CSSHelpers.setZoom = function(selector,zoom) {
-	  	$(selector).css("zoom", zoom);
+	CSSHelpers.setZoom = function(element,zoom) {
+	  	element.css("zoom", zoom);
 	}
 
 	return CSSHelpers;

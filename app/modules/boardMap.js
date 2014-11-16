@@ -1,13 +1,14 @@
 define([
 	"modules/add.board",
 	"modules/board",
+	"modules/CSS.helpers",
 	"modules/board.services",
 	"modules/workspace.services",
 	"jquery",
 	"jqueryUI"
 ],
 
-function(AddBoard, Board, Board_Services, Workspace_Services) {
+function(AddBoard, Board, CSSHelpers, Board_Services, Workspace_Services) {
 	var BoardMap = {};
 
 	//////////////////////// Views
@@ -79,6 +80,13 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
             return null;
 		},
 
+		// {{ Setters }}
+
+		setZoom: function(zoom) {
+
+			CSSHelpers.setZoom(this.$el, zoom);
+		},
+
 		// {{ Public Methods }}
 
 		addRow: function(boardRow) {
@@ -95,9 +103,7 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 		    if (left < 0) left = 0;
 
 		    this.$el.css("top", top);
-		    this.$el.css("left", left);
-		    
-		    return this;
+		    this.$el.css("left", left)
 		},
 
 		destroy: function() {
@@ -265,10 +271,25 @@ function(AddBoard, Board, Board_Services, Workspace_Services) {
 			return this.model.position;
 		},
 
+		// {{ Setters }}
+
+		setZoom: function(zoom) {
+			CSSHelpers.setZoom(this.$el, zoom);
+		},
+
 		// {{ Public Methods }}
 
 		center: function() {
-			this.$el.center();
+		    this.$el.css("position","absolute");
+
+		    var top = (($(window).height()/this._workspace.getZoom()) / 2) - (this.$el.outerHeight() / 2),
+		    	left = (($(window).width()/this._workspace.getZoom()) / 2) - (this.$el.outerWidth() / 2);
+
+		    if (top < 0) top = 0;
+		    if (left < 0) left = 0;
+
+		    this.$el.css("top", top);
+		    this.$el.css("left", left)
 		},
 
 		destroy: function() {
