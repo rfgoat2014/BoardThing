@@ -104,15 +104,17 @@ exports.update = function (req, res) {
 												action: "update",
 												code: 500,
 												msg: "Error saving card: " + cards[i]._id,
-												err: err,
-												res: res
+												err: err
 											});
 										}
 									});
 								}
+
 							}
 						}
 					});
+
+					res.send({ code: 200 });
 				} 
 				else if (req.body.action.trim().toLowerCase() == "update") {
 					// this is an update to the details of an exisiting cluster

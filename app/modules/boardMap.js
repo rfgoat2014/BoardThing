@@ -83,7 +83,6 @@ function(AddBoard, Board, CSSHelpers, Board_Services, Workspace_Services) {
 		// {{ Setters }}
 
 		setZoom: function(zoom) {
-
 			CSSHelpers.setZoom(this.$el, zoom);
 		},
 
@@ -94,16 +93,7 @@ function(AddBoard, Board, CSSHelpers, Board_Services, Workspace_Services) {
 		},
 
 		center: function() {
-		    this.$el.css("position","absolute");
-
-		    var top = (($(window).height()/this._workspace.getZoom()) / 2) - (this.$el.outerHeight() / 2),
-		    	left = (($(window).width()/this._workspace.getZoom()) / 2) - (this.$el.outerWidth() / 2);
-
-		    if (top < 0) top = 0;
-		    if (left < 0) left = 0;
-
-		    this.$el.css("top", top);
-		    this.$el.css("left", left)
+			CSSHelpers.center(this.$el, this._workspace.getZoom());
 		},
 
 		destroy: function() {
@@ -280,16 +270,7 @@ function(AddBoard, Board, CSSHelpers, Board_Services, Workspace_Services) {
 		// {{ Public Methods }}
 
 		center: function() {
-		    this.$el.css("position","absolute");
-
-		    var top = (($(window).height()/this._workspace.getZoom()) / 2) - (this.$el.outerHeight() / 2),
-		    	left = (($(window).width()/this._workspace.getZoom()) / 2) - (this.$el.outerWidth() / 2);
-
-		    if (top < 0) top = 0;
-		    if (left < 0) left = 0;
-
-		    this.$el.css("top", top);
-		    this.$el.css("left", left)
+			CSSHelpers.center(this.$el, this._workspace.getZoom());
 		},
 
 		destroy: function() {
