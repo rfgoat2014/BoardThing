@@ -303,8 +303,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 			if ((!this.model.startBoardId) && (this.model.boards.length == 0)) this._selectedBoard = new Board.Index({ model: this.model.boards[0], workspace: this, mode: this._mode });
 
-			boardXIndexes.sort();
-			boardYIndexes.sort();
+			boardXIndexes.sort(function(a,b) { return a - b; });
+			boardYIndexes.sort(function(a,b) { return a - b; });
 
 			this._boardMap = new BoardMap.Index({ workspace: this });
 
