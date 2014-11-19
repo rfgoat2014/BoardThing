@@ -9,7 +9,7 @@ function() {
     	// {{ Contructor }}
 	
 		initialize: function(options) {
-			this.el.id = "add-board_" + options.positionY + "." + options.positionX;
+			this.el.id = "add-board_" + options.positionY + "_" + options.positionX;
 			this.el.className = "add-board cell";
 
 			this._positionX = options.positionX;
@@ -66,8 +66,12 @@ function() {
 
 		// {{ Getters }}
 
-		getPosition: function() {
-			return this._position;
+		getPositionX: function() {
+			return this._positionX;
+		},
+
+		getPositionY: function() {
+			return this._positionY;
 		},
 
 		getType: function() {

@@ -1,4 +1,5 @@
 define([
+	"modules/board.add",
 	"modules/board",
 	"modules/board.model",
 	"modules/card.add",
@@ -16,7 +17,7 @@ define([
 	"jquery"
 ],
 
-function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, CSSHelpers, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
+function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, BoardMap, Utils, CSSHelpers, Workspace_Services, Board_Services, Card_Services, Cluster_Services) {
 	var Workspace = {};
 
 	// ===== View for viewing a workdspace
@@ -279,34 +280,41 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 
 		setupWorkspace: function() {
 			// First, build the board map up. We need this regardless of the mode we're in
-			var boards = [],
+			var boardXIndexes = [],
+				boardYIndexes = [],
+				boards = {},
 				maxRowSize = 0,
 				maxColSize = 0;
 
 			for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
 				var board = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode }),
-					coordinates = board.getPosition();
+					positionX = board.getPositionX(),
+					positionY = board.getPositionY();
 
-				if (coordinates.y > maxRowSize) maxRowSize = coordinates.y;
-				if (coordinates.x > maxColSize) maxColSize = coordinates.x;
+				if (boardXIndexes.indexOf(positionX) === -1) boardXIndexes.push(positionX);
+				if (boardYIndexes.indexOf(positionY) === -1) boardYIndexes.push(positionY);
 
-				if (boards[coordinates.y] == null) boards[coordinates.y] = {};
-				boards[coordinates.y][coordinates.x] = board;
+				if (boards[positionY] == null) boards[positionY] = {};
+				boards[positionY][positionX] = board;
 			
 				// When we set up the workspace we should try to pick the starting board. This is mainly used for the single board view mode.
 				if ((this.model.startBoardId) && (this.model.startBoardId.toString() == this.model.boards[i].id.toString())) this._selectedBoard = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode });
-				else if ((!this.model.startBoardId) && ((this.model.boards[i].positionX == 1) && (this.model.boards[i].positionY == 1))) this._selectedBoard = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode });
 			}
+
+			if ((!this.model.startBoardId) && (this.model.boards.length == 0)) this._selectedBoard = new Board.Index({ model: this.model.boards[0], workspace: this, mode: this._mode });
+
+			boardXIndexes.sort();
+			boardYIndexes.sort();
 
 			this._boardMap = new BoardMap.Index({ workspace: this });
 
-			for (var i=0; i<maxRowSize; i+=1) {
-				var boardRow = this._boardMap.addRow();
+			for (var i=0; i<boardYIndexes.length; i+=1) {
+				var boardRow = this._boardMap.addRow(boardYIndexes[i]);
 
-				if (boards[(i+1)] != null) {
-					for (var j=0; j<maxColSize; j+=1) {
-						if (boards[(i+1)][(j+1)] != null) boardRow.addColumn(boards[(i+1)][(j+1)]);
-						else boardRow.addColumn(null);
+				if (boards[boardYIndexes[i]] != null) {
+					for (var j=0; j<boardXIndexes.length; j+=1) {
+						if (boards[boardYIndexes[i]][boardXIndexes[j]] != null) boardRow.addColumn(boards[boardYIndexes[i]][boardXIndexes[j]]);
+						else boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: boardXIndexes[j], positionY: boardYIndexes[i], direction: "m" }));
 					}
 				}
 			}
@@ -393,7 +401,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 		},
 
 		zoomOut: function() {
-			if (this._zoom > 0.2) {
+			if (this._zoom > 0.1) {
 				this._zoom -= 0.1;
 				this._zoom = Math.round(this._zoom * 100) / 100;
 

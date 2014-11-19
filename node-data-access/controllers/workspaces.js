@@ -240,7 +240,11 @@ var buildReturnWorkspace = function(res, req, workspace) {
 					returnWorkspace.boards.push(returnBoard);
 
 					returnWorkspace.boards.sort(function (a, b) { 
-						return a.position > b.position ? 1 : a.position < b.position ? -1 : 0; 
+						return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
+					});
+
+					returnWorkspace.boards.sort(function (a, b) { 
+						return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
 					});
 
 					if ((!returnWorkspace.startBoardId) && (boards[i].position == 1)) returnWorkspace.startBoardId = boards[i]._id;

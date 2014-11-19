@@ -31,6 +31,11 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			this.el.className = "table-container";
 
 			this._workspace = options.workspace;
+
+			this._rows = [];
+
+			this._topEdgeRow = null;
+			this._bottomEdgeRow = null;
 		},
 
 		// {{ Object Building }}
@@ -47,9 +52,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					this._topEdgeRow = null;
 				}
 
-				this._topEdgeRow = new BoardMap.EdgeRow({ index:0, workspace: this._workspace });
+				var topRowColumns = this._rows[0].getColumns(),
+					topRowIndex = topRowColumns[0].getPositionY()-1;
 
-				var topRowColumns = this._rows[0].getColumns();
+				if (topRowIndex == 0) topRowIndex = -1;
+
+				this._topEdgeRow = new BoardMap.EdgeRow({ index: topRowIndex, workspace: this._workspace });
 
 				for (var i=0, topRowColumnsLength=topRowColumns.length; i<topRowColumnsLength; i+=1) {
 					if (topRowColumns[i].getType() == "board") this._topEdgeRow.addAddColumn();
@@ -146,59 +154,97 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 		},
 
 		addBoardInPosition: function(xPos, yPos, board) {
-			if (xPos === 0) {
+			var newRow = false,
+				rowIndex = -1,
+				newColumn = false,
+				columnIndex = -1;
+
+			if (this._rows.length > 0) {
 	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
-					var bottomRowColumns = this._rows[i].getColumns();
-
-					for (var j=0, bottomRowColumnsLength=bottomRowColumns.length; j<bottomRowColumnsLength; j+=1) {
-						var positionParts = bottomRowColumns[j].getPosition().split("."),
-							newPosition = positionParts[0] + "." + (parseInt(positionParts[1])+1);
-
-						bottomRowColumns[j].setPosition();
-
-						Board_Services.UpdatePosition(this._workspace.getId(), bottomRowColumns[j].getId(), newPosition);
+					if ((i === 0) && (this._rows[i].getIndex() > yPos)) {
+						this.addRow(yPos, 0);
+						rowIndex = 0;
+						newRow = true;
+						break;
 					}
-
-					if (i == yPos) this._rows[i].addColumnAtPosition(0, board);
-					else this._rows[i].addColumnAtPosition(0, null);
-				}
-			}
-
-			if (yPos === 0) {
-				var boardRow = new BoardMap.Row({ index: 1, parent: this, workspace: this._workspace }),
-					maxColumnLength = 0;
-
-	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
-					var bottomRowColumns = this._rows[i].getColumns();
-
-					for (var j=0, bottomRowColumnsLength=bottomRowColumns.length; j<bottomRowColumnsLength; j+=1) {
-						var positionParts = bottomRowColumns[j].getPosition().split("."),
-							newPosition = (parseInt(positionParts[0])+1).toString() + "." + positionParts[1];
-
-						bottomRowColumns[j].setPosition(newPosition);
-
-						console.log(newPosition)
-
-						Board_Services.UpdatePosition(this._workspace.getId(), bottomRowColumns[j].getId(), newPosition);
-
-						if (bottomRowColumnsLength > maxColumnLength) maxColumnLength = bottomRowColumnsLength;
+					else if (this._rows[i].getIndex() == yPos) {
+						rowIndex = i;
+						break;
 					}
 				}
 
-	            for (var i=0; i<maxColumnLength; i+=1) {
-					boardRow.addColumn();
+				if (rowIndex === -1) {
+					this.addRow(yPos, this._rows.length);
+					rowIndex = this._rows.length-1;
+					newRow = true;
+				}
+			}
+			else {
+				this.addRow(yPos, 0);
+				rowIndex = 0;
+				newRow = true;
+			}
+
+			if (rowIndex != -1) {
+				var referenceRowColumns = [],
+					rowColumns = this._rows[rowIndex].getColumns();
+
+				if (rowIndex != 0) referenceRowColumns = this._rows[0].getColumns();
+				else if (this._rows.length > 1) referenceRowColumns = this._rows[1].getColumns();
+
+				if (rowColumns.length > 0) {
+					for (var i=0, referenceRowColumnsLength=referenceRowColumns.length; i<referenceRowColumnsLength; i+=1) {
+						if ((i === 0) && (referenceRowColumns[i].getPositionX() > xPos)) {
+							this._rows[rowIndex].addColumnAtPosition(0, board);
+							columnIndex = 0;
+							newColumn = true;
+						}
+						else if (referenceRowColumns[i].getPositionX() == xPos) {
+							this._rows[rowIndex].replaceColumnAtPosition(i, board);
+							columnIndex = i;
+							break;
+						}
+						else if (newRow) {
+							this._rows[rowIndex].addColumnAtPosition(i, new AddBoard.Index({ workspace: this._workspace, positionX: referenceRowColumns[i].getPositionX(), positionY: this._rows[rowIndex].getIndex(), direction: "m" }));
+						}
+					}
+
+					if (columnIndex === -1) {
+						this._rows[rowIndex].addColumnAtPosition(this._rows.length, board);
+						columnIndex = rowColumns.length-1;
+						newColumn = true;
+					}
+				}
+				else {
+					this._rows[rowIndex].addColumnAtPosition(0, board);
+					columnIndex = 0;
+					newColumn = true;
+				}
+
+				if (newColumn) {
+					var referenceColumns = this._rows[rowIndex].getColumns();
+
+	            	for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+						for (var j=0, rowColumnsLength=this._rows[i].getColumns().length; j<rowColumnsLength; j+=1) {
+							if ((i != rowIndex) && (j == columnIndex)) this._rows[i].addColumnAtPosition(j, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[j].getPositionX(), positionY: this._rows[i].getIndex(), direction: "m" }));
+	            		}
+	            	}
 				}
 			}
 
-			console.log(this._rows)
+			this.destroyRows();
+			this.render();
 		},
 
 		// {{ Public Methods }}
 
-		addRow: function() {
-			var boardRow = new BoardMap.Row({ index: (this._rows.length+1), parent: this, workspace: this._workspace });
+		addRow: function(yPos, position) {
+			var boardRow = new BoardMap.Row({ index: yPos, parent: this, workspace: this._workspace });
 
-			this._rows.push(boardRow);
+			if (position == null) position = this._rows.length;
+
+			if (position == this._rows.length) this._rows.push(boardRow)
+			else this._rows.splice(position, 0, boardRow);
 
 			return boardRow;
 		},
@@ -207,10 +253,17 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			CSSHelpers.center(this.$el, this._workspace.getZoom());
 		},
 
-		destroy: function() {
+		destroyRows: function() {
+			if (this._topEdgeRow) this._topEdgeRow.destroy();
+			if (this._bottomEdgeRow) this._bottomEdgeRow.destroy();
+
             for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
             	this._rows[i].destroy();
             }
+        },
+
+		destroy: function() {
+			this.destroyRows();
 
 			$(this.el).detach();
 			this.remove();
@@ -233,6 +286,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			this.el.className = "row";
 
 			this._workspace = options.workspace;
+
 			this._columns = [];
 
 			this._columns.push(new Placeholder.Index({ width: 100, height: 100 }));
@@ -298,7 +352,13 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 		// {{ Object Building }}
 
 		render: function() {
-			if (this._columns[0].getType() == "board") this._edgeAddBoards.push(new AddBoard.Index({ positionX: 0, positionY: this._index, direction: "x", workspace: this._workspace }));
+			if (this._columns[0].getType() == "board") {
+				var startPositionX = 1;
+				if (this._columns.length > 0) startPositionX = this._columns[0].getPositionX()-1;
+				if (startPositionX == 0) startPositionX = -1;
+
+				this._edgeAddBoards.push(new AddBoard.Index({ positionX: startPositionX, positionY: this._index, direction: "x", workspace: this._workspace }));
+			}
 			else this._edgeAddBoards.push(new Placeholder.Index({ width: 100, height: this._workspace.getBoardHeight() }));
 			
 			this.$el.append(this._edgeAddBoards[(this._edgeAddBoards.length-1)].$el);
@@ -309,7 +369,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
             	this.$el.append(this._columns[i].$el);
             }
 
-			if (this._columns[(this._columns.length-1)].getType() == "board") this._edgeAddBoards.push(new AddBoard.Index({ positionX: (this._columns.length+1), positionY: this._index, direction: "x", workspace: this._workspace }));
+			if (this._columns[(this._columns.length-1)].getType() == "board") {
+				var startPositionX = 1;
+				if (this._columns.length > 0) startPositionX = this._columns[(this._columns.length-1)].getPositionX()+1;
+
+				this._edgeAddBoards.push(new AddBoard.Index({ positionX: (this._columns.length+1), positionY: this._index, direction: "x", workspace: this._workspace }));
+			}
 			else this._edgeAddBoards.push(new Placeholder.Index({ width: 100, height: this._workspace.getBoardHeight() }));
 
 			this.$el.append(this._edgeAddBoards[(this._edgeAddBoards.length-1)].$el);
@@ -360,20 +425,27 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 		// {{ Public Methods }}
 
 		addColumnAtPosition: function(index, boardColumn) {
-			if (boardColumn) this._columns.splice(index, 0, boardColumn);
-			else this._columns.splice(index, 0, new AddBoard.Index({ workspace: this._workspace, positionX: (index+1), positionY: this._index, direction: "m" }));
+			if (index == this._columns.length) this._columns.push(boardColumn);
+			else this._columns.splice(index, 0, boardColumn);
+		},
+
+		replaceColumnAtPosition: function(index, boardColumn) {
+			this._columns[index].destroy();
+
+			this._columns[index] = boardColumn;
 		},
 
 		addColumn: function(boardColumn) {
-			var columnIndex = this._columns.length+1;
-
-			if (boardColumn) this._columns.push(boardColumn);
-			else this._columns.push(new AddBoard.Index({ workspace: this._workspace, positionX: columnIndex, positionX: columnIndex, positionY: this._index, direction: "m" }));
+			this._columns.push(boardColumn);
 		},
 
 		destroy: function() {
             for (var i=0, columnsLength = this._columns.length; i<columnsLength; i+=1) {
             	this._columns[i].destroy();
+            }
+
+            for (var i=0, columnsLength = this._edgeAddBoards.length; i<columnsLength; i+=1) {
+            	this._edgeAddBoards[i].destroy();
             }
 
 			$(this.el).detach();

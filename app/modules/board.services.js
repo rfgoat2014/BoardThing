@@ -44,13 +44,14 @@ function() {
     	});
 	}
 	
-	Board.Insert = function(id, title, position, callback) {
+	Board.Insert = function(id, title, positionX, positionY, callback) {
 		$.ajax({
 			type: "POST",
 			url: "/workspace/boards/" + id,
 			data:  {
 				title: title,
-				position: position
+            	positionX: positionX, 
+            	positionY: positionY
 			},
 			success: function(response) {
 				if (callback) callback(response);

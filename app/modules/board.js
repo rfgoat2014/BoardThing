@@ -107,11 +107,12 @@ function(CSSHelpers) {
 			return this.model.height;
 		},
 
-		getPosition: function() {
-			return {
-				x: this.model.positionX,
-				y: this.model.positionY
-			};
+		getPositionX: function() {
+			return this.model.positionX;
+		},
+
+		getPositionY: function() {
+			return this.model.positionY;
 		},
 
 		// {{ Setters }}
