@@ -1,5 +1,5 @@
 define([
-	"modules/add.workspace",
+	"modules/workspace.add",
 	"modules/workspace",
 	"modules/workspace.services",
 	"jquery"

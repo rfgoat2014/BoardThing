@@ -60,7 +60,8 @@ exports.insert = function (req, res) {
 			workspace: req.params.id,
 			title: req.body.title,
 		    created: new Date(),
-		    position: (boards.length+1),
+			positionX: req.body.positionX,
+			positionY: req.body.positionY,
 	    	lastModified: new Date()
 		});
 
@@ -83,7 +84,8 @@ exports.insert = function (req, res) {
 				    workspace: newBoard.workspace,
 				    owner: newBoard.owner,
 					title: newBoard.title,
-					position: newBoard.position,
+					positionX: newBoard.positionX,
+					positionY: newBoard.positionY,
 				    created: newBoard.created,
 				    lastModified: newBoard.lastModified
 				});
@@ -201,6 +203,73 @@ exports.updateBackground = function (req, res) {
 			dataError.log({
 				model: __filename,
 				action: "updateBackground",
+				code: 404,
+				msg: "Error finding board " + req.params.id,
+				res: res
+			});
+		}
+	});
+};
+
+// ===== Action to set the board background. This is based on the HTML canvas that people can draw on
+exports.updatePosition = function (req, res) {
+	var cookies = parseCookies(req);;
+	
+	Board
+	.findById(req.params.id)
+	.populate("workspace")
+	.exec(function(err, board) {
+        if (err) {
+        	dataError.log({
+				model: __filename,
+				action: "updatePosition",
+				code: 500,
+				msg: "Error getting board",
+				err: err,
+				res: res
+			});
+        }
+        else if (board) {
+			// Check if this workspace is private and if so check this user has access
+        	if ((!board.workspace.isPrivate) ||
+        		((req.isAuthenticated()) && (board.workspace.owner.toString() == req.user._id.toString())) || 
+        		((cookies["BoardThing_" + board._id + "_password"] != null) && (cookies["BoardThing_" + board._id + "_password"].trim() == board.workspace.password.trim()))) {
+	        	
+	        	// Update the background image stored for this boards
+	        	board.positionX = req.body.positionX;
+	        	board.positionY = req.body.positionY;
+	        	board.lastModified = new Date();
+
+		        board.save(function (err, board) {
+					if (err) {
+						dataError.log({
+							model: __filename,
+							action: "updatePosition",
+							code: 500,
+							msg: "Error saving board",
+							err: err,
+							res: res
+						});
+					}
+					else {
+		  				res.send({ code: 200 });
+					}
+				});
+		    }
+		    else {
+				dataError.log({
+					model: __filename,
+					action: "updatePosition",
+					code: 401,
+					msg: "Invalid board authentication",
+					res: res
+				});
+		    }
+		}
+		else {
+			dataError.log({
+				model: __filename,
+				action: "updatePosition",
 				code: 404,
 				msg: "Error finding board " + req.params.id,
 				res: res

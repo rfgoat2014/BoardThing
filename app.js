@@ -644,9 +644,9 @@
 		}
 	});
 
-	app.post("/workspaces/authenticate/:id", workspaces.authenticateWorkspace);
+	app.post("/workspace/authenticate/:id", workspaces.authenticateWorkspace);
 
-	app.put("/workspaces/boardPositions/:id", function(req,res) {
+	app.put("/workspace/boardPositions/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			checkAuthenticated(req, res, function(user) {
 				if (user) {
@@ -668,7 +668,7 @@
 		}
 	});
 
-	app.post("/workspaces/boards/:id", function(req,res) {
+	app.post("/workspace/boards/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			checkAuthenticated(req, res, function(user) {
 				if (user) {
@@ -692,10 +692,12 @@
 
 // Actions for manipulating boards
 
+	app.put("/workspace/boards/position/:workspaceId/:id", boards.updatePosition);
+
 	// Actions for storing what people have drawn on a board (Store HTML canvas as a flat image)
 
-	app.get("/boards/background/:id", boards.getBackground);
-	app.put("/boards/background/:id", boards.updateBackground);
+	app.get("/boards/background/:workspaceId/:id", boards.getBackground);
+	app.put("/boards/background/:workspaceId/:id", boards.updateBackground);
 
 	/* app.get("/boards/export/:id/:format", function(req,res) {
 		if (!req.isAuthenticated()) {

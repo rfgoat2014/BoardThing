@@ -34,6 +34,13 @@
 	z-index: 1;
 }
 
+#board-container .add-board {
+	position: relative;
+	border: 1px solid #CCCCCC;
+    cursor: hand;
+    cursor: pointer;
+}
+
 #board-container .board {
 	position: relative;
 }

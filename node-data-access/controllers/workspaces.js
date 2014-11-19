@@ -205,7 +205,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 
 		Board
 		.find({ workspace: workspace._id })
-		.select("_id title position created lastModified")
+		.select("_id title positionX positionY created lastModified")
 		.sort({ position: 'asc' })
 		.exec(function(err, boards) {
 			if (err) {
@@ -228,7 +228,8 @@ var buildReturnWorkspace = function(res, req, workspace) {
 					var returnBoard = {
 						id: boards[i]._id,
 					    title: boards[i].title,
-					    position: boards[i].position,
+					    positionX: boards[i].positionX,
+					    positionY: boards[i].positionY,
 					    width: workspace.boardWidth,
 					    height: workspace.boardHeight,
 					    cards: [],
@@ -343,7 +344,8 @@ exports.insert = function (req, res) {
 			var board = new Board({ 
 				workspace: newWorkspace._id,
 				title: req.body.title,
-				position: 1,
+				positionX: 1,
+				positionY: 1,
 			    created: new Date(),
 		    	lastModified: new Date()
 			});

@@ -1,7 +1,7 @@
 define([
 	"modules/board",
 	"modules/board.model",
-	"modules/add.card",
+	"modules/card.add",
 	"modules/card",
 	"modules/card.model",
 	"modules/cluster",
@@ -198,6 +198,11 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			return this._zoom;
 		},
 
+		getAvailablePositions: function(boardPosition) {
+			if (this._boardMap) return this._boardMap.getAvailablePositions(boardPosition);
+			else return [];
+		},
+
 		getBoardDistanceFromSource: function(sourceBoardId,targetBoardId) {
 			if (this._mode == "individual") {
 				return {
@@ -279,24 +284,24 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				maxColSize = 0;
 
 			for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
-				var board = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode }),
-					coordinates = board.getPosition().split(".");
+				var board = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode }),
+					coordinates = board.getPosition();
 
-				if (coordinates[0] > maxColSize) maxRowSize = coordinates[0];
-				if (coordinates[1] > maxColSize) maxColSize = coordinates[1];
+				if (coordinates.y > maxRowSize) maxRowSize = coordinates.y;
+				if (coordinates.x > maxColSize) maxColSize = coordinates.x;
 
-				if (boards[coordinates[0]] == null) boards[coordinates[0]] = {};
-				boards[coordinates[0]][coordinates[1]] = board;
+				if (boards[coordinates.y] == null) boards[coordinates.y] = {};
+				boards[coordinates.y][coordinates.x] = board;
 			
 				// When we set up the workspace we should try to pick the starting board. This is mainly used for the single board view mode.
-				if ((this.model.startBoardId) && (this.model.startBoardId.toString() == this.model.boards[i].id.toString())) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode });
-				else if ((!this.model.startBoardId) && (this.model.boards[i].position == "1.1")) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[i], workspace: this, mode: this._mode });
+				if ((this.model.startBoardId) && (this.model.startBoardId.toString() == this.model.boards[i].id.toString())) this._selectedBoard = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode });
+				else if ((!this.model.startBoardId) && ((this.model.boards[i].positionX == 1) && (this.model.boards[i].positionY == 1))) this._selectedBoard = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode });
 			}
 
 			this._boardMap = new BoardMap.Index({ workspace: this });
 
 			for (var i=0; i<maxRowSize; i+=1) {
-				var boardRow = new BoardMap.Row({ index: (i+1) });
+				var boardRow = this._boardMap.addRow();
 
 				if (boards[(i+1)] != null) {
 					for (var j=0; j<maxColSize; j+=1) {
@@ -304,8 +309,6 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 						else boardRow.addColumn(null);
 					}
 				}
-
-				this._boardMap.addRow(boardRow);
 			}
 		},
 
@@ -329,7 +332,7 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 				if (this._selectedBoard) this._selectedBoard.destroy();
 
 				// If we cant find the starting board then just take the first. If we still can't then set up a dummy
-				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new BoardMap.Board({ model: this.model.boards[0], workspace: this, mode: this._mode });
+				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new Board.Index({ model: this.model.boards[0], workspace: this, mode: this._mode });
 				
 				this._selectedBoard.render();
 
@@ -415,6 +418,16 @@ function(Board, BoardModel, AddCard, Card, CardModel, Cluster, ClusterModel, Boa
 			   	this._selectedBoard.unbind();
 			   	this._selectedBoard.unbind();
 			}
+		},
+
+		// ********** Adding boards **********
+
+		addBoard: function(positionX, positionY) {
+			var that = this;
+            
+            Board_Services.Insert(this.model.id, "New Board", positionX, positionY, function(response) {
+            	that._boardMap.addBoardInPosition(positionX, positionY, new Board.Index({ model: response.board, workspace: that, mode: that._mode }));
+            });
 		},
 
 		// ********** Adding cards **********

@@ -15,6 +15,21 @@ function() {
 		});
 	};
 
+	Board.UpdatePosition = function(workspaceId, boardId, positionX, positionY, callback) {
+        $.ajax({
+            url: "/workspace/boards/position/" + workspaceId + "/" + boardId,
+            type: 'PUT',
+            dataType: "json",
+            data: { 
+            	positionX: positionX, 
+            	positionY: positionY
+            },
+			success: function(response) {
+				if (callback) callback(response);
+			}
+    	});
+	}
+
 	Board.UpdateCardZIndexes = function(workspaceId, boardId, sortedCards, callback) {
         $.ajax({
             url: "/workspace/boards/cards/zindex/" + workspaceId + "/" + boardId,
@@ -29,12 +44,13 @@ function() {
     	});
 	}
 	
-	Board.Insert = function(id, title, callback) {
+	Board.Insert = function(id, title, position, callback) {
 		$.ajax({
 			type: "POST",
-			url: "/workspaces/boards/" + id,
+			url: "/workspace/boards/" + id,
 			data:  {
-				title: title
+				title: title,
+				position: position
 			},
 			success: function(response) {
 				if (callback) callback(response);
