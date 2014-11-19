@@ -192,17 +192,21 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 				if (rowIndex != 0) referenceRowColumns = this._rows[0].getColumns();
 				else if (this._rows.length > 1) referenceRowColumns = this._rows[1].getColumns();
 
-				if (rowColumns.length > 0) {
+				if (referenceRowColumns.length > 0) {
 					for (var i=0, referenceRowColumnsLength=referenceRowColumns.length; i<referenceRowColumnsLength; i+=1) {
 						if ((i === 0) && (referenceRowColumns[i].getPositionX() > xPos)) {
 							this._rows[rowIndex].addColumnAtPosition(0, board);
 							columnIndex = 0;
 							newColumn = true;
 						}
-						else if (referenceRowColumns[i].getPositionX() == xPos) {
+						else if ((rowColumns[i] != null ) && (rowColumns[i].getPositionX() == xPos)) {
 							this._rows[rowIndex].replaceColumnAtPosition(i, board);
 							columnIndex = i;
 							break;
+						}
+						else if ((rowColumns[i] == null ) && (referenceRowColumns[i].getPositionX() == xPos)) {
+							this._rows[rowIndex].addColumnAtPosition(i, board);
+							columnIndex = i;
 						}
 						else if (newRow) {
 							this._rows[rowIndex].addColumnAtPosition(i, new AddBoard.Index({ workspace: this._workspace, positionX: referenceRowColumns[i].getPositionX(), positionY: this._rows[rowIndex].getIndex(), direction: "m" }));
