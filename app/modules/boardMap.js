@@ -30,6 +30,9 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			this.el.id = "table-container";
 			this.el.className = "table-container";
 
+			this._startXIndex = options.startXIndex;
+			this._startYIndex = options.startYIndex;
+
 			this._workspace = options.workspace;
 
 			this._rows = [];
@@ -50,11 +53,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 				}
 
 				var topRowColumns = this._rows[0].getColumns(),
-					topRowIndex = topRowColumns[0].getPositionY()-1;
+					startYIndex = this._startYIndex-1,
+					endYIndex = this._startYIndex+1;
 
-				if (topRowIndex == 0) topRowIndex = -1;
+				if (startYIndex == 0) startYIndex = -1;
 
-				this._topEdgeRow = new BoardMap.EdgeRow({ index: topRowIndex, workspace: this._workspace });
+				this._topEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: startYIndex, workspace: this._workspace });
 
 				for (var i=0, topRowColumnsLength=topRowColumns.length; i<topRowColumnsLength; i+=1) {
 					if (topRowColumns[i].getType() == "board") this._topEdgeRow.addAddColumn();
@@ -71,6 +75,8 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 	            	this._rows[i].render();
 
 	            	this.$el.append(this._rows[i].$el);
+
+	            	endYIndex++;
 	            }
 
 				// Bottom edge add button row
@@ -80,7 +86,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					this._bottomEdgeRow = null;
 				}
 
-				this._bottomEdgeRow = new BoardMap.EdgeRow({ index: this._rows.length+1, workspace: this._workspace });
+				this._bottomEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: endYIndex+1, workspace: this._workspace });
 
 				var bottomRowColumns = this._rows[this._rows.length-1].getColumns();
 
@@ -266,9 +272,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
     	// {{ Contructor }}
 
 		initialize: function(options) {
-			this._index = options.index;
+			this._xIndex = options.xIndex;
+			this._yIndex = options.yIndex;
 
-			this.el.id = "board-row_" + this._index;
+			this.el.id = "board-row_" + this._yIndex;
 			this.el.className = "row";
 
 			this._workspace = options.workspace;
@@ -293,10 +300,14 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		addPlaceholderColumn: function() {
 			this._columns.splice((this._columns.length-1), 0, new Placeholder.Index({ width: this._workspace.getBoardWidth(), height: 100 }));
+			this._xIndex++;
+			if (this._xIndex == 0) this._xIndex++;
 		},
 
 		addAddColumn: function() {
-			this._columns.splice((this._columns.length-1), 0, new AddBoard.Index({ positionX: (this._columns.length-1), positionY: this._index, direction: "y", workspace: this._workspace }));
+			this._columns.splice((this._columns.length-1), 0, new AddBoard.Index({ positionX: this._xIndex, positionY: this._yIndex, direction: "y", workspace: this._workspace }));
+			this._xIndex++;
+			if (this._xIndex == 0) this._xIndex++;
 		},
 
 		destroy: function() {

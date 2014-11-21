@@ -1,4 +1,5 @@
 var User = require(config.userModel),
+	Workspace = require(config.workspaceModel),
 	Board = require(config.boardModel),
 	Card = require(config.cardModel);
 
@@ -50,49 +51,77 @@ exports.getBackground = function (req, res) {
 
 // ===== Actions to create a new board
 exports.insert = function (req, res) {
-	Board
-	.find({ workspace: req.params.id })
-	.select("_id")
-	.exec(function(err, boards) {
-		// create and save the new board
+	Workspace
+	.findById(req.params.id)
+	.select("boardWidth boardHeight")
+	.exec(function(err, workspace) {
+		if (err) {
+			dataError.log({
+				model: __filename,
+				action: "insert",
+				code: 500,
+				msg: "Error retrieving workspace for id: " + req.params.id,
+				err: err,
+				res: res
+			});
+		}
+		else if (workspace) {
+			Board
+			.find({ workspace: req.params.id })
+			.select("_id")
+			.exec(function(err, boards) {
+				// create and save the new board
 
-		var board = new Board({ 
-			workspace: req.params.id,
-			title: req.body.title,
-		    created: new Date(),
-			positionX: req.body.positionX,
-			positionY: req.body.positionY,
-	    	lastModified: new Date()
-		});
-
-		board.save(function (err, newBoard) {
-			if (err) {
-				dataError.log({
-					model: __filename,
-					action: "insert",
-					code: 500,
-					msg: "Error saving board",
-					err: err,
-					res: res
+				var board = new Board({ 
+					workspace: req.params.id,
+					title: req.body.title,
+				    created: new Date(),
+					positionX: req.body.positionX,
+					positionY: req.body.positionY,
+			    	lastModified: new Date()
 				});
-			}
-			else {
-				// return the new baord back to client
 
-				var returnBoard = new Board({
-					id: newBoard._id, 
-				    workspace: newBoard.workspace,
-				    owner: newBoard.owner,
-					title: newBoard.title,
-					positionX: newBoard.positionX,
-					positionY: newBoard.positionY,
-				    created: newBoard.created,
-				    lastModified: newBoard.lastModified
+				board.save(function (err, newBoard) {
+					if (err) {
+						dataError.log({
+							model: __filename,
+							action: "insert",
+							code: 500,
+							msg: "Error saving board",
+							err: err,
+							res: res
+						});
+					}
+					else {
+						// return the new baord back to client
+
+						var returnBoard = {
+							id: newBoard._id, 
+						    workspace: newBoard.workspace,
+						    owner: newBoard.owner,
+							title: newBoard.title,
+							positionX: newBoard.positionX,
+							positionY: newBoard.positionY,
+						    width: workspace.boardWidth,
+						    height: workspace.boardHeight,
+						    created: newBoard.created,
+						    lastModified: newBoard.lastModified
+						};
+						
+						res.send({ code: 200, board: returnBoard });
+					}
 				});
-				
-				res.send({ code: 200, board: returnBoard });
-			}
-		});
+			});
+        }
+        else {
+			dataError.log({
+				model: __filename,
+				action: "insert",
+				code: 404,
+				msg: "Unable to find workspace " + req.params.id,
+				res: res
+			});
+        }
 	});
 };
 

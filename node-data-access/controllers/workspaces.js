@@ -173,7 +173,7 @@ var getWorkspace = function(res, req, workspaceId, startingBoardId, callback) {
 			// a workspace must load with a starting board. Set that board if we know it at this points
 			workspace.startBoardId = startingBoardId;
 
-			callback(res, req, workspace);	
+			callback(res, req, workspace);
         }
         else {
 			callback(res, req, null);

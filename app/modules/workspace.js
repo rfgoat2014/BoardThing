@@ -306,7 +306,13 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			boardXIndexes.sort(function(a,b) { return a - b; });
 			boardYIndexes.sort(function(a,b) { return a - b; });
 
-			this._boardMap = new BoardMap.Index({ workspace: this });
+			var startXIndex = 1,
+				startYIndex = 1;
+
+			if (boardXIndexes.length > 0) startXIndex = boardXIndexes[0];
+			if (boardYIndexes.length > 0) startYIndex = boardYIndexes[0];
+
+			this._boardMap = new BoardMap.Index({ startXIndex: startXIndex, startYIndex: startYIndex, workspace: this });
 
 			for (var i=0; i<boardYIndexes.length; i+=1) {
 				var boardRow = this._boardMap.addRow(boardYIndexes[i]);
