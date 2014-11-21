@@ -86,7 +86,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					this._bottomEdgeRow = null;
 				}
 
-				this._bottomEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: endYIndex+1, workspace: this._workspace });
+				this._bottomEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: endYIndex, workspace: this._workspace });
 
 				var bottomRowColumns = this._rows[this._rows.length-1].getColumns();
 
@@ -151,6 +151,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
 					if ((i === 0) && (this._rows[i].getIndex() > yPos)) {
 						this.addRow(yPos, 0);
+						this._startYIndex--;
 						rowIndex = 0;
 						newRow = true;
 						break;
@@ -169,6 +170,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			}
 			else {
 				this.addRow(yPos, 0);
+				this._startYIndex--;
 				rowIndex = 0;
 				newRow = true;
 			}
@@ -184,6 +186,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					for (var i=0, referenceRowColumnsLength=referenceRowColumns.length; i<referenceRowColumnsLength; i+=1) {
 						if ((i === 0) && (referenceRowColumns[i].getPositionX() > xPos)) {
 							this._rows[rowIndex].addColumnAtPosition(0, board);
+							this._startXIndex--;
 							columnIndex = 0;
 							newColumn = true;
 						}
@@ -209,6 +212,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 				}
 				else {
 					this._rows[rowIndex].addColumnAtPosition(0, board);
+					this._startXIndex--;
 					columnIndex = 0;
 					newColumn = true;
 				}
@@ -217,9 +221,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					var referenceColumns = this._rows[rowIndex].getColumns();
 
 	            	for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
-						for (var j=0, rowColumnsLength=this._rows[i].getColumns().length; j<rowColumnsLength; j+=1) {
-							if ((i != rowIndex) && (j == columnIndex)) this._rows[i].addColumnAtPosition(j, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[j].getPositionX(), positionY: this._rows[i].getIndex(), direction: "m" }));
-	            		}
+	            		if (i != rowIndex) {
+	            			if (columnIndex === 0) this._rows[i].addColumnAtPosition(0, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[0].getPositionX(), positionY: this._rows[i].getIndex(), direction: "m" }));
+							else this._rows[i].addColumnAtPosition(this._rows[i].getColumns().length, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[this._rows[i].getColumns().length].getPositionX()+1, positionY: this._rows[i].getIndex(), direction: "m" }));
+		            	}
 	            	}
 				}
 			}

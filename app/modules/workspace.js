@@ -315,12 +315,20 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			this._boardMap = new BoardMap.Index({ startXIndex: startXIndex, startYIndex: startYIndex, workspace: this });
 
 			for (var i=0; i<boardYIndexes.length; i+=1) {
-				var boardRow = this._boardMap.addRow(boardYIndexes[i]);
+				var yIndex = startYIndex+i;
+				if (yIndex >= 0) yIndex++;
+
+				var boardRow = this._boardMap.addRow(yIndex);
 
 				if (boards[boardYIndexes[i]] != null) {
 					for (var j=0; j<boardXIndexes.length; j+=1) {
 						if (boards[boardYIndexes[i]][boardXIndexes[j]] != null) boardRow.addColumn(boards[boardYIndexes[i]][boardXIndexes[j]]);
-						else boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: boardXIndexes[j], positionY: boardYIndexes[i], direction: "m" }));
+						else {
+							var xIndex = startXIndex+j;
+							if (xIndex >= 0) xIndex++;
+
+							boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: xIndex, positionY: yIndex, direction: "m" }));
+						}
 					}
 				}
 			}
