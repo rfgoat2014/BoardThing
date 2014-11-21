@@ -42,9 +42,6 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		render: function() {
 			if (this._rows.length > 0) {
-				var maxwidth = 0,
-					totalHeight = 0;
-
 				// Top edge add button row
 
 				if (this._topEdgeRow) {
@@ -68,20 +65,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
             	this.$el.append(this._topEdgeRow.$el);
 
-            	totalHeight += 102;
-
             	// Main body layout
 
 	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
 	            	this._rows[i].render();
 
 	            	this.$el.append(this._rows[i].$el);
-
-	            	var rowWidth = this._rows[i].getWidth();
-
-	            	if (rowWidth > maxwidth) maxwidth = rowWidth;
-
-	            	totalHeight += this._rows[i].getHeight();
 	            }
 
 				// Bottom edge add button row
@@ -103,13 +92,6 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 				this._bottomEdgeRow.render();
 
             	this.$el.append(this._bottomEdgeRow.$el);
-
-            	totalHeight += 102;
-
-            	// Set up board container
-
-	            this.$el.css({ width: maxwidth });
-	            this.$el.css({ height: totalHeight });
 			}
 
             this.center();
@@ -388,24 +370,6 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		getIndex: function() {
 			return this._index;
-		},
-
-		getWidth: function() {
-			var width = 0;
-
-            for (var i=0, columnsLength = this._columns.length; i<columnsLength; i+=1) {
-            	width += (this._columns[i].getWidth()+2);
-            }
-
-            for (var i=0, edgesLength = this._edgeAddBoards.length; i<edgesLength; i+=1) {
-            	width += (this._edgeAddBoards[i].getWidth()+2);
-        	}
-
-            return width;
-		},
-
-		getHeight: function() {
-			return this._workspace.getBoardHeight()+2;
 		},
 
 		getColumns: function() {

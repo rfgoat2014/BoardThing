@@ -26,6 +26,13 @@ function() {
 				this._width = this._workspace.getBoardWidth();
 				this._height = 100;
 			}
+			else if (this._direction == "m") {
+				this._width = this._workspace.getBoardWidth();
+				this._height = this._workspace.getBoardHeight();
+			}
+
+			this.$el.width(this._width);
+			this.$el.height(this._height);
 
 			this.render()
 		},
@@ -38,16 +45,9 @@ function() {
 			$.get("/app/templates/board.add/index.html", function(contents) {
 				that.$el.html(_.template(contents));
 
-				that.afterRender()
-
 				that.unbind();
 				that.bind();
 			}, "text");
-		},
-
-		afterRender: function() {
-			this.$el.width(this._width);
-			this.$el.height(this._height);
 		},
 
 		// {{ Event Binding }}

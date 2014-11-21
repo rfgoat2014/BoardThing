@@ -119,6 +119,8 @@
 
 	.table-container {
 		display: table;
+		table-layout: fixed;
+		width: 100%;
 	}
 
 	.table-container .row {

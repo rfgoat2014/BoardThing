@@ -11,17 +11,19 @@ function() {
     	// {{ Contructor }}
 	
 		initialize: function(options) {
+			this.el.id = "placeholder_" + this.cid;
 			this.el.className = "dummy cell";
 
 			this._workspace = options.workspace;
 
 			this._width = options.width;
 			this._height = options.height;
+
+			this.$el.width(this._width);
+			this.$el.height(this._height);
 		},
 
 		render: function() {
-			this.$el.width(this._width);
-			this.$el.height(this._height);
 		},
 
 		getType: function() {
