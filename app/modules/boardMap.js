@@ -52,13 +52,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					this._topEdgeRow = null;
 				}
 
-				var topRowColumns = this._rows[0].getColumns(),
-					startYIndex = this._startYIndex-1,
-					endYIndex = this._startYIndex+1;
+				var topRowColumns = this._rows[0].getColumns();
 
-				if (startYIndex == 0) startYIndex = -1;
+				var yIndex = this._startYIndex-1;
+				if (yIndex == 0) yIndex = -1;
 
-				this._topEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: startYIndex, workspace: this._workspace });
+				this._topEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: yIndex, workspace: this._workspace });
 
 				for (var i=0, topRowColumnsLength=topRowColumns.length; i<topRowColumnsLength; i+=1) {
 					if (topRowColumns[i].getType() == "board") this._topEdgeRow.addAddColumn();
@@ -76,7 +75,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 	            	this.$el.append(this._rows[i].$el);
 
-	            	endYIndex++;
+	            	yIndex++;
 	            }
 
 				// Bottom edge add button row
@@ -86,7 +85,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 					this._bottomEdgeRow = null;
 				}
 
-				this._bottomEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: endYIndex, workspace: this._workspace });
+	            yIndex++;
+				if (yIndex >= 0) yIndex++;
+
+				this._bottomEdgeRow = new BoardMap.EdgeRow({ xIndex: this._startXIndex, yIndex: yIndex, workspace: this._workspace });
 
 				var bottomRowColumns = this._rows[this._rows.length-1].getColumns();
 
@@ -149,14 +151,14 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 			if (this._rows.length > 0) {
 	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
-					if ((i === 0) && (this._rows[i].getIndex() > yPos)) {
+					if ((i === 0) && (this._rows[i].getYIndex() > yPos)) {
 						this.addRow(this._startXIndex, yPos, 0);
 						this._startYIndex--;
 						rowIndex = 0;
 						newRow = true;
 						break;
 					}
-					else if (this._rows[i].getIndex() == yPos) {
+					else if (this._rows[i].getYIndex() == yPos) {
 						rowIndex = i;
 						break;
 					}
@@ -200,7 +202,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 							columnIndex = i;
 						}
 						else if (newRow) {
-							this._rows[rowIndex].addColumnAtPosition(i, new AddBoard.Index({ workspace: this._workspace, positionX: referenceRowColumns[i].getPositionX(), positionY: this._rows[rowIndex].getIndex(), direction: "m" }));
+							this._rows[rowIndex].addColumnAtPosition(i, new AddBoard.Index({ workspace: this._workspace, positionX: referenceRowColumns[i].getPositionX(), positionY: this._rows[rowIndex].getYIndex(), direction: "m" }));
 						}
 					}
 
@@ -222,8 +224,8 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 	            	for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
 	            		if (i != rowIndex) {
-	            			if (columnIndex === 0) this._rows[i].addColumnAtPosition(0, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[0].getPositionX(), positionY: this._rows[i].getIndex(), direction: "m" }));
-							else this._rows[i].addColumnAtPosition(this._rows[i].getColumns().length, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[this._rows[i].getColumns().length].getPositionX()+1, positionY: this._rows[i].getIndex(), direction: "m" }));
+	            			if (columnIndex === 0) this._rows[i].addColumnAtPosition(0, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[0].getPositionX(), positionY: this._rows[i].getYIndex(), direction: "m" }));
+							else this._rows[i].addColumnAtPosition(this._rows[i].getColumns().length, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[this._rows[i].getColumns().length].getPositionX()+1, positionY: this._rows[i].getYIndex(), direction: "m" }));
 		            	}
 	            	}
 				}
@@ -385,7 +387,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		// {{ Getters }}
 
-		getIndex: function() {
+		getYIndex: function() {
 			return this._yIndex;
 		},
 
@@ -409,6 +411,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		// {{ Public Methods }}
 
+		addColumn: function(boardColumn) {
+			this._columns.push(boardColumn);
+		},
+
 		addColumnAtPosition: function(xIndex, boardColumn) {
 			if (xIndex == this._columns.length) this._columns.push(boardColumn);
 			else this._columns.splice(xIndex, 0, boardColumn);
@@ -418,10 +424,6 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			this._columns[xIndex].destroy();
 
 			this._columns[xIndex] = boardColumn;
-		},
-
-		addColumn: function(boardColumn) {
-			this._columns.push(boardColumn);
 		},
 
 		destroy: function() {
