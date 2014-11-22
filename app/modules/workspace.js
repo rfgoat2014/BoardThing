@@ -896,11 +896,15 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		sortZIndexes: function(elementId, publish) {
 			try {
 				var that = this,
+					boardId = null,
 					lockedElements = new Array(),
 					unlockedElements = new Array();
 
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
-					if ((elementId) && (this._boardEntities[i].getId() == elementId)) this._boardEntities[i].setZPos(999999999999999);
+					if ((elementId) && (this._boardEntities[i].getId() == elementId)) {
+						boardId = this._boardEntities[i].getBoardId();
+						this._boardEntities[i].setZPos(999999999999999);
+					}
 
 					if (this._boardEntities[i].getIsLocked()) lockedElements.push(this._boardEntities[i]);
 					else unlockedElements.push(this._boardEntities[i]);
@@ -935,11 +939,11 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					unlockedElements[i].setZIndex((i+(lockedElements.length+1)));
 				}
 
-				if ((elementId) && (publish)) {
-					Board_Services.UpdateCardZIndexes(this.model.id, this._selectedBoard.getId(), sortedCards, function(response) {
+				if ((boardId) && (elementId) && (publish)) {
+					Board_Services.UpdateCardZIndexes(this.model.id, boardId, sortedCards, function(response) {
 		            	that._socket.send(JSON.stringify({ 
 		            		action:"sortZIndexes", 
-		            		board: that._selectedBoard.getId(), 
+		            		board: boardId, 
 		            		card: { id: elementId } 
 		            	}));
 	            	});
