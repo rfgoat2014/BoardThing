@@ -318,11 +318,13 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				var yIndex = startYIndex+i;
 				if (yIndex >= 0) yIndex++;
 
-				var boardRow = this._boardMap.addRow(yIndex);
+				var boardRow = this._boardMap.addRow(startXIndex, yIndex);
 
 				if (boards[boardYIndexes[i]] != null) {
 					for (var j=0; j<boardXIndexes.length; j+=1) {
-						if (boards[boardYIndexes[i]][boardXIndexes[j]] != null) boardRow.addColumn(boards[boardYIndexes[i]][boardXIndexes[j]]);
+						if (boards[boardYIndexes[i]][boardXIndexes[j]] != null) {
+							boardRow.addColumn(boards[boardYIndexes[i]][boardXIndexes[j]]);
+						}
 						else {
 							var xIndex = startXIndex+j;
 							if (xIndex >= 0) xIndex++;

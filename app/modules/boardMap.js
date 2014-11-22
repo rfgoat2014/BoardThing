@@ -150,7 +150,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			if (this._rows.length > 0) {
 	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
 					if ((i === 0) && (this._rows[i].getIndex() > yPos)) {
-						this.addRow(yPos, 0);
+						this.addRow(this._startXIndex, yPos, 0);
 						this._startYIndex--;
 						rowIndex = 0;
 						newRow = true;
@@ -163,13 +163,13 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 				}
 
 				if (rowIndex === -1) {
-					this.addRow(yPos, this._rows.length);
+					this.addRow(this._startXIndex, yPos, this._rows.length);
 					rowIndex = this._rows.length-1;
 					newRow = true;
 				}
 			}
 			else {
-				this.addRow(yPos, 0);
+				this.addRow(this._startXIndex, yPos, 0);
 				this._startYIndex--;
 				rowIndex = 0;
 				newRow = true;
@@ -235,8 +235,8 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		// {{ Public Methods }}
 
-		addRow: function(yPos, position) {
-			var boardRow = new BoardMap.Row({ index: yPos, parent: this, workspace: this._workspace });
+		addRow: function(xIndex, yIndex, position) {
+			var boardRow = new BoardMap.Row({ xIndex: xIndex, yIndex: yIndex, parent: this, workspace: this._workspace });
 
 			if (position == null) position = this._rows.length;
 
@@ -339,9 +339,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
     	// {{ Contructor }}
 	
 		initialize: function(options) {
-			this._index = options.index;
+			this._xIndex = options.xIndex; 
+			this._yIndex = options.yIndex;
 
-			this.el.id = "board-row_" + this._index;
+			this.el.id = "board-row_" + this._yIndex;
 			this.el.className = "row";
 
 			this._parent = options.parent;
@@ -354,28 +355,28 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 		// {{ Object Building }}
 
 		render: function() {
-			if (this._columns[0].getType() == "board") {
-				var startPositionX = 1;
-				if (this._columns.length > 0) startPositionX = this._columns[0].getPositionX()-1;
-				if (startPositionX == 0) startPositionX = -1;
+			var startPositionX = this._xIndex-1;
+			if (startPositionX == 0) startPositionX = -1;
 
-				this._edgeAddBoards.push(new AddBoard.Index({ positionX: startPositionX, positionY: this._index, direction: "x", workspace: this._workspace }));
-			}
+			if (this._columns[0].getType() == "board") this._edgeAddBoards.push(new AddBoard.Index({ positionX: startPositionX, positionY: this._yIndex, direction: "x", workspace: this._workspace }));
 			else this._edgeAddBoards.push(new Placeholder.Index({ width: 100, height: this._workspace.getBoardHeight() }));
 			
 			this.$el.append(this._edgeAddBoards[(this._edgeAddBoards.length-1)].$el);
 			
             for (var i=0, columnsLength = this._columns.length; i<columnsLength; i+=1) {
+            	startPositionX++;
+            	if (startPositionX === 0) startPositionX = 1;
+
             	this._columns[i].render();
 
             	this.$el.append(this._columns[i].$el);
             }
 
 			if (this._columns[(this._columns.length-1)].getType() == "board") {
-				var startPositionX = 1;
-				if (this._columns.length > 0) startPositionX = this._columns[(this._columns.length-1)].getPositionX()+1;
+            	startPositionX++;
+            	if (startPositionX === 0) startPositionX = 1;
 
-				this._edgeAddBoards.push(new AddBoard.Index({ positionX: (this._columns.length+1), positionY: this._index, direction: "x", workspace: this._workspace }));
+				this._edgeAddBoards.push(new AddBoard.Index({ positionX: startPositionX, positionY: this._yIndex, direction: "x", workspace: this._workspace }));
 			}
 			else this._edgeAddBoards.push(new Placeholder.Index({ width: 100, height: this._workspace.getBoardHeight() }));
 
@@ -385,7 +386,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 		// {{ Getters }}
 
 		getIndex: function() {
-			return this._index;
+			return this._yIndex;
 		},
 
 		getColumns: function() {
@@ -408,15 +409,15 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
 		// {{ Public Methods }}
 
-		addColumnAtPosition: function(index, boardColumn) {
-			if (index == this._columns.length) this._columns.push(boardColumn);
-			else this._columns.splice(index, 0, boardColumn);
+		addColumnAtPosition: function(xIndex, boardColumn) {
+			if (xIndex == this._columns.length) this._columns.push(boardColumn);
+			else this._columns.splice(xIndex, 0, boardColumn);
 		},
 
-		replaceColumnAtPosition: function(index, boardColumn) {
-			this._columns[index].destroy();
+		replaceColumnAtPosition: function(xIndex, boardColumn) {
+			this._columns[xIndex].destroy();
 
-			this._columns[index] = boardColumn;
+			this._columns[xIndex] = boardColumn;
 		},
 
 		addColumn: function(boardColumn) {
