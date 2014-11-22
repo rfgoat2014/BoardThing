@@ -36,9 +36,42 @@
 
 #board-container .add-board {
 	position: relative;
+}
+
+#board-container .add-board .add-button {
+	position: absolute;
+	display: none;
 	border: 1px solid #CCCCCC;
     cursor: hand;
     cursor: pointer;
+}
+
+#board-container .add-board .north {
+	top: 0px;
+	left: 0px;
+	height: 98px;
+	border-top: 0px;
+}
+
+#board-container .add-board .south {
+	bottom: 0px;
+	left: 0px;
+	height: 98px;
+	border-bottom: 0px;
+}
+
+#board-container .add-board .east {
+	top: 0px;
+	right: 0px;
+	width: 98px;
+	border-right: 0px;
+}
+
+#board-container .add-board .west {
+	top: 0px;
+	left: 0px;
+	width: 96px;
+	border-left: 0px;
 }
 
 #board-container .board {

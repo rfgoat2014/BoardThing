@@ -199,8 +199,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			return this._zoom;
 		},
 
-		getAvailablePositions: function(boardPosition) {
-			if (this._boardMap) return this._boardMap.getAvailablePositions(boardPosition);
+		getAvailablePositions: function(xPos, yPos) {
+			if (this._boardMap) return this._boardMap.getAvailablePositions(xPos, yPos);
 			else return [];
 		},
 
@@ -329,7 +329,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 							var xIndex = startXIndex+j;
 							if (xIndex >= 0) xIndex++;
 
-							boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: xIndex, positionY: yIndex, direction: "m" }));
+							boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: xIndex, positionY: yIndex, location: "body" }));
 						}
 					}
 				}
@@ -903,6 +903,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i++) {
 					if ((elementId) && (this._boardEntities[i].getId() == elementId)) {
 						boardId = this._boardEntities[i].getBoardId();
+
 						this._boardEntities[i].setZPos(999999999999999);
 					}
 
