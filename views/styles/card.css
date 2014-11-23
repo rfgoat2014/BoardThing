@@ -159,8 +159,6 @@
 
 .card-settings-menu .menu-item {
     position: relative;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 14px;
     font-weight: bold;
     color: #333333;
     background-color: #FFFFFF;
@@ -178,8 +176,6 @@
 }
 
 .card-content-body {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size:14px;
     font-weight: normal;
     color: #000000;
     cursor: hand;
@@ -221,9 +217,6 @@
 
 .card-image-title {
     padding-top: 10px; 
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    font-weight: normal;
     color: #222222;
     word-wrap: break-word;
 }

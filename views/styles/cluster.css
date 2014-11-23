@@ -61,8 +61,6 @@
 }
 
 .cluster-body .title {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size:14px;
     font-weight: bold;
     color: #111111;
     width: 180px;
@@ -80,8 +78,6 @@
 }
 
 .cluster-body-collapsed .title {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size:14px;
     font-weight: bold;
     color: #111111;
     width: 159px;
@@ -118,8 +114,6 @@
 
 .cluster-settings-menu .menu-item {
     position: relative;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 14px;
     font-weight: bold;
     color: #333333;
     background-color: #FFFFFF;
@@ -141,8 +135,7 @@
     float:left;
     margin-top: 3px;
     margin-right: -5px;
-    margin-bottom: -5px;    
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin-bottom: -5px;
     font-size:10px;
     font-weight: normal;
     color: #222222;
@@ -163,8 +156,6 @@
 .editable-title {
     position: relative;
     top: -1px;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size:14px;
     font-weight: bold;
     color: #111111;
     padding: 0px;

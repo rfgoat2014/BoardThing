@@ -571,6 +571,14 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 	    	this.model.zPos = value;
 	    },
 
+	    setHidden: function() {
+	    	this.$el.hide();
+	    },
+
+	    setVisible: function() {
+	    	this.$el.show();
+	    },
+
 	    // ********** Cluster specific setters **********
 
 	    addCard: function(cardModel) {

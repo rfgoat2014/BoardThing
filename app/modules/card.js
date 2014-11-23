@@ -448,6 +448,14 @@ function(Card_Services, Cluster_Services) {
 	    	this.model.zPos = value;
 	    },
 
+	    setHidden: function() {
+	    	this.$el.hide();
+	    },
+
+	    setVisible: function() {
+	    	this.$el.show();
+	    },
+
 	    // {{ Public Methods }}
 
 		// ********** Actions for displaying edit icons **********

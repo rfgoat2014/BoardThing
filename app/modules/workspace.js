@@ -412,19 +412,34 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				this._zoom = Math.round(this._zoom * 100) / 100;
 
 				this.renderZoom();
+
+				if (this._zoom === 0.2) {
+					for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+						this._boardEntities[i].setVisible();
+					}
+				}
 			}
 		},
 
 		zoomOut: function() {
 			if (this._zoom > 0.1) {
+
 				this._zoom -= 0.1;
 				this._zoom = Math.round(this._zoom * 100) / 100;
 
 				this.renderZoom();
+
+				if (this._zoom === 0.1) {
+					for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+						this._boardEntities[i].setHidden();
+					}
+				}
 			}
 		},
 
 		renderZoom: function() {
+			this.$("#zoom-container").html(Math.round(this._zoom*100) + "%");
+
 			if (this._mode == "boardMap") {
 				this._boardMap.setZoom(this._zoom);
 				this._boardMap.center();
