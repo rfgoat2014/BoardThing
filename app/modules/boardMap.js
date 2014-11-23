@@ -207,7 +207,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 	            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
 					if ((i === 0) && (this._rows[i].getYIndex() > yPos)) {
 						this.addRow(this._startXIndex, yPos, 0);
+
 						this._startYIndex--;
+						if (this._startYIndex === 0) this._startYIndex--;
+
 						rowIndex = 0;
 						newRow = true;
 						break;
@@ -226,63 +229,70 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			}
 			else {
 				this.addRow(this._startXIndex, yPos, 0);
-				this._startYIndex--;
+						
+				this._startYIndex = yPos;
+
 				rowIndex = 0;
 				newRow = true;
 			}
 
 			if (rowIndex != -1) {
-				var referenceRowColumns = [],
-					rowColumns = this._rows[rowIndex].getColumns();
+				if (newRow) {
+					var referenceColumns = [];
 
-				if (rowIndex != 0) referenceRowColumns = this._rows[0].getColumns();
-				else if (this._rows.length > 1) referenceRowColumns = this._rows[1].getColumns();
+					if (rowIndex == 0) referenceColumns = this._rows[1].getColumns();
+					else referenceColumns = this._rows[rowIndex-1].getColumns();
 
-				if (referenceRowColumns.length > 0) {
-					for (var i=0, referenceRowColumnsLength=referenceRowColumns.length; i<referenceRowColumnsLength; i+=1) {
-						if ((i === 0) && (referenceRowColumns[i].getPositionX() > xPos)) {
-							this._rows[rowIndex].addColumnAtPosition(0, board);
-							this._startXIndex--;
-							columnIndex = 0;
-							newColumn = true;
-						}
-						else if ((rowColumns[i] != null ) && (rowColumns[i].getPositionX() == xPos)) {
-							this._rows[rowIndex].replaceColumnAtPosition(i, board);
-							columnIndex = i;
-							break;
-						}
-						else if ((rowColumns[i] == null ) && (referenceRowColumns[i].getPositionX() == xPos)) {
-							this._rows[rowIndex].addColumnAtPosition(i, board);
-							columnIndex = i;
-						}
-						else if (newRow) {
-							this._rows[rowIndex].addColumnAtPosition(i, new AddBoard.Index({ workspace: this._workspace, positionX: referenceRowColumns[i].getPositionX(), positionY: this._rows[rowIndex].getYIndex(), location: "body" }));
-						}
-					}
-
-					if (columnIndex === -1) {
-						this._rows[rowIndex].addColumnAtPosition(this._rows.length, board);
-						columnIndex = rowColumns.length-1;
-						newColumn = true;
-					}
+	            	for (var i=0, referenceColumnsLength = referenceColumns.length; i<referenceColumnsLength; i+=1) {
+	        			this._rows[rowIndex].addColumnAtPosition(i, new AddBoard.Index({ 
+	        				workspace: this._workspace, 
+	        				positionX: referenceColumns[i].getPositionX(), 
+	        				positionY: this._rows[rowIndex].getYIndex(), 
+	        				location: "body" 
+	        			}));
+	        		}
 				}
-				else {
+
+				if (xPos < this._startXIndex) {
 					this._rows[rowIndex].addColumnAtPosition(0, board);
+					
 					this._startXIndex--;
+					if (this._startXIndex === 0) this._startXIndex--;
+
 					columnIndex = 0;
 					newColumn = true;
 				}
+				else {
+					var rowColumns = this._rows[rowIndex].getColumns(),
+						columnFound = false;
 
-				if (newColumn) {
-					var referenceColumns = this._rows[rowIndex].getColumns();
+	            	for (var i=0, rowColumnsLength = rowColumns.length; i<rowColumnsLength; i+=1) {
+            			if (rowColumns[i].getPositionX() === xPos) {
+            				this._rows[rowIndex].replaceColumnAtPosition(i, board);
+            				columnFound = true;
+            			}
+	            	}
 
-	            	for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
-	            		if (i != rowIndex) {
-	            			if (columnIndex === 0) this._rows[i].addColumnAtPosition(0, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[0].getPositionX(), positionY: this._rows[i].getYIndex(), location: "body" }));
-							else this._rows[i].addColumnAtPosition(this._rows[i].getColumns().length, new AddBoard.Index({ workspace: this._workspace, positionX: referenceColumns[this._rows[i].getColumns().length].getPositionX()+1, positionY: this._rows[i].getYIndex(), location: "body" }));
-		            	}
+	            	if (!columnFound) {
+	            		this._rows[rowIndex].addColumnAtPosition(rowColumns.length, board);
+
+						columnIndex = rowColumns.length;
+						newColumn = true;
 	            	}
 				}
+
+				if (newColumn) {
+	            	for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+	            		if (i != rowIndex) {
+	            			if (columnIndex === 0) this._rows[i].addColumnAtPosition(0, new AddBoard.Index({ workspace: this._workspace, positionX: this._startXIndex, positionY: this._rows[i].getYIndex(), location: "body" }));
+							else {
+								this._rows[i].addColumnAtPosition(this._rows[rowIndex].getColumns().length, new AddBoard.Index({ workspace: this._workspace, positionX: this._rows[rowIndex].getColumns()[(rowColumns.length-1)].getPositionX(), positionY: this._rows[i].getYIndex(), location: "body" }));
+		            		}
+		            	}
+
+						this._rows[i].setXIndex(this._startXIndex);
+	            	}
+	            }
 			}
 
 			this.destroyRows();
@@ -456,6 +466,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
         	return boards;
         },
+
+		// {{ Setters }}
+
+		setXIndex: function(xIndex) {
+			this._xIndex = xIndex;
+		},
 
         getColumnCount: function() {
         	return this._columns.length;

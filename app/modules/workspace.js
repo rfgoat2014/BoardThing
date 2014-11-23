@@ -306,32 +306,36 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			boardYIndexes.sort(function(a,b) { return a - b; });
 
 			var startXIndex = 1,
-				startYIndex = 1;
+				xIndex = 1,
+				yIndex = 1;
 
 			if (boardXIndexes.length > 0) startXIndex = boardXIndexes[0];
-			if (boardYIndexes.length > 0) startYIndex = boardYIndexes[0];
+			if (boardYIndexes.length > 0) yIndex = boardYIndexes[0];
 
-			this._boardMap = new BoardMap.Index({ startXIndex: startXIndex, startYIndex: startYIndex, workspace: this });
+			if (startXIndex == 0) startXIndex++;
+			if (yIndex == 0) yIndex++;
+
+			this._boardMap = new BoardMap.Index({ startXIndex: startXIndex, startYIndex: yIndex, workspace: this });
 
 			for (var i=0; i<boardYIndexes.length; i+=1) {
-				var yIndex = startYIndex+i;
-				if (yIndex >= 0) yIndex++;
+				xIndex = startXIndex;
 
-				var boardRow = this._boardMap.addRow(startXIndex, yIndex);
+				if (yIndex == 0) yIndex++;
+
+				var boardRow = this._boardMap.addRow(xIndex, yIndex);
 
 				if (boards[boardYIndexes[i]] != null) {
 					for (var j=0; j<boardXIndexes.length; j+=1) {
-						if (boards[boardYIndexes[i]][boardXIndexes[j]] != null) {
-							boardRow.addColumn(boards[boardYIndexes[i]][boardXIndexes[j]]);
-						}
-						else {
-							var xIndex = startXIndex+j;
-							if (xIndex >= 0) xIndex++;
+						if (xIndex == 0) xIndex++;
 
-							boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: xIndex, positionY: yIndex, location: "body" }));
-						}
+						if (boards[boardYIndexes[i]][boardXIndexes[j]] != null) boardRow.addColumn(boards[boardYIndexes[i]][boardXIndexes[j]]);
+						else boardRow.addColumn(new AddBoard.Index({ workspace: this, positionX: xIndex, positionY: yIndex, location: "body" }));
+						
+						xIndex++;
 					}
 				}
+
+				yIndex++;
 			}
 		},
 
