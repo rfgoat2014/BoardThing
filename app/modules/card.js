@@ -212,7 +212,7 @@ function(Card_Services, Cluster_Services) {
 
 				this.$el.dblclick(function(e) {
 					if (that.model.isLocked) {
-	        			that._workspace._dropPosition = { x: that._workspace._currentMousePosition.x,  y: that._workspace._currentMousePosition.y };
+	        			//that._workspace._dropPosition = { x: that._workspace._currentMousePosition.x,  y: that._workspace._currentMousePosition.y };
 	        			that._workspace._cardsDroppedInPosition = 0;
 
 						that._workspace.showAddCard();

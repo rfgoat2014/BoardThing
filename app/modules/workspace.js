@@ -27,8 +27,6 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 		_mode: "boardMap",
 
-		_currentMousePosition: { x: -1, y: -1 },
-
 		_zoom: 1,
 
 		_boardMap: null,
@@ -36,6 +34,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 		_boardEntities: [],
 		
+		_dropBoardId: null,
 		_dropPosition: null,
 	    _cardsDroppedInPosition: 0,
 
@@ -156,7 +155,12 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 		            canvas.addEventListener('dblclick', function(e) {
 						if (that.getSelectedPageTool() == "card") {
-		        			that._dropPosition = { x: that._currentMousePosition.x,  y: that._currentMousePosition.y };
+		        			that._dropBoardId = boardId;
+
+		        			that._dropPosition = { 
+		        				x: e.offsetX,  
+		        				y: e.offsetY 
+		        			};
 
 		        			that._cardsDroppedInPosition = 0;
 
@@ -174,10 +178,6 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
       	},
 
 		// {{ Getters }}
-
-		getCurrentMousePosition: function() {
-			return this._currentMousePosition;
-		},
 
 		getSelectedColor: function() {
 			return "#ffffff";
@@ -251,8 +251,13 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			return this.model.boards;
 		},
 
+		getDropBoardId: function() {
+			return this._dropBoardId;
+		},
+
 		getSelectedBoardId: function() {
-			return this._selectedBoard.getId();
+			if (this._selectedBoard) return this._selectedBoard.getId();
+			else return null;
 		},
 
 		getBoardEntity: function(id) {
@@ -266,12 +271,6 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			}
 
 			return null;
-		},
-
-		// {{ Setters }}
-
-		setCurrentMousePosition: function(currentMousePosition) {
-			this._currentMousePosition = currentMousePosition;
 		},
 
 		// {{ Public Methods }}
@@ -513,8 +512,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		cardAdded: function(card) {
     		try {
 				var that = this,
-					xPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).width()/2)+this.getBoardScrollWidth()-90,
-					yPos = Math.floor(this.$("#board-cards_" + this._selectedBoard.getId()).height()/2)+this.getBoardScrollHeight();
+					xPos = Math.floor(this.$("#board-cards_" + this._dropBoardId).width()/2)-90,
+					yPos = Math.floor(this.$("#board-cards_" + this._dropBoardId).height()/2);
 
 				if (this._dropPosition) {
 					xPos = this._dropPosition.x;
@@ -525,7 +524,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					id: card.id, 
 					parentId: null,
 					type: card.type,  
-					boardId: this._selectedBoard.getId(),
+					boardId: this._dropBoardId,
 					boardOwner: this.model.owner,	
 					title: card.title, 
 					content: card.content, 
@@ -540,7 +539,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					color: card.color
 				};
 
-				Card_Services.UpdatePosition(this.model.id, this._selectedBoard.getId(), newCard.id, newCard.xPos, newCard.yPos, function() {
+				Card_Services.UpdatePosition(this.model.id, this._dropBoardId, newCard.id, newCard.xPos, newCard.yPos, function() {
 					that.sendSocket(JSON.stringify({ 
 						action:"updateCardPosition", 
 						workspace: that.model.id,

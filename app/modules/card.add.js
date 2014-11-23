@@ -121,8 +121,7 @@ function(Card_Services, Cluster_Services) {
 
 		saveCard: function(e) {
 			var that = this,
-				boardId = this._workspace.getSelectedBoardId();
-
+				boardId = this._workspace.getDropBoardId();
 
 			if (this.$("#card-text").val().trim().length > 0) {
 				if (!this._cardModel) {
