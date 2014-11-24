@@ -12,8 +12,3 @@ This will be the build for the newest version of BoardThing. We intend to build 
 Frameworks ---------------
 
 Initially the main board listing page was built using AngularJS and the main board was wrote with Backbone.js. The new version will ony be using Backbone.js.
-
-
-Initial Goals ---------------
-
-- Recreate the cards and clusters for the new board map
