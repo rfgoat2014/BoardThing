@@ -9,7 +9,7 @@ define([
 	"modules/cluster.model",
 	"modules/boardMap",
 	"modules/utils",
-	"modules/CSS.helpers",
+	"modules/css.helpers",
 	"modules/workspace.services",
 	"modules/board.services",
 	"modules/card.services",

@@ -2,7 +2,7 @@ define([
 	"modules/board.add",
 	"modules/board",
 	"modules/board.placeholder",
-	"modules/CSS.helpers",
+	"modules/css.helpers",
 	"modules/board.services",
 	"modules/workspace.services",
 	"jquery",

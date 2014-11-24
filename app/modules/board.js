@@ -1,5 +1,5 @@
 define([
-	"modules/CSS.helpers",
+	"modules/css.helpers",
 	"jquery"
 ],
 
