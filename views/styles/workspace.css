@@ -77,6 +77,36 @@
 	color: #fff;
 }
 
+/* board navigation */
+
+#north-board-navigation {
+	top: 30px;
+	left: 50%;
+}
+
+#south-board-navigation {
+	bottom: 30px;
+	left: 50%;
+}
+
+#east-board-navigation {
+	top: 50%;
+	right: 30px;
+}
+
+#west-board-navigation {
+	top: 50%;
+	left: 30px;
+}
+
+.workspace-navigation {
+    display:none;
+    position:fixed;
+	cursor: hand;
+	cursor: pointer;
+	z-index: 15;
+}
+
 #overlay {
     display:none;
     position:fixed;

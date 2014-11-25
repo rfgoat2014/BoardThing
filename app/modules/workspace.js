@@ -30,6 +30,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		_zoom: 1,
 
 		_boardMap: null,
+		_selectedBoardId: null,
 		_selectedBoard: null,
 
 		_boardEntities: [],
@@ -74,6 +75,15 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			this.$("#view-board-map").unbind("click");
 
 			this.$("#card-create-overlay").unbind("click");
+
+			this.$("#zoom-in-container").unbind("click");
+			this.$("#zoom-out-container").unbind("click");
+
+			this.$("#north-board-navigation").unbind("click");
+			this.$("#south-board-navigation").unbind("click");
+			this.$("#east-board-navigation").unbind("click");
+			this.$("#west-board-navigation").unbind("click");
+
 		},
 
 		bind: function() {
@@ -96,6 +106,70 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 			this.$("#zoom-out-container").click(function(event) {
 				that.zoomOut();
+			});
+
+			this.$("#north-board-navigation").click(function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+			
+				if (that._selectedBoard) {
+					var newXPos = that._selectedBoard.getPositionX(),
+						newYPos = that._selectedBoard.getPositionY()-1,
+						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+
+					if (newSelectedBoard) {
+						that._selectedBoardId = newSelectedBoard.getId();
+						that.renderBoards();
+					}
+				}
+			});
+
+			this.$("#south-board-navigation").click(function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+			
+				if (that._selectedBoard) {
+					var newXPos = that._selectedBoard.getPositionX(),
+						newYPos = that._selectedBoard.getPositionY()+1,
+						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+
+					if (newSelectedBoard) {
+						that._selectedBoardId = newSelectedBoard.getId();
+						that.renderBoards();
+					}
+				}
+			});
+
+			this.$("#east-board-navigation").click(function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+			
+				if (that._selectedBoard) {
+					var newXPos = that._selectedBoard.getPositionX()+1,
+						newYPos = that._selectedBoard.getPositionY(),
+						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+
+					if (newSelectedBoard) {
+						that._selectedBoardId = newSelectedBoard.getId();
+						that.renderBoards();
+					}
+				}
+			});
+
+			this.$("#west-board-navigation").click(function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+			
+				if (that._selectedBoard) {
+					var newXPos = that._selectedBoard.getPositionX()-1,
+						newYPos = that._selectedBoard.getPositionY(),
+						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+
+					if (newSelectedBoard) {
+						that._selectedBoardId = newSelectedBoard.getId();
+						that.renderBoards();
+					}
+				}
 			});
 		},
 
@@ -285,6 +359,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				maxRowSize = 0,
 				maxColSize = 0;
 
+			this._selectedBoardId = this.model.startBoardId;
+
 			for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
 				var board = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode }),
 					positionX = board.getPositionX(),
@@ -344,6 +420,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		renderBoards: function() {
 			var that = this;
 
+			this.$(".workspace-navigation").hide();
 			this.$("#board-container").empty();
 
 			// Now we have the board map we need to determine if we are looking at a single view or the entire map
@@ -356,10 +433,19 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			}
 			else if (this._mode == "individual") {
 				if (this._selectedBoard) this._selectedBoard.destroy();
+				this._selectedBoard = null;
 
-				// If we cant find the starting board then just take the first. If we still can't then set up a dummy
-				if ((!this._selectedBoard) && (this.model.boards.length > 0)) this._selectedBoard = new Board.Index({ model: this.model.boards[0], workspace: this, mode: this._mode });
-				
+				if (!this._selectedBoardId) this._selectedBoardId = this.model.boards[0].id;
+
+				for (var i=0, boardsLength=this.model.boards.length; i<boardsLength; i+=1) {
+					if (this.model.boards[i].id == this._selectedBoardId) {
+						this._selectedBoard = new Board.Index({ model: this.model.boards[i], workspace: this, mode: this._mode });
+						break;
+					}
+				}
+
+				if (!this._selectedBoard) this._selectedBoard = new Board.Index({ model: this.model.boards[0], workspace: this, mode: this._mode });
+
 				this._selectedBoard.render();
 
 				this.$("#board-container").html(this._selectedBoard.$el);
@@ -367,6 +453,13 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				$(window).resize(function(){
 				   that._selectedBoard.center();
 				});
+
+				var boardPositions = this._boardMap.getTakenPositions(that._selectedBoard.getPositionX(), that._selectedBoard.getPositionY());
+					
+				if (boardPositions.indexOf("n") !== -1) this.$("#north-board-navigation").show();
+				if (boardPositions.indexOf("s") !== -1) this.$("#south-board-navigation").show();
+				if (boardPositions.indexOf("e") !== -1) this.$("#east-board-navigation").show();
+				if (boardPositions.indexOf("w") !== -1) this.$("#west-board-navigation").show();
 			}
 
 			this.renderZoom();

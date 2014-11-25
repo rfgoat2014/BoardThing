@@ -247,7 +247,7 @@ var buildReturnWorkspace = function(res, req, workspace) {
 						return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
 					});
 
-					if ((!returnWorkspace.startBoardId) && (boards[i].position == 1)) returnWorkspace.startBoardId = boards[i]._id;
+					if ((!returnWorkspace.startBoardId) && ((boards[i].positionX == 1) && (boards[i].positionY == 1))) returnWorkspace.startBoardId = boards[i]._id;
 				}
 			}
 

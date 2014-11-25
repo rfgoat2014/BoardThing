@@ -120,8 +120,45 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 		},
 
 		getAvailablePositions: function(xPos, yPos) {
-			var availablePositions = [],
-				northAvailable = true,
+			var availablePositionsArray = [],
+				availablePositions = this.getAvailableBoardPositions(xPos, yPos);
+
+			if (availablePositions.north) availablePositionsArray.push("n");
+			if (availablePositions.south) availablePositionsArray.push("s");
+			if (availablePositions.east) availablePositionsArray.push("e");
+			if (availablePositions.west) availablePositionsArray.push("w");
+
+			return availablePositionsArray;
+		},
+
+		getTakenPositions: function(xPos, yPos) {
+			var availablePositionsArray = [],
+				availablePositions = this.getAvailableBoardPositions(xPos, yPos);
+
+			if (!availablePositions.north) availablePositionsArray.push("n");
+			if (!availablePositions.south) availablePositionsArray.push("s");
+			if (!availablePositions.east) availablePositionsArray.push("e");
+			if (!availablePositions.west) availablePositionsArray.push("w");
+
+			return availablePositionsArray;
+		},
+
+		getBoardAtPosition: function(xPos, yPos) {
+            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+            	if (this._rows[i].getYIndex() === yPos) {
+	            	var boards = this._rows[i].getBoards();
+
+        			for (var j=0, boardsLength = boards.length; j<boardsLength; j+=1) {
+	            		if (boards[j].getPositionX() === xPos) return boards[j];
+        			}
+        		}
+        	}
+
+        	return null;
+		},
+
+		getAvailableBoardPositions: function(xPos, yPos) {
+			var northAvailable = true,
 				southAvailable = true,
 				eastAvailable = true,
 				westAvailable = true;
@@ -163,12 +200,12 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 				}
 			}
 
-			if (northAvailable) availablePositions.push("n");
-			if (southAvailable) availablePositions.push("s");
-			if (eastAvailable) availablePositions.push("e");
-			if (westAvailable) availablePositions.push("w");
-
-			return availablePositions;
+			return {
+				north: northAvailable,
+				south: southAvailable,
+				east: eastAvailable,
+				west: westAvailable
+			};
 		},
 
 		getBoardInPosition: function(xPos, yPos) {
