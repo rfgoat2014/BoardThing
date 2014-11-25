@@ -353,7 +353,6 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				this._boardMap.render();
 				
 				this.$("#board-container").html(this._boardMap.$el);
-
 			}
 			else if (this._mode == "individual") {
 				if (this._selectedBoard) this._selectedBoard.destroy();
@@ -468,6 +467,16 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			var that = this;
             
             Board_Services.Insert(this.model.id, "New Board", positionX, positionY, function(response) {
+            	that.model.boards.push(response.board);
+            	
+				that.model.boards.sort(function (a, b) { 
+					return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
+				});
+
+				that.model.boards.sort(function (a, b) { 
+					return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
+				});
+
             	that._boardMap.addBoardInPosition(positionX, positionY, new Board.Index({ model: response.board, workspace: that, mode: that._mode }));
             });
 		},
