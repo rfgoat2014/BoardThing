@@ -832,6 +832,30 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			}
 		},
 
+		setCardToCluster: function(boardId, sourceCardId, targetCardId) {
+			var that = this,
+				clusterModel = {
+	  				id: targetCardId,
+	  				boardId: boardId,
+	  				action: "create",
+	  				cards: [{ id: sourceCardId }]
+	  			};
+
+  			Cluster_Services.Insert(this.model.id, boardId, targetCardId, clusterModel, function() {
+  				that.createClusterFromCard(boardId, sourceCardId, targetCardId);
+
+  				that._socket.send(JSON.stringify({ 
+  					action:"createClusterFromCard", 
+  					workspace: that.model.id, 
+  					cluster: {
+  						boardId: boardId, 
+  						sourceCardId: sourceCardId, 
+  						targetCardId: targetCardId
+  					} 
+  				}));
+  			});
+		},
+
 		createClusterFromCard: function(boardId, sourceCardId, targetCardId) {
 			try {
 				var that = this,
@@ -867,21 +891,6 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					}
 
 					if (targetCard) {
-			  			var clusterModel = {
-			  				id: targetCard.id,
-			  				boardId: boardId,
-			  				action: "create",
-			  				cards: [{ id: sourceCard.id }]
-			  			};
-
-			  			Cluster_Services.Insert(this.model.id, boardId, targetCard.id, clusterModel, function() {
-			  				that._socket.send(JSON.stringify({ 
-			  					action:"createClusterFromCard", 
-			  					workspace: that.model.id, 
-			  					cluster: clusterModel 
-			  				}));
-			  			});
-
 			  			this.addClusterToBoard(targetCard, sourceCard);
 
 						this.sortZIndexes(targetCard.id, true);
@@ -1347,11 +1356,16 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 										}
 									}
 								break;
+								case "createClusterFromCard":
+									var clusterDetail = socketPackage.cluster;
+
+									that.createClusterFromCard(clusterDetail.boardId, clusterDetail.sourceCardId, clusterDetail.targetCardId);
+									break;
 								case "addCardToCluster":
 		    						var updateDetail = socketPackage.updateDetail;
 
 		    						that.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
-								break;
+									break;
 								case "removeCardFromCluster":
 		    						var updateDetail = socketPackage.updateDetail;
 

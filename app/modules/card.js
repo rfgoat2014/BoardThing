@@ -364,7 +364,7 @@ function(Card_Services, Cluster_Services) {
 				        		var entity = that._workspace.getBoardEntity(elementId);
 
 								if (entity.getType() == "card") {
-									if (!entity.getIsLocked()) that._workspace.createClusterFromCard(targetBoard.getId(), that.model.id, elementId);
+									if (!entity.getIsLocked()) that._workspace.setCardToCluster(targetBoard.getId(), that.model.id, elementId);
 									else {
 							        	that.updateCardPosition(that.model.xPos, that.model.yPos);
 								    	

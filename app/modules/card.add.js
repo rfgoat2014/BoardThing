@@ -133,12 +133,15 @@ function(Card_Services, Cluster_Services) {
 					};
 					
 					Card_Services.InsertTextCard(this._workspace.getId(), boardId, newCard, function(response) {
-						that._workspace.cardAdded(response.card);
+						var addedCard = response.card;
+						addedCard.boardId = boardId;
+
+						that._workspace.cardAdded(addedCard);
 
 						that._workspace.sendSocket(JSON.stringify({ 
 							action:"boardCardAdded", 
 							workspace: that._workspace.getId(), 
-							card: response.cards 
+							card: addedCard
 						}));
 					});
 				}
