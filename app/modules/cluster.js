@@ -292,7 +292,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 							clusterPosition = {
 								x: that.$el.position().left + totalParentOffset.x,
 								y: that.$el.position().top + totalParentOffset.y
-							}, mousePosition = {
+							}, 
+							mousePosition = {
 								x: (e.pageX/zoom) + that._workspace.getBoardScrollWidth() - boardDistanceFromSource.x,
 								y: (e.pageY/zoom) + that._workspace.getBoardScrollHeight() - boardDistanceFromSource.y
 							};
@@ -327,16 +328,20 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 						if (elementId == -1) {
 							if (that._parent) {
-								that._parent.removeCard(that.model.id);
+								that._parent.removeCard(that.model.id, {
+									xPos: that.model.xPos,
+									yPos: that.model.yPos
+								});
 						    	
 								that.model.collapsed = false;
 
 						    	that._workspace.addClusterToBoard(that.model);
 							}
-
-					        that.updateClusterPosition(that.model.xPos, that.model.yPos);
+							else {
+								that.updateClusterPosition(that.model.xPos, that.model.yPos);
 						    	
-					    	that._workspace.sortZIndexes(that.model.id, true);
+					    		that._workspace.sortZIndexes(that.model.id, true);
+					    	}
 			        	}
 			        	else {
 			        		var entity = that._workspace.getBoardEntity(elementId);
@@ -664,18 +669,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}	
 		},
 
-		// ----- Set switch the clusters collapsed position
-		toggleCollapsed: function() {
-	        if (this.model.parentId) {
-				if (this.model.collapsed) this.expandCluster();
-				else this.collapseCluster();
-			}
-			else {
-				if (this.model.collapsed) this.saveAndExpandCluster();
-				else this.saveAndCollapseCluster();
-			}
-		},
-
 		// ********** Actions to update sort position **********
 
 		changeSortPosition: function(selectedElement) {
@@ -737,12 +730,6 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						this.model.cards[j].zPos = (i+1);
 					}
 	        	}
-
-				if (!elementFound) {
-					for (var j=0, clustersLength=this.model.clusters.length; j<clustersLength; j+=1) {
-   						if (this.model.clusters[j].id == cards[i]) this.model.clusters[j].zPos = i+1;
-		        	}
-		        }
 			}
 
 			this.render();
@@ -820,6 +807,18 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
+		// ----- Set switch the clusters collapsed position
+		toggleCollapsed: function() {
+	        if (this.model.parentId) {
+				if (this.model.collapsed) this.expandCluster();
+				else this.collapseCluster();
+			}
+			else {
+				if (this.model.collapsed) this.saveAndExpandCluster();
+				else this.saveAndCollapseCluster();
+			}
+		},
+
 		// ********** Actions for editing cluster **********
 
 		editCluster: function(e) {
@@ -881,7 +880,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
-		removeCard: function(cardId) {
+		removeCard: function(cardId, position) {
 			var that = this,
 				cardModel = null;
 
@@ -891,17 +890,30 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 
 					this.model.cards.splice(i,1);
 
+					var updateDetail = {
+						clusterId: that.model.id,
+						cardId: cardId
+					};
+
+					if (position) {
+						updateDetail.xPos = position.xPos;
+						updateDetail.yPos = position.yPos;
+					}
+
 					if (cardModel.cards.length === 0) {
 						// This is a card so call the detach card method
 						Cluster_Services.DetachCard(that._workspace.getId(), that.model.boardId, that.model.id, cardId, function(response) {
 			            	if (response.code == 200) {
+								if (position) {
+									Card_Services.UpdatePosition(that._workspace.getId(), that.model.boardId, cardId, position.xPos, position.yPos);
+
+							    	//that._workspace.sortZIndexes(that.model.id, true);
+								}
+
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeCardFromCluster", 
 									workspace: that._workspace.getId(),
-									updateDetail: {
-										clusterId: that.model.id,
-										cardId: cardId
-									}
+									updateDetail: updateDetail
 								}));
 							}
 						});
@@ -910,13 +922,16 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 						// This is a card so call the detach cluster method
 						Cluster_Services.DetachCluster(that._workspace.getId(), that.model.boardId, that.model.id, cardId, function(response) {
 			            	if (response.code == 200) {
+								if (position) {
+									Cluster_Services.UpdatePosition(that._workspace.getId(), that.model.boardId, cardId, position.xPos, position.yPos);
+							    	
+							    	that._workspace.sortZIndexes(that.model.id, true);
+								}
+
 								that._workspace.sendSocket(JSON.stringify({ 
 									action:"removeClusterFromCluster", 
 									workspace: that._workspace.getId(),
-									updateDetail: {
-										clusterId: that.model.id,
-										cardId: cardId
-									}
+									updateDetail: updateDetail
 								}));
 							}
 						});
@@ -947,18 +962,47 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		},
 
 		makeClusterCard: function(clusterId) {
-			var clusterUpdated = false,
-				clusters = this.model.clusters;
+			var clusterUpdated = false;
 
-			for (var i=0, clustersLength=clusters.length; i<clustersLength; i+=1) {
-				if ((clusters[i] != null) && (clusters[i].id == clusterId)) {
-					that.model.clusters.splice(i,1);
+			for (var i=0, clustersLength=cards.length; i<clustersLength; i+=1) {
+				if ((cards[i] != null) && (cards[i].id == clusterId)) {
+					that.model.cards.splice(i,1);
 
 					clusterUpdated = true;
 				}
 			}
 
 			if (clusterUpdated) this.render();
+		},
+
+		detachAndReturn: function(itemId) {
+			var modelItem = null;
+
+			if (this.model.cards) {
+				for (var i=(this.model.cards.length-1); i>=0; i-=1) {
+					if (this.model.cards[i].id == itemId) {
+						modelItem = this.model.cards[i];
+
+						this.model.cards.splice(i,1);
+					}
+				}
+			}
+
+			if (modelItem) {
+				this.render();
+
+				return modelItem;
+			}
+
+			for (var i=0; i<this._childViews.length; i++) {
+		       	if (this._childViews[i].getType() == "cluster") {
+					var searched = this._childViews[i].detachAndReturn(itemId);
+
+					if (searched) return searched;
+				}
+			}
+
+			return null;
 		},
 
 		// ********** Actions for managing attached cards **********

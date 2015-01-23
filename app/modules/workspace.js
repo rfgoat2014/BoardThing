@@ -771,6 +771,54 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			}
 		},
 
+		removeCardFromCluster: function(updateDetail) {
+			try {
+				var sourceCard = null;
+
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") sourceCard = this._boardEntities[i].detachAndReturn(updateDetail.cardId);
+
+					if (sourceCard) break;
+				}
+
+				if (sourceCard) {
+					sourceCard.width = null;
+					sourceCard.height = null;
+					sourceCard.xPos = updateDetail.xPos;
+					sourceCard.yPos = updateDetail.yPos;
+
+					this.addCardToBoard(sourceCard);
+				}
+			}
+			catch (err) {
+				Utils.sendClientError("removeCardFromCluster", err);
+			}
+		},
+
+		removeClusterFromCluster: function(updateDetail) {
+			try {
+				var sourceCard = null;
+
+				for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
+					if (this._boardEntities[i].getType() == "cluster") sourceCard = this._boardEntities[i].detachAndReturn(updateDetail.cardId);
+
+					if (sourceCard) break;
+				}
+
+				if (sourceCard) {
+					sourceCard.width = null;
+					sourceCard.height = null;
+					sourceCard.xPos = updateDetail.xPos;
+					sourceCard.yPos = updateDetail.yPos;
+
+					this.addClusterToBoard(sourceCard);
+				}
+			}
+			catch (err) {
+				Utils.sendClientError("removeCardFromCluster", err);
+			}
+		},
+
 		addClusterToBoard: function(clusterModel, cardModel) {
 			try {
 				var cluster = new Cluster.Item({ 
@@ -1294,6 +1342,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 								case "updateClusterPosition":
 		    						var position = socketPackage.position;
 
+
 		    						if (that._boardEntities) {
 										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
 											if (that._boardEntities[i].getId() == position.id) that._boardEntities[i].setClusterPosition(position.id,position.xPos,position.yPos); 
@@ -1364,7 +1413,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 								case "addCardToCluster":
 		    						var updateDetail = socketPackage.updateDetail;
 
-		    						that.addCardToCluster(updateDetail.clusterId, updateDetail.cardId);
+		    						that.addCardToCluster(updateDetail.boardId, updateDetail.clusterId, updateDetail.cardId);
 									break;
 								case "removeCardFromCluster":
 		    						var updateDetail = socketPackage.updateDetail;

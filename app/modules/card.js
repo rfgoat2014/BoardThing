@@ -314,7 +314,8 @@ function(Card_Services, Cluster_Services) {
 								cardPosition = {
 									x: that.$el.position().left + totalParentOffset.x,
 									y: that.$el.position().top + totalParentOffset.y
-								}, mousePosition = {
+								}, 
+								mousePosition = {
 									x: (e.pageX/zoom) + that._workspace.getBoardScrollWidth() - boardDistanceFromSource.x,
 									y: (e.pageY/zoom) + that._workspace.getBoardScrollHeight() - boardDistanceFromSource.y
 								};
@@ -349,16 +350,20 @@ function(Card_Services, Cluster_Services) {
 
 							if (elementId == -1) {
 								if (that._parent) {
-									that._parent.removeCard(that.model.id);
+									that._parent.removeCard(that.model.id, {
+										xPos: that.model.xPos,
+										yPos: that.model.yPos
+									});
 							    	
 									that.model.collapsed = false;
 
 							    	that._workspace.addCardToBoard(that.model);
 								}
-
-						        that.updateCardPosition(that.model.xPos, that.model.yPos);
-							    	
-						    	that._workspace.sortZIndexes(that.model.id, true);
+								else {
+							        that.updateCardPosition(that.model.xPos, that.model.yPos);
+								    	
+							    	that._workspace.sortZIndexes(that.model.id, true);
+							    }
 				        	}
 				        	else {
 				        		var entity = that._workspace.getBoardEntity(elementId);
