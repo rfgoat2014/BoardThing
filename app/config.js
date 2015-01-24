@@ -9,7 +9,6 @@ require.config({
     	"touchpunch": "/libs/jquery.ui.touch-punch.min",
     	"cookies": "/libs/jquery.cookie",
 		"backbone": "/libs/backbone",
-		"raphael": "/libs/raphael-min",
     	"spectrum": "/libs/spectrum"
 	},
 	shim: {
