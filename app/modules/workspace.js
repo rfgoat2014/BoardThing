@@ -72,6 +72,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		// {{ Event Binding }}
 
 		unbind: function() {
+			this.$("#header-logo").unbind("click");
+
 			this.$("#view-board-map").unbind("click");
 
 			this.$("#card-create-overlay").unbind("click");
@@ -88,6 +90,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 		bind: function() {
 			var that = this;
+
+			this.$("#header-logo").click(function(event) {
+				window.location.href = "/main";
+			});
 
 			this.$("#view-board-map").click(function(event) {
 				if (that._mode == "boardMap") that._mode = "individual";
