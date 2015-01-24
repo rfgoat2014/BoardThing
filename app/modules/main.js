@@ -82,7 +82,7 @@ function(AddWorkspace, Workspace, Workspace_Services) {
 		},
 
 		viewWorkspace: function(workspaceId) {
-  			Backbone.history.navigate("workspace/" + workspaceId, true);
+  			window.location.href = "/workspace/" + workspaceId;
 		},
 
 		// ********** Actions to create a new workspace **********
