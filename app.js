@@ -27,12 +27,9 @@
 
 	app.set("view engine", "ejs");
 
-	// angular app
+	// app
   	app.use("/app", express.static(__dirname + "/app"));
   	
-  	// board
-  	app.use("/app_board", express.static(__dirname + "/app_board"));
-
 	// static resources that don't need compiling
 	app.use("/libs", express.static(__dirname + "/views/libs"));
 	app.use("/img", express.static(__dirname + "/views/img"));	
