@@ -596,6 +596,23 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			});
 
         	this._boardMap.addBoardInPosition(board.positionX, board.positionY, new Board.Index({ model: board, workspace: this, mode: this._mode }));
+		
+        	if ((this._mode == "individual") && (this._selectedBoard)) {
+    			var boardSouthPosition = (board.positionY+1),
+    				boardNorthPosition = (board.positionY-1),
+    				boardEastPosition = (board.positionX+1),
+    				boardWestPosition = (board.positionX-1);
+
+    			if (boardSouthPosition === 0) boardSouthPosition = -1;
+    			if (boardNorthPosition === 0) boardNorthPosition = 1;
+    			if (boardEastPosition === 0) boardEastPosition = 1;
+    			if (boardWestPosition === 0) boardWestPosition = -1;
+
+				if ((board.positionX === this._selectedBoard.getPositionX()) && (boardSouthPosition === this._selectedBoard.getPositionY())) this.$("#north-board-navigation").show();
+				if ((board.positionX === this._selectedBoard.getPositionX()) && (boardNorthPosition === this._selectedBoard.getPositionY())) this.$("#south-board-navigation").show();
+				if ((boardWestPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#east-board-navigation").show();
+				if ((boardEastPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#west-board-navigation").show();
+        	}
 		},
 
 		// ********** Adding cards **********
