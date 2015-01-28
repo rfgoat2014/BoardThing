@@ -119,8 +119,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				event.preventDefault();
 			
 				if (that._selectedBoard) {
+					var newYPos = that._selectedBoard.getPositionY()-1;
+					if (newYPos === 0) newYPos = -1;
+
 					var newXPos = that._selectedBoard.getPositionX(),
-						newYPos = that._selectedBoard.getPositionY()-1,
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -135,8 +137,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				event.preventDefault();
 			
 				if (that._selectedBoard) {
+					var newYPos = that._selectedBoard.getPositionY()+1;
+					if (newYPos === 0) newYPos = 1;
+
 					var newXPos = that._selectedBoard.getPositionX(),
-						newYPos = that._selectedBoard.getPositionY()+1,
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -151,8 +155,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				event.preventDefault();
 			
 				if (that._selectedBoard) {
-					var newXPos = that._selectedBoard.getPositionX()+1,
-						newYPos = that._selectedBoard.getPositionY(),
+					var newXPos = that._selectedBoard.getPositionX()+1;
+					if (newXPos === 0) newXPos = 1;
+
+					var newYPos = that._selectedBoard.getPositionY(),
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -165,10 +171,12 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			this.$("#west-board-navigation").click(function(event) {
 				event.stopPropagation();
 				event.preventDefault();
-			
+
 				if (that._selectedBoard) {
-					var newXPos = that._selectedBoard.getPositionX()-1,
-						newYPos = that._selectedBoard.getPositionY(),
+					var newXPos = that._selectedBoard.getPositionX()-1;
+					if (newXPos === 0) newXPos = -1;
+
+					var newYPos = that._selectedBoard.getPositionY(),
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
