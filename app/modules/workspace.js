@@ -574,18 +574,28 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			var that = this;
             
             Board_Services.Insert(this.model.id, "New Board", positionX, positionY, function(response) {
-            	that.model.boards.push(response.board);
-            	
-				that.model.boards.sort(function (a, b) { 
-					return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
-				});
+            	that.renderNewBoard(response.board)
 
-				that.model.boards.sort(function (a, b) { 
-					return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
-				});
-
-            	that._boardMap.addBoardInPosition(positionX, positionY, new Board.Index({ model: response.board, workspace: that, mode: that._mode }));
+				that.sendSocket(JSON.stringify({ 
+					action:"addBoard", 
+					workspace: that.getId(), 
+					board: response.board
+				}));
             });
+		},
+
+		renderNewBoard: function(board) {
+			this.model.boards.push(board);
+            	
+			this.model.boards.sort(function (a, b) { 
+				return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
+			});
+
+			this.model.boards.sort(function (a, b) { 
+				return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
+			});
+
+        	this._boardMap.addBoardInPosition(board.positionX, board.positionY, new Board.Index({ model: board, workspace: this, mode: this._mode }));
 		},
 
 		// ********** Adding cards **********
@@ -1264,6 +1274,14 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			    	if ((socketPackage != null) && (socketPackage.action != null)) {
 			    		try {
 			    			switch(socketPackage.action) {
+			    				case "addBoard":
+			    					var board = socketPackage.board,
+			    						boardExists = false;
+
+			    					if (this._boardMap) boardExists = (this._boardMap.getBoard(board.id) !== null);
+
+			    					if (!boardExists) that.renderNewBoard(board)
+			    					break;
 								case "boardCardAdded":
 			    					var card = socketPackage.card,
 			    						cardExists = false;
