@@ -521,8 +521,9 @@ function(Card_Services, Cluster_Services) {
 				that._workspace.sendSocket(JSON.stringify({ 
 					action:"updateCardPosition", 
 					workspace: that._workspace.getId(),
-					position: {
+					card: {
 			        	id: that.model.id,
+			        	boardId: that.model.boardId,
 			        	xPos: left,
 			        	yPos: top
 			        } 

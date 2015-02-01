@@ -1096,7 +1096,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		},
 		
 		// ---- Move the board that a card exists on
-		moveCardBoard: function(cardId,targetBoardId,targetBoardXPos,targetBoardYPos) {
+		moveCardBoard: function(cardId, targetBoardId, targetBoardXPos, targetBoardYPos) {
 			for (var i=0, boardEntitiesLength=this._boardEntities.length; i<boardEntitiesLength; i+=1) {
 				if (this._boardEntities[i].getId() == cardId) {								
 					this._boardEntities[i].setBoardId(targetBoardId);
@@ -1337,11 +1337,15 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 									}
 								break;
 								case "updateCardPosition":
-		    						var position = socketPackage.position;
+		    						var card = socketPackage.card;
 
 		    						if (that._boardEntities) {
 										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
-											if (that._boardEntities[i].getId() == position.id) that._boardEntities[i].setCardPosition(position.id,position.xPos,position.yPos); 
+											if (that._boardEntities[i].getId() == card.id) {
+												if (that._boardEntities[i].getBoardId() != card.boardId) that.moveCardBoard(card.id, card.boardId, card.xPos, card.yPos);
+
+												that._boardEntities[i].setCardPosition(card.id, card.xPos, card.yPos); 
+											}
 										}
 									}
 								break;
