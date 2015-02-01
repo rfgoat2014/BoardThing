@@ -40,9 +40,12 @@
 #board-container .add-board .add-button {
 	position: absolute;
 	display: none;
-	border: 1px solid #CCCCCC;
     cursor: hand;
     cursor: pointer;
+}
+
+#board-container .add-board .add-button:hover {
+	border: 1px solid #CCCCCC;
 }
 
 #board-container .add-board .north {
