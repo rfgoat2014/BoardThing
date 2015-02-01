@@ -652,8 +652,9 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			this._workspace.sendSocket(JSON.stringify({
 				action:"updateClusterPosition",
 				workspace: this._workspace.getId(),
-				position: {
+				cluster: {
 		        	id: this.model.id,
+		        	boardId: this.model.boardId,
 		        	xPos: left,
 		        	yPos: top
 		        }

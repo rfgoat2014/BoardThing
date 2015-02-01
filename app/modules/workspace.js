@@ -707,8 +707,9 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					that.sendSocket(JSON.stringify({ 
 						action:"updateCardPosition", 
 						workspace: that.model.id,
-						position: {
+						card: {
 				        	id: newCard.id,
+				        	boardId: newCard.boardId,
 				        	xPos: newCard.xPos,
 				        	yPos: newCard.yPos
 				        } 
@@ -1395,12 +1396,15 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 									}
 				    			break;
 								case "updateClusterPosition":
-		    						var position = socketPackage.position;
-
+		    						var cluster = socketPackage.cluster;
 
 		    						if (that._boardEntities) {
 										for (var i=0, boardEntitiesLength=that._boardEntities.length; i<boardEntitiesLength; i++) {
-											if (that._boardEntities[i].getId() == position.id) that._boardEntities[i].setClusterPosition(position.id,position.xPos,position.yPos); 
+											if (that._boardEntities[i].getId() == cluster.id) {
+												if (that._boardEntities[i].getBoardId() != cluster.boardId) that.moveCardBoard(cluster.id, cluster.boardId, cluster.xPos, cluster.yPos);
+
+												that._boardEntities[i].setClusterPosition(cluster.id, cluster.xPos, cluster.yPos); 
+											}
 										}
 									}
 								break;
