@@ -230,8 +230,6 @@ var buildReturnWorkspace = function(res, req, workspace) {
 					    title: boards[i].title,
 					    positionX: boards[i].positionX,
 					    positionY: boards[i].positionY,
-					    width: workspace.boardWidth,
-					    height: workspace.boardHeight,
 					    cards: [],
 					    created: boards[i].created,
 					    lastModified: lastModified

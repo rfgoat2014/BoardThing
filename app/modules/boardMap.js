@@ -214,9 +214,9 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 
             	for (var j=0, boardsLength = boards.length; j<boardsLength; j+=1) {
             		var boardStartX = boards[j].getXPos(),
-            			boardEndX = boardStartX+boards[j].getWidth(),
+            			boardEndX = boardStartX+this._workspace.getBoardWidth(),
             			boardStartY = boards[j].getYPos(),
-            			boardEndY = boardStartY+boards[j].getHeight();
+            			boardEndY = boardStartY+this._workspace.getBoardHeight();
 
  					if (((xPos > boardStartX) && (xPos < boardEndX)) && 
  						((yPos > boardStartY) && (yPos < boardEndY))) return boards[j];
@@ -482,6 +482,8 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			else this._edgeAddBoards.push(new Placeholder.Index({ width: 100, height: this._workspace.getBoardHeight() }));
 
 			this.$el.append(this._edgeAddBoards[(this._edgeAddBoards.length-1)].$el);
+
+			this.$el.css({ height: this._workspace.getBoardHeight() });
         },
 
 		// {{ Getters }}

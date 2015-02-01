@@ -33,14 +33,14 @@ function(CSSHelpers) {
 		},
 
 		afterRender: function() {
-			this.$el.width(this.model.width);
-			this.$el.height(this.model.height);
+			this.$el.width(this._workspace.getBoardWidth());
+			this.$el.height(this._workspace.getBoardHeight());
 
-			this.$("#board-cards_" + this.model.id).width(this.model.width);
-			this.$("#board-cards_" + this.model.id).height(this.model.height);
+			this.$("#board-cards_" + this.model.id).width(this._workspace.getBoardWidth());
+			this.$("#board-cards_" + this.model.id).height(this._workspace.getBoardHeight());
 
-			this.$("#page-canvas_" + this.model.id).width(this.model.width);
-			this.$("#page-canvas_" + this.model.id).height(this.model.height);
+			this.$("#page-canvas_" + this.model.id).width(this._workspace.getBoardWidth());
+			this.$("#page-canvas_" + this.model.id).height(this._workspace.getBoardHeight());
 
 			if (this._mode == "boardMap") this.$el.addClass("cell");
 
@@ -70,14 +70,6 @@ function(CSSHelpers) {
 
 		getYPos: function() {
 			return this.$el.position().top+this._workspace.getBoardScrollHeight();
-		},
-
-		getWidth: function() {
-			return this.model.width;
-		},
-
-		getHeight: function() {
-			return this.model.height;
 		},
 
 		getPositionX: function() {

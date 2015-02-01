@@ -28,6 +28,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		_mode: "boardMap",
 
 		_zoom: 1,
+		_boardWidth: null,
+		_boardHeight: null,
 
 		_boardMap: null,
 		_selectedBoardId: null,

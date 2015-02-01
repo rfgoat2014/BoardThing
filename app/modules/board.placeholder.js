@@ -21,6 +21,7 @@ function() {
 
 			this.$el.width(this._width);
 			this.$el.height(this._height);
+			this.$el.html("<div style=\"position:absolute;top:0px;left:0px;\">&nbsp;</div>");
 		},
 
 		render: function() {
@@ -28,14 +29,6 @@ function() {
 
 		getType: function() {
 			return "dummy";
-		},
-
-		getWidth: function() {
-			return this._width;
-		},
-
-		getHeight: function() {
-			return this._height;
 		},
 
 		destroy: function() {
