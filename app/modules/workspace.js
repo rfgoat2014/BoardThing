@@ -121,8 +121,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				event.preventDefault();
 			
 				if (that._selectedBoard) {
+					var newYPos = that._selectedBoard.getPositionY()-1;
+					if (newYPos === 0) newYPos = -1;
+
 					var newXPos = that._selectedBoard.getPositionX(),
-						newYPos = that._selectedBoard.getPositionY()-1,
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -137,8 +139,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				event.preventDefault();
 			
 				if (that._selectedBoard) {
+					var newYPos = that._selectedBoard.getPositionY()+1;
+					if (newYPos === 0) newYPos = 1;
+
 					var newXPos = that._selectedBoard.getPositionX(),
-						newYPos = that._selectedBoard.getPositionY()+1,
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -153,8 +157,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				event.preventDefault();
 			
 				if (that._selectedBoard) {
-					var newXPos = that._selectedBoard.getPositionX()+1,
-						newYPos = that._selectedBoard.getPositionY(),
+					var newXPos = that._selectedBoard.getPositionX()+1;
+					if (newXPos === 0) newXPos = 1;
+
+					var newYPos = that._selectedBoard.getPositionY(),
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -167,10 +173,12 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			this.$("#west-board-navigation").click(function(event) {
 				event.stopPropagation();
 				event.preventDefault();
-			
+
 				if (that._selectedBoard) {
-					var newXPos = that._selectedBoard.getPositionX()-1,
-						newYPos = that._selectedBoard.getPositionY(),
+					var newXPos = that._selectedBoard.getPositionX()-1;
+					if (newXPos === 0) newXPos = -1;
+
+					var newYPos = that._selectedBoard.getPositionY(),
 						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
 
 					if (newSelectedBoard) {
@@ -568,18 +576,45 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			var that = this;
             
             Board_Services.Insert(this.model.id, "New Board", positionX, positionY, function(response) {
-            	that.model.boards.push(response.board);
-            	
-				that.model.boards.sort(function (a, b) { 
-					return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
-				});
+            	that.renderNewBoard(response.board)
 
-				that.model.boards.sort(function (a, b) { 
-					return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
-				});
-
-            	that._boardMap.addBoardInPosition(positionX, positionY, new Board.Index({ model: response.board, workspace: that, mode: that._mode }));
+				that.sendSocket(JSON.stringify({ 
+					action:"addBoard", 
+					workspace: that.getId(), 
+					board: response.board
+				}));
             });
+		},
+
+		renderNewBoard: function(board) {
+			this.model.boards.push(board);
+            	
+			this.model.boards.sort(function (a, b) { 
+				return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
+			});
+
+			this.model.boards.sort(function (a, b) { 
+				return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
+			});
+
+        	this._boardMap.addBoardInPosition(board.positionX, board.positionY, new Board.Index({ model: board, workspace: this, mode: this._mode }));
+		
+        	if ((this._mode == "individual") && (this._selectedBoard)) {
+    			var boardSouthPosition = (board.positionY+1),
+    				boardNorthPosition = (board.positionY-1),
+    				boardEastPosition = (board.positionX+1),
+    				boardWestPosition = (board.positionX-1);
+
+    			if (boardSouthPosition === 0) boardSouthPosition = -1;
+    			if (boardNorthPosition === 0) boardNorthPosition = 1;
+    			if (boardEastPosition === 0) boardEastPosition = 1;
+    			if (boardWestPosition === 0) boardWestPosition = -1;
+
+				if ((board.positionX === this._selectedBoard.getPositionX()) && (boardSouthPosition === this._selectedBoard.getPositionY())) this.$("#north-board-navigation").show();
+				if ((board.positionX === this._selectedBoard.getPositionX()) && (boardNorthPosition === this._selectedBoard.getPositionY())) this.$("#south-board-navigation").show();
+				if ((boardWestPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#east-board-navigation").show();
+				if ((boardEastPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#west-board-navigation").show();
+        	}
 		},
 
 		// ********** Adding cards **********
@@ -1258,6 +1293,14 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			    	if ((socketPackage != null) && (socketPackage.action != null)) {
 			    		try {
 			    			switch(socketPackage.action) {
+			    				case "addBoard":
+			    					var board = socketPackage.board,
+			    						boardExists = false;
+
+			    					if (this._boardMap) boardExists = (this._boardMap.getBoard(board.id) !== null);
+
+			    					if (!boardExists) that.renderNewBoard(board)
+			    					break;
 								case "boardCardAdded":
 			    					var card = socketPackage.card,
 			    						cardExists = false;

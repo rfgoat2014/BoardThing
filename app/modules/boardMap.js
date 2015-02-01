@@ -332,8 +332,10 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 	            }
 			}
 
-			this.destroyRows();
-			this.render();
+			if (this._workspace.getMode().toLowerCase() == "boardmap") {
+				this.destroyRows();
+				this.render();
+			}
 		},
 
 		addRow: function(xIndex, yIndex, position) {
