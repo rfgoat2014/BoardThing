@@ -81,13 +81,13 @@ function() {
 		// {{ Event Binding }}
 
 		unbind: function() {
-			this.$(".add-button").unbind("click");
+			this.$(".add-button").unbind("dblclick");
 		},
 
 		bind: function() {
 			var that = this;
 
-			this.$(".add-button").click(function(e) {
+			this.$(".add-button").dblclick(function(e) {
 				e.stopPropagation();
 				e.preventDefault();
 
