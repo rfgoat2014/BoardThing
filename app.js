@@ -17,7 +17,12 @@
 	
 // Load custom modules
 
-	global.email = require(path.join(__dirname, config.customModulesFolder, "email-helpers.js"));	
+	global.email = require("./node-data-access/helpers/email-helpers.js");	
+	global.dataError = require("./node-data-access/helpers/data-error.js");
+	global.mimeTypes = require("./node-data-access/helpers/mime-extensions.js");
+	global.security = require("./node-data-access/helpers/security-helpers.js");
+	global.utils = require("./node-data-access/helpers/utils.js");
+
 	
 // Instantiate Express
 
@@ -90,21 +95,15 @@
 
 	mongoose.connect(config.mongoAddress, { server: { auto_reconnect: true } });
 
-// Add global until functions
-
-	global.dataError = require(config.customModulesFolder + "data-error.js");
-	global.mimeTypes = require(config.customModulesFolder + "mime-extensions.js");
-	global.security = require(config.customModulesFolder + "security-helpers.js");
-
 // Set up the data access controllers
 
-	var users = require(config.controllerPath + "users");
-	var workspaces = require(config.controllerPath + "workspaces");
-	var boards = require(config.controllerPath + "boards");
-	var boardCards = require(config.controllerPath + "boardCards");
-	var boardClusters = require(config.controllerPath + "boardClusters");
-	var hints = require(config.controllerPath + "hints");
-	var chat = require(config.controllerPath + "chat");
+	var users = require("./node-data-access/controllers/users");
+	var workspaces = require("./node-data-access/controllers/workspaces");
+	var boards = require("./node-data-access/controllers/boards");
+	var boardCards = require("./node-data-access/controllers/boardCards");
+	var boardClusters = require("./node-data-access/controllers/boardClusters");
+	var hints = require("./node-data-access/controllers/hints");
+	var chat = require("./node-data-access/controllers/chat");
 
 // Configure the Amazon client access key
 
@@ -112,29 +111,6 @@
 		var knox = require("knox");
 
 		return knox.createClient({ key: config.amazonKey, secret: config.amazonSecret, bucket: config.amazonBucket });
-	}
-
-// Functions to create session Id
-	
-	global.createGUID = function() {
-		var s4 = function () {
-		  	return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-		};
-
-		return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
-	}
-
-// Parse any cookies that have been sent from the client and make them available in global
-
-	global.parseCookies = function (request) {
-		var cookies = [];
-
-		request.headers.cookie && request.headers.cookie.split(";").forEach(function( cookie ) {
-			var parts = cookie.split("=");
-			cookies[ parts[ 0 ].trim() ] = ( parts[ 1 ] || "" ).trim();
-		});
-
-		return cookies;
 	}
 	
 // Passport authenitcation	
@@ -198,7 +174,7 @@
 					user.canPasswordProtectBoard = canPasswordProtectBoard;
 
 					if (!user.sessionId) {
-						var sessionId = createGUID();
+						var sessionId = utils.createGUID();
 						user.sessionId = sessionId;
 
 						users.saveSessionId(user._id, sessionId);
@@ -208,7 +184,7 @@
 				});
 			}
 			else {
-				var cookies = parseCookies(req);;
+				var cookies = utils.parseCookies(req);;
 
 				if(cookies[config.cookieID]) {
 					users.getBySessionId(cookies[config.cookieID], function(err, user) {
@@ -288,68 +264,6 @@
 			}
 		});
 	});
-	
-	// Generic functionality to check if someone is authenticated. Needs cleaning up
-
-	function checkAuthenticated(req, res, callback) {
-		if (req.isAuthenticated()) {
-			var canPasswordProtectBoard = false;
-
-			if(req.user.roles) { 
-				for (var i=0; i<req.user.roles.length; i++) {
-					for (var j=0; j<userRoles.length; j++) {
-						if (req.user.roles[i].trim().toLowerCase() == userRoles[j].trim().toLowerCase()) {
-							canPasswordProtectBoard = true;
-						}
-					}
-				}
-			}
-
-			var authenticatedUser = {
-				_id: req.user._id, 
-				sessionId: req.user.sessionId,
-				username: req.user.username,
-				email: req.user.email,
-				canPasswordProtectBoard: canPasswordProtectBoard,
-				joined: req.user.joined
-			}
-
-			return callback(authenticatedUser);
-		}
-		else {
-			var cookies = parseCookies(req);;
-
-			if(cookies[config.cookieID]) {
-				users.getBySessionId(cookies[config.cookieID], function(err, authenticatedUser) {
-					if (authenticatedUser) {
-						var canPasswordProtectBoard = false;
-
-						if(authenticatedUser.roles) { 
-							for (var i=0; i<authenticatedUser.roles.length; i++) {
-								for (var j=0; j<userRoles.length; j++) {
-									if (authenticatedUser.roles[i].trim().toLowerCase() == userRoles[j].trim().toLowerCase()) {
-										canPasswordProtectBoard = true;
-									}
-								}
-							}
-						}
-
-						authenticatedUser.canPasswordProtectBoard = canPasswordProtectBoard;
-						
-						req.login(authenticatedUser, function(err) {
-							return callback(authenticatedUser);
-						});
-					}
-					else {
-						return callback(null);
-					}
-				});
-			}
-			else {
-				return callback(null);
-			}
-		}
-	}
 
 // Main actions
 

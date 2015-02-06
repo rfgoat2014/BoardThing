@@ -513,7 +513,7 @@ exports.updateBoardPositions = function (req, res) {
 // Lets not worry about the save as and export until we're further down the line
 /* // ===== The action to save a selected board as a new board with a different name
 exports.saveAs = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -678,7 +678,7 @@ exports.saveAs = function (req, res) {
 
 // ===== Action to ecport the contents of a selected board. This can be done as HTML, plain text or OPML. DEFINITELY not the best implemented feature
 exports.export = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.id)

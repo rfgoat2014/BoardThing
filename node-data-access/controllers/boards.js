@@ -5,7 +5,7 @@ var User = require(config.userModel),
 
 // ===== Action to get the background for the board. The this is placed on the HTML canvas which users can draw on
 exports.getBackground = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.id)
@@ -176,7 +176,7 @@ exports.update = function (req, res) {
 
 // ===== Action to set the board background. This is based on the HTML canvas that people can draw on
 exports.updateBackground = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.id)
@@ -242,7 +242,7 @@ exports.updateBackground = function (req, res) {
 
 // ===== Action to set the board background. This is based on the HTML canvas that people can draw on
 exports.updatePosition = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.id)

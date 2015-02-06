@@ -16,7 +16,7 @@ exports.get = function (req, res) {
 		}
 	};
 
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 
 	// Attempting to retrieve board
 	Board
@@ -198,7 +198,7 @@ exports.getImage = function (req, res) {
 
 // ===== Actions for inserting a new board cards
 exports.insertText = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -297,7 +297,7 @@ exports.insertText = function (req, res) {
 exports.insertImage = function (req, res) {
     var fs = require('fs'),
     	Busboy = require('busboy'),
-    	cookies = parseCookies(req);
+    	cookies = utils.parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)
@@ -330,7 +330,7 @@ exports.insertImage = function (req, res) {
 
 						file.on('end', function() {
 							var filenameParts = filename.split("."),
-								newFilename = createGUID() + "." + filenameParts[filenameParts.length-1],
+								newFilename = utils.createGUID() + "." + filenameParts[filenameParts.length-1],
 					    		finalData = Buffer.concat(fileData),
 					    		amazonClient = authenticateAmazonS3();
 
@@ -442,7 +442,7 @@ exports.insertImage = function (req, res) {
 exports.downloadImage = function (req, res) {
 	var request = require('request').defaults({ encoding: null }),
 		amazonClient = authenticateAmazonS3(),
-		cookies = parseCookies(req);;
+		cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -472,7 +472,7 @@ exports.downloadImage = function (req, res) {
 							// Check if the selected image could be retrieved
 						    if ((!error) && (response.statusCode == 200) && (response.headers["content-type"].toString().toLowerCase().indexOf("image") == 0)) {
 						    	var data = new Buffer(body),
-						    		newFilename = createGUID() + "." + mimeTypes.getFileExtension(response.headers["content-type"]);
+						    		newFilename = utils.createGUID() + "." + mimeTypes.getFileExtension(response.headers["content-type"]);
 
 								var fileReq = amazonClient.put(req.params.boardId + "/" + newFilename, {
 									'Content-Length': response.headers["content-length"],
@@ -575,7 +575,7 @@ exports.downloadImage = function (req, res) {
 
 // ====== Update the details of a text card
 exports.updateText = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -650,7 +650,7 @@ exports.updateText = function (req, res) {
 
 // ===== Update the details of an image card
 exports.updateImage = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -738,7 +738,7 @@ exports.updateImage = function (req, res) {
 
 // Actions for deleting a card from a baord
 exports.delete = function (req, res) {
-	var cookies = parseCookies(req);
+	var cookies = utils.parseCookies(req);
 
 	Board
 	.findById(req.params.boardId)
@@ -847,7 +847,7 @@ exports.delete = function (req, res) {
 
 // ===== Allows the duplication of a board card
 exports.duplicate = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -890,7 +890,7 @@ exports.duplicate = function (req, res) {
 						if (card.type != "text") {
 					    	var filenameParts = card.content.split(".");
 
-							cardContent = createGUID() + "." + filenameParts[filenameParts.length-1];
+							cardContent = utils.createGUID() + "." + filenameParts[filenameParts.length-1];
 						}
 
 						// Create the new file object
@@ -1025,7 +1025,7 @@ exports.duplicate = function (req, res) {
 
 // ===== Update the dimensions of a selected card (width/height)
 exports.updateDimensions = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -1109,7 +1109,7 @@ exports.updateDimensions = function (req, res) {
 
 // ===== Update the position of the card on a board
 exports.updatePosition = function (req, res) {
-	var cookies = parseCookies(req);
+	var cookies = utils.parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)
@@ -1193,7 +1193,7 @@ exports.updatePosition = function (req, res) {
 
 // ===== Update the z position of the card on the board
 exports.updateZIndex = function (req, res) {
-	var cookies = parseCookies(req);
+	var cookies = utils.parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)
@@ -1307,7 +1307,7 @@ exports.setBoard = function (req, res) {
 		});
 	}
 
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -1378,7 +1378,7 @@ exports.setBoard = function (req, res) {
 
 // ===== Actions for adding a vote to a card while dot voting
 exports.addVote = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -1463,7 +1463,7 @@ exports.addVote = function (req, res) {
 
 // ===== Actions for removing all votes from a card
 exports.removeVotes = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -1546,7 +1546,7 @@ exports.removeVotes = function (req, res) {
 
 // ===== Action for locking a board card
 exports.lock = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -1618,7 +1618,7 @@ exports.lock = function (req, res) {
 
 // ====== Action for unlocking a board card
 exports.unlock = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)

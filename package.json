@@ -45,14 +45,12 @@
     "amazonSecret": "",
     "amazonBucket": "",
     "mongoAddress": "mongodb://localhost/GamestormingCore",
-    "controllerPath": "./node-data-access/controllers/",
     "modelPath": "./node-data-access/models/",
     "workspaceModel": "../models/Workspace.js",
     "boardModel": "../models/Board.js",
     "cardModel": "../models/Card.js",
     "exampleModel": "../models/Example.js",
     "hintModel": "../models/Hint.js",
-    "userModel": "../models/User.js",
-    "customModulesFolder": "./custom_modules/"
+    "userModel": "../models/User.js"
   }
 }

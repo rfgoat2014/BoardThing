@@ -2,7 +2,7 @@ var Board = require(config.boardModel);
 
 // ===== Action to get all the chat associated to a selected board
 exports.get = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -48,7 +48,7 @@ exports.get = function (req, res) {
 
 // ===== Action to insert a new chat item for a board
 exports.insert = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)

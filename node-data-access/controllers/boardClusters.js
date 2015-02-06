@@ -4,7 +4,7 @@ var Workspace = require(config.workspaceModel),
 
 // ===== Actions for updating a cluster (this also covers creating a cluster as clusters are just a relationship between 2 cards)
 exports.update = function (req, res) {
-	var cookies = parseCookies(req);
+	var cookies = utils.parseCookies(req);
 	
 	Board
 	.findById(req.params.boardId)
@@ -196,7 +196,7 @@ exports.update = function (req, res) {
 
 // ===== Sets that this cluster should render itself as expanded on the front end
 exports.expand = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -289,7 +289,7 @@ exports.expand = function (req, res) {
 
 // ===== Sets that this cluster should render itself as collapsed on the front end
 exports.collapse = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -382,7 +382,7 @@ exports.collapse = function (req, res) {
 
 // ===== Set the cluster as having dot voting enabled
 exports.startDotVoting = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -528,7 +528,7 @@ exports.startDotVoting = function (req, res) {
 
 // ===== Set the cluster as having dot voting turned off
 exports.stopDotVoting = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -659,7 +659,7 @@ exports.stopDotVoting = function (req, res) {
 
 // ===== Actions to delete a cluster from a board
 exports.delete = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -801,7 +801,7 @@ exports.delete = function (req, res) {
 
 // ===== Attach a card to a selected cluster
 exports.attachCard = function (req, res) {
-	var cookies = parseCookies(req);
+	var cookies = utils.parseCookies(req);
 	
 	Board
 	.find({ workspace: req.params.workspaceId })
@@ -942,7 +942,7 @@ exports.attachCard = function (req, res) {
 
 // ===== Remove a card from a selected cluster
 exports.detachCard = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
@@ -1057,7 +1057,7 @@ exports.detachCard = function (req, res) {
 
 // ===== Actions to take a cluster previously attached to another cluster back to the main board
 exports.attachClusterToMain = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.find({ workspace: req.params.workspaceId })
@@ -1170,7 +1170,7 @@ exports.attachClusterToMain = function (req, res) {
 
 // ===== Actions to attach one cluster to another cluster
 exports.attachCluster = function (req, res) {
-	var cookies = parseCookies(req);
+	var cookies = utils.parseCookies(req);
 	
 	Board
 	.find({ workspace: req.params.workspaceId })
@@ -1309,7 +1309,7 @@ exports.attachCluster = function (req, res) {
 
 // ===== Actions to detach a cluster from it's parent cluster
 exports.detachCluster = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.find({ workspace: req.params.workspaceId })
@@ -1399,7 +1399,7 @@ exports.detachCluster = function (req, res) {
 
 // ===== Set the sort position of cards within a cluster
 exports.sort = function (req, res) {
-	var cookies = parseCookies(req);;
+	var cookies = utils.parseCookies(req);;
 	
 	Board
 	.findById(req.params.boardId)
