@@ -255,7 +255,7 @@
 	});
 	
 	app.get("/checkAuthenticated", function(req, res, next) {
-	 	checkAuthenticated(req, res, function(user) {
+	 	security.checkAuthenticated(req, res, function(user) {
 			if (user) {
 				return res.send({ code: 200, user: user });
 			}
@@ -272,7 +272,7 @@
 	});
 	
 	app.get("/login", function(req,res) {
-		checkAuthenticated(req, res, function(user) {
+		security.checkAuthenticated(req, res, function(user) {
 			if (user) {
 				res.redirect("/main");
 			}
@@ -283,7 +283,7 @@
 	});
 	
 	app.get("/signup", function(req,res) {
-		checkAuthenticated(req, res, function(user) {
+		security.checkAuthenticated(req, res, function(user) {
 			if (user) {
 				res.redirect("/main");
 			}
@@ -295,7 +295,7 @@
 	
 	app.get("/main", function(req,res) { 
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) res.render("index", { title: 'BoardThing' });
 				else res.redirect("/login");
 			});
@@ -321,7 +321,7 @@
 
 	app.get("/users/getDisplayCardAddHint", function(req,res) { 
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					users.getDisplayCardAddHint(req,res);
 				}
@@ -343,7 +343,7 @@
 
 	app.put("/users/disableDisplayCardAddHint", function(req,res) { 
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					users.disableDisplayCardAddHint(req,res);
 				}
@@ -369,7 +369,7 @@
 
 	app.put("/users/sharedBoards/:boardId", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					users.updateSharedBoards(req,res);
 				}
@@ -395,7 +395,7 @@
 
 	app.get("/users", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					users.get(req,res);
 				}
@@ -419,7 +419,7 @@
 
 	app.put("/users/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					users.update(req,res);
 				}
@@ -460,7 +460,7 @@
 
 	app.get("/workspaces", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					workspaces.getAll(req,res);
 				}
@@ -484,7 +484,7 @@
 
 	app.post("/workspaces", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					workspaces.insert(req,res);
 				}
@@ -512,7 +512,7 @@
 
 	app.post("/boards/:boardId", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					boards.saveAs(req,res);
 				}
@@ -535,7 +535,7 @@
 
 	app.put("/workspaces/updatePassword/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					workspaces.updatePassword(req,res);
 				}
@@ -559,7 +559,7 @@
 
 	app.put("/workspace/boardPositions/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					workspaces.updateBoardPositions(req,res);
 				}
@@ -581,7 +581,7 @@
 
 	app.post("/workspace/boards/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					boards.insert(req,res);
 				}
@@ -612,7 +612,7 @@
 
 	/* app.get("/boards/export/:id/:format", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					boards.export(req,res);
 				}
@@ -633,7 +633,7 @@
 
 	app.put("/boards/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					boards.update(req,res);
 				}
@@ -655,7 +655,7 @@
 
 	app.delete("/boards/:ids", function(req,res) {
 		if (!req.isAuthenticated()) {
-			checkAuthenticated(req, res, function(user) {
+			security.checkAuthenticated(req, res, function(user) {
 				if (user) {
 					boards.delete(req,res);
 				}
