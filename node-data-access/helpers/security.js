@@ -45,6 +45,8 @@
 // Generic functionality to check if someone is authenticated. Needs cleaning up
 
 	exports.checkAuthenticated = function(req, res, callback) {
+		var users = require("../controllers/users");
+
 		if (req.isAuthenticated()) {
 			var canPasswordProtectBoard = false;
 

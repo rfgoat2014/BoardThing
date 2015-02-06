@@ -45,7 +45,6 @@
     "amazonSecret": "",
     "amazonBucket": "",
     "mongoAddress": "mongodb://localhost/GamestormingCore",
-    "modelPath": "./node-data-access/models/",
     "workspaceModel": "../models/Workspace.js",
     "boardModel": "../models/Board.js",
     "cardModel": "../models/Card.js",

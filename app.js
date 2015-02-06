@@ -17,10 +17,10 @@
 	
 // Load custom modules
 
-	global.email = require("./node-data-access/helpers/email-helpers.js");	
+	global.email = require("./node-data-access/helpers/email.js");	
 	global.dataError = require("./node-data-access/helpers/data-error.js");
 	global.mimeTypes = require("./node-data-access/helpers/mime-extensions.js");
-	global.security = require("./node-data-access/helpers/security-helpers.js");
+	global.security = require("./node-data-access/helpers/security.js");
 	global.utils = require("./node-data-access/helpers/utils.js");
 
 	
@@ -59,9 +59,9 @@
 	
 	var socket = io.attach(http);
 
-	/*process.on("uncaughtException", function(err) {
+	process.on("uncaughtException", function(err) {
 		console.log("************************** UNCAUGHT EXCEPTION: " + err);
-	});*/
+	});
 
 // Connect to the mongo database
 
@@ -188,9 +188,7 @@
 
 				if(cookies[config.cookieID]) {
 					users.getBySessionId(cookies[config.cookieID], function(err, user) {
-						if ((err) || (!user)) {
-							return done(null, null);
-						}
+						if ((err) || (!user)) return done(null, null);
 						else {
 							var canPasswordProtectBoard = false;
 
@@ -218,9 +216,8 @@
 // REST Routes
 
 	app.get("/*", function(req, res, next) {
-		if (req.headers.host.match(/^www\./) != null) {
-			res.redirect("http://" + req.headers.host.slice(4) + req.url, 301);
-		} else next();
+		if (req.headers.host.match(/^www\./) != null) res.redirect("http://" + req.headers.host.slice(4) + req.url, 301);
+		else next();
 	});
 
 // Actions for user authentication
@@ -229,12 +226,8 @@
 		if (req.isAuthenticated()) req.logout();
 
 		passport.authenticate("local", function(err, user, info) {
-			if (err) {
-				return res.send({ status: "401", message: err.message});
-			}
-			else if (!user) {
-				return res.send({ status: "401", message: info.message});
-			}
+			if (err) return res.send({ status: "401", message: err.message});
+			else if (!user) return res.send({ status: "401", message: info.message});
 			else {
 				req.logIn(user, function(err) {
 					if (err) return res.send({ status: "401", message: err.message});
@@ -273,23 +266,15 @@
 	
 	app.get("/login", function(req,res) {
 		security.checkAuthenticated(req, res, function(user) {
-			if (user) {
-				res.redirect("/main");
-			}
-			else {
-				res.render("index", { title: 'BoardThing' }); 
-			}
+			if (user) res.redirect("/main");
+			else res.render("index", { title: 'BoardThing' });
 		});
 	});
 	
 	app.get("/signup", function(req,res) {
 		security.checkAuthenticated(req, res, function(user) {
-			if (user) {
-				res.redirect("/main");
-			}
-			else {
-				res.render("index", { title: 'BoardThing' }); 
-			}
+			if (user) res.redirect("/main");
+			else res.render("index", { title: 'BoardThing' });
 		});
 	});
 	
@@ -322,9 +307,7 @@
 	app.get("/users/getDisplayCardAddHint", function(req,res) { 
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					users.getDisplayCardAddHint(req,res);
-				}
+				if (user) users.getDisplayCardAddHint(req,res);
 				else {
 					dataError.log({
 						model: "users",
@@ -344,9 +327,7 @@
 	app.put("/users/disableDisplayCardAddHint", function(req,res) { 
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					users.disableDisplayCardAddHint(req,res);
-				}
+				if (user) users.disableDisplayCardAddHint(req,res);
 				else {
 					dataError.log({
 						model: "users",
@@ -370,9 +351,7 @@
 	app.put("/users/sharedBoards/:boardId", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					users.updateSharedBoards(req,res);
-				}
+				if (user)users.updateSharedBoards(req,res);
 				else {
 					dataError.log({
 						model: "users",
@@ -384,9 +363,7 @@
 				}
 			});
 		}
-		else {
-			users.updateSharedBoards(req,res);
-		}
+		else users.updateSharedBoards(req,res);
 	});
 
 	app.post("/users/sendPassword", users.sendUserPassword);
@@ -396,9 +373,7 @@
 	app.get("/users", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					users.get(req,res);
-				}
+				if (user) users.get(req,res);
 				else {
 					dataError.log({
 						model: "users",
@@ -410,9 +385,7 @@
 				}
 			});
 		}
-		else {
-			users.get(req,res);
-		}
+		else users.get(req,res);
 	});
 
 	app.post("/users", users.insert);
@@ -420,9 +393,7 @@
 	app.put("/users/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					users.update(req,res);
-				}
+				if (user) users.update(req,res);
 				else {
 					dataError.log({
 						model: "users",
@@ -461,9 +432,7 @@
 	app.get("/workspaces", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					workspaces.getAll(req,res);
-				}
+				if (user) workspaces.getAll(req,res);
 				else {
 					dataError.log({
 						model: "workspaces",
@@ -475,9 +444,7 @@
 				}
 			});
 		}
-		else {
-			workspaces.getAll(req,res);
-		}
+		else workspaces.getAll(req,res);
 	});
 
 // Get all the boards for the currently authenticated user
@@ -485,9 +452,7 @@
 	app.post("/workspaces", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					workspaces.insert(req,res);
-				}
+				if (user) workspaces.insert(req,res);
 				else {
 					dataError.log({
 						model: "workspaces",
@@ -499,9 +464,7 @@
 				}
 			});
 		}
-		else {
-			workspaces.insert(req,res);
-		}
+		else workspaces.insert(req,res);
 	});
 	
 // Get a requested workspace
@@ -536,9 +499,7 @@
 	app.put("/workspaces/updatePassword/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					workspaces.updatePassword(req,res);
-				}
+				if (user) workspaces.updatePassword(req,res);
 				else {
 					dataError.log({
 						model: "workspaces",
@@ -550,9 +511,7 @@
 				}
 			});
 		}
-		else {
-			workspaces.updatePassword(req,res);
-		}
+		else workspaces.updatePassword(req,res);
 	});
 
 	app.post("/workspace/authenticate/:id", workspaces.authenticateWorkspace);
@@ -560,9 +519,7 @@
 	app.put("/workspace/boardPositions/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					workspaces.updateBoardPositions(req,res);
-				}
+				if (user) workspaces.updateBoardPositions(req,res);
 				else {
 					dataError.log({
 						model: "boards",
@@ -574,17 +531,13 @@
 				}
 			});
 		}
-		else {
-			workspaces.updateBoardPositions(req,res);
-		}
+		else workspaces.updateBoardPositions(req,res);
 	});
 
 	app.post("/workspace/boards/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.insert(req,res);
-				}
+				if (user) boards.insert(req,res);
 				else {
 					dataError.log({
 						model: "boards",
@@ -596,9 +549,7 @@
 				}
 			});
 		}
-		else {
-			boards.insert(req,res);
-		}
+		else boards.insert(req,res);
 	});
 
 // Actions for manipulating boards
@@ -656,9 +607,7 @@
 	app.delete("/boards/:ids", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
-				if (user) {
-					boards.delete(req,res);
-				}
+				if (user) boards.delete(req,res);
 				else {
 					dataError.log({
 						model: "boards",
@@ -670,9 +619,7 @@
 				}
 			});
 		}
-		else {
-			boards.delete(req,res);
-		}
+		else boards.delete(req,res);
 	});
 	
 // Actions for manipulating cards and clusters on a board
