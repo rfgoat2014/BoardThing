@@ -937,6 +937,7 @@ exports.duplicate = function (req, res) {
 										// return the new card object
 										var returnCard = {
 									        id: addedCard._id,
+											boardId: board._id,
 								        	title: addedCard.title,
 									        content: addedCard.content,
 									        type: addedCard.type,
@@ -980,6 +981,7 @@ exports.duplicate = function (req, res) {
 										// return the new card object
 									var returnCard = {
 								        id: addedCard._id,
+										boardId: board._id,
 							        	title: addedCard.title,
 								        content: addedCard.content,
 								        type: addedCard.type,
@@ -988,6 +990,7 @@ exports.duplicate = function (req, res) {
 								    	collapsed: addedCard.collapsed,
 			    						width: addedCard.width,
 			    						height: addedCard.height,
+										color: addedCard.color, 
 										xPos: addedCard.xPos,
 										yPos: addedCard.yPos,
 										zPos: null,
