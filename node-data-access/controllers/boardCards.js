@@ -601,7 +601,6 @@ exports.updateText = function (req, res) {
 				.exec(function(err, card) {
 					// Update the cards details, being a text card this could either be the content or color
 					card.content = req.body.content;
-					
 					if ((req.body.color) && (req.body.color.trim().length > 0)) card.color = req.body.color;
 
 					// save the updates

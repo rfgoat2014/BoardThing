@@ -120,11 +120,12 @@ function(Card_Services, Cluster_Services) {
 		},
 
 		saveCard: function(e) {
-			var that = this,
-				boardId = this._workspace.getDropBoardId();
+			var that = this;
 
 			if (this.$("#card-text").val().trim().length > 0) {
 				if (!this._cardModel) {
+					var boardId = this._workspace.getDropBoardId();
+
 					var newCard = {
 						type: "text",
 						boardId: boardId,
@@ -157,7 +158,7 @@ function(Card_Services, Cluster_Services) {
 							color: this.$("#card-color-select").spectrum("get").toString()
 						};
 
-						Card_Services.UpdateTextCard(this._workspace.getId(), boardId, this._cardModel.id, updateModel, function(response) {
+						Card_Services.UpdateTextCard(this._workspace.getId(), this._cardModel.boardId, this._cardModel.id, updateModel, function(response) {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"boardCardUpdated", 
 								workspace: that._workspace.getId(),
@@ -169,7 +170,7 @@ function(Card_Services, Cluster_Services) {
 						updateModel = {
 							id: this._cardModel.id, 
 							type: "text",
-							boardId: boardId,
+							boardId: this._cardModel.boardId,
 			  				action: "update",
 							color: this.$("#card-color-select").spectrum("get").toString()
 			  			};
@@ -177,7 +178,7 @@ function(Card_Services, Cluster_Services) {
 			  			if (this._cardModel.type == "text") updateModel.content = this.$("#card-text").val();
 			  			else updateModel.title = this.$("#card-text").val();
 
-						Cluster_Services.Insert(this._workspace.getId(), boardId, this._cardModel.id, updateModel, function(response) {
+						Cluster_Services.Insert(this._workspace.getId(), this._cardModel.boardId, this._cardModel.id, updateModel, function(response) {
 							that._workspace.sendSocket(JSON.stringify({ 
 								action:"boardClusterUpdated", 
 								workspace: that._workspace.getId(),
@@ -189,6 +190,8 @@ function(Card_Services, Cluster_Services) {
 					that._workspace.cardEdited(updateModel);
 				}
 			}
+
+	    	this.$("#card-color-select").spectrum("hide");
 
 			this._workspace.hideAddCard();
 		},
