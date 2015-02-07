@@ -65,10 +65,18 @@ function(CSSHelpers) {
 		},
 
 		getXPos: function() {
-			return this.$el.position().left+this._workspace.getBoardScrollWidth();
+			return this.$el.position().left;
 		},
 
 		getYPos: function() {
+			return this.$el.position().top;
+		},
+
+		getRelativeXPos: function() {
+			return this.$el.position().left+this._workspace.getBoardScrollWidth();
+		},
+
+		getRelativeYPos: function() {
 			return this.$el.position().top+this._workspace.getBoardScrollHeight();
 		},
 

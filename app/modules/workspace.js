@@ -125,7 +125,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					if (newYPos === 0) newYPos = -1;
 
 					var newXPos = that._selectedBoard.getPositionX(),
-						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+						newSelectedBoard = that._boardMap.getBoardAtIndex(newXPos, newYPos);
 
 					if (newSelectedBoard) {
 						that._selectedBoardId = newSelectedBoard.getId();
@@ -143,7 +143,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					if (newYPos === 0) newYPos = 1;
 
 					var newXPos = that._selectedBoard.getPositionX(),
-						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+						newSelectedBoard = that._boardMap.getBoardAtIndex(newXPos, newYPos);
 
 					if (newSelectedBoard) {
 						that._selectedBoardId = newSelectedBoard.getId();
@@ -161,7 +161,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					if (newXPos === 0) newXPos = 1;
 
 					var newYPos = that._selectedBoard.getPositionY(),
-						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+						newSelectedBoard = that._boardMap.getBoardAtIndex(newXPos, newYPos);
 
 					if (newSelectedBoard) {
 						that._selectedBoardId = newSelectedBoard.getId();
@@ -179,7 +179,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					if (newXPos === 0) newXPos = -1;
 
 					var newYPos = that._selectedBoard.getPositionY(),
-						newSelectedBoard = that._boardMap.getBoardAtPosition(newXPos, newYPos);
+						newSelectedBoard = that._boardMap.getBoardAtIndex(newXPos, newYPos);
 
 					if (newSelectedBoard) {
 						that._selectedBoardId = newSelectedBoard.getId();
@@ -297,16 +297,16 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		getBoardDistanceFromSource: function(sourceBoardId,targetBoardId) {
 			if (this._mode == "individual") {
 				return {
-					x: this._selectedBoard.getXPos(),
-					y: this._selectedBoard.getYPos()
+					x: this._selectedBoard.getRelativeXPos(),
+					y: this._selectedBoard.getRelativeYPos()
 				};
 			}
 			else {
 				var targetBoard = this._boardMap.getBoard(targetBoardId);
 
 				return {
-					x: targetBoard.getXPos()+this.$("#table-container").position().left,
-					y: targetBoard.getYPos()+this.$("#table-container").position().top
+					x: targetBoard.getRelativeXPos()+this.$("#table-container").position().left,
+					y: targetBoard.getRelativeYPos()+this.$("#table-container").position().top
 				};
 			}
 		},
@@ -316,8 +316,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				targetBoard = this._boardMap.getBoard(targetBoardId);
 
 			return {
-				x: (targetBoard.getXPos()-sourceBoard.getXPos()),
-				y: (targetBoard.getYPos()-sourceBoard.getYPos())
+				x: (targetBoard.getRelativeXPos()-sourceBoard.getRelativeXPos()),
+				y: (targetBoard.getRelativeYPos()-sourceBoard.getRelativeYPos())
 			};
 		},
 
@@ -342,7 +342,18 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		},
 
 		getDropBoardId: function() {
-			return this._dropBoardId;
+			if (this._dropBoardId) return this._dropBoardId;
+			else if (this._boardMap) {
+				var screenCenterX = ($(window).width()/2) + this.$("#board-container").scrollLeft(),
+					screenCenterY = ($(window).height())/2 + this.$("#board-container").scrollTop();
+
+				var board = this._boardMap.getBoardInPosition(screenCenterX, screenCenterY);
+				
+				if (board) return board.getId();
+				else {
+					return -1;
+				}
+			}
 		},
 
 		getSelectedBoardId: function() {
@@ -636,7 +647,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
   				var valid = (charCode > 47 && charCode < 58) || charCode == 32 || charCode == 13 || (charCode > 64 && charCode < 91) || (charCode > 95 && charCode < 112) || (charCode > 185 && charCode < 193) || (charCode > 218 && charCode < 223);
   				
-  				if ((valid) && (!that._blockAddCard)) {
+  				if ((valid) && (!that._blockAddCard) && (that.getDropBoardId() !== -1)) {
 					that.showAddCard();
 				}
   			}, false);
@@ -676,8 +687,9 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		cardAdded: function(card) {
     		try {
 				var that = this,
-					xPos = Math.floor(this.$("#board-cards_" + this._dropBoardId).width()/2)-90,
-					yPos = Math.floor(this.$("#board-cards_" + this._dropBoardId).height()/2);
+					dropBoardId = this.getDropBoardId(),
+					xPos = Math.floor(this.$("#board-cards_" + dropBoardId).width()/2)-90,
+					yPos = Math.floor(this.$("#board-cards_" + dropBoardId).height()/2);
 
 				if (this._dropPosition) {
 					xPos = this._dropPosition.x;
@@ -688,7 +700,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					id: card.id, 
 					parentId: null,
 					type: card.type,  
-					boardId: this._dropBoardId,
+					boardId: dropBoardId,
 					boardOwner: this.model.owner,	
 					title: card.title, 
 					content: card.content, 
@@ -703,7 +715,7 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					color: card.color
 				};
 
-				Card_Services.UpdatePosition(this.model.id, this._dropBoardId, newCard.id, newCard.xPos, newCard.yPos, function() {
+				Card_Services.UpdatePosition(this.model.id, dropBoardId, newCard.id, newCard.xPos, newCard.yPos, function() {
 					that.sendSocket(JSON.stringify({ 
 						action:"updateCardPosition", 
 						workspace: that.model.id,
@@ -1181,8 +1193,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		// ---- Check if a board exists at a specified X/Y position
 		checkBoardPosition: function(xPos,yPos) {
 			try {
-				if (this._mode == "individual") return this._boardMap.getBoardInPosition(xPos-this._selectedBoard.getXPos(), yPos-this._selectedBoard.getYPos());
-				else return this._boardMap.getBoardInPosition(xPos-this.$("#table-container").position().left,yPos-this.$("#table-container").position().top);
+				if (this._mode == "individual") return this._boardMap.getBoardInRelativePosition(xPos-this._selectedBoard.getRelativeXPos(), yPos-this._selectedBoard.getRelativeYPos());
+				else return this._boardMap.getBoardInRelativePosition(xPos-this.$("#table-container").position().left,yPos-this.$("#table-container").position().top);
 			}
 			catch (err) {
 				Utils.sendClientError("checkPositionTaken", err);

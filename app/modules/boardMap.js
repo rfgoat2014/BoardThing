@@ -143,7 +143,7 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
 			return availablePositionsArray;
 		},
 
-		getBoardAtPosition: function(xPos, yPos) {
+		getBoardAtIndex: function(xPos, yPos) {
             for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
             	if (this._rows[i].getYIndex() === yPos) {
 	            	var boards = this._rows[i].getBoards();
@@ -216,6 +216,24 @@ function(AddBoard, Board, Placeholder, CSSHelpers, Board_Services, Workspace_Ser
             		var boardStartX = boards[j].getXPos(),
             			boardEndX = boardStartX+this._workspace.getBoardWidth(),
             			boardStartY = boards[j].getYPos(),
+            			boardEndY = boardStartY+this._workspace.getBoardHeight();
+
+ 					if (((xPos > boardStartX) && (xPos < boardEndX)) && 
+ 						((yPos > boardStartY) && (yPos < boardEndY))) return boards[j];
+        		}
+            }
+
+            return null;
+		},
+
+		getBoardInRelativePosition: function(xPos, yPos) {
+            for (var i=0, rowsLength = this._rows.length; i<rowsLength; i+=1) {
+            	var boards = this._rows[i].getBoards();
+
+            	for (var j=0, boardsLength = boards.length; j<boardsLength; j+=1) {
+            		var boardStartX = boards[j].getRelativeXPos(),
+            			boardEndX = boardStartX+this._workspace.getBoardWidth(),
+            			boardStartY = boards[j].getRelativeYPos(),
             			boardEndY = boardStartY+this._workspace.getBoardHeight();
 
  					if (((xPos > boardStartX) && (xPos < boardEndX)) && 
