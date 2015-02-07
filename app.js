@@ -36,9 +36,9 @@
   	app.use("/app", express.static(__dirname + "/app"));
   	
 	// static resources that don't need compiling
-	app.use("/libs", express.static(__dirname + "/views/libs"));
-	app.use("/img", express.static(__dirname + "/views/img"));	
-	app.use("/styles", express.static(__dirname + "/views/styles"));
+	app.use("/libs", express.static(__dirname + "/assets/libs"));
+	app.use("/img", express.static(__dirname + "/assets/img"));	
+	app.use("/styles", express.static(__dirname + "/assets/styles"));
 	
   	app.use(function(req, res, next) {
     	res.header("Access-Control-Allow-Origin", "*");
