@@ -29,6 +29,9 @@ function(CSSHelpers) {
 				that.$el.html(_.template(contents, that.model));
 
 				that.afterRender();
+
+				that.unbind();
+				that.bind();
 			}, "text");
 		},
 
@@ -52,6 +55,39 @@ function(CSSHelpers) {
 			this._workspace.getBoardItems(this.model.id);
 
 			if (this._mode == "individual") this.center();
+
+			if (this._workspace.getBoardCount() === 1) $("#board-action-container_" + this.model.id).hide();
+		},
+
+		// {{ Event Binding }}
+
+		unbind: function() {
+			$("#board-action-container_" + this.model.id).unbind("click");
+			$("#board-delete-button_" + this.model.id).unbind("click");
+		},
+
+		bind: function() {
+			var that = this;
+
+			$("#board-action-container_" + this.model.id).click(function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+
+				if (!$("#board-settings-menu_" + that.model.id).is(":visible")) {
+					$("#board-settings-menu_" + that.model.id).show(); 
+				}
+				else {
+					$("#board-settings-menu_" + that.model.id).hide();
+				}
+			});
+
+			$("#board-delete-button_" + this.model.id).click(function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+
+				that.$("#board-settings-menu_" + that.model.id).hide();
+				that._workspace.deleteBoard(that.model.id);
+			});
 		},
 
 		// {{ Getters }}

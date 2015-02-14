@@ -58,6 +58,16 @@ function() {
 			}
 		});
 	};
+	
+	Board.Delete = function(id, callback) {
+		$.ajax({
+			type: "DELETE",
+			url: "/workspace/boards/" + id,
+			success: function(response) {
+				if (callback) callback(response);
+			}
+		});
+	};
 
 	return Board;
 });

@@ -256,7 +256,7 @@ function(Card_Services, Cluster_Services) {
 			});
 
 			this.$("#card-delete-button").click(function(e) {
-				that.deleteCard(e);
+				that.delete(e);
 			});
 
 			this.$("#vote-container").click(function(e) {
@@ -837,8 +837,8 @@ function(Card_Services, Cluster_Services) {
 
 		// ********** Actions to delete a card **********
 
-		deleteCard: function(e) {
-			e.stopPropagation();
+		delete: function(e) {
+			if (e) e.stopPropagation();
 
 			var that = this;
 

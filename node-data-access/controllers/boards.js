@@ -309,109 +309,61 @@ exports.updatePosition = function (req, res) {
 
 // ===== Action to delete a board
 exports.delete = function (req, res) {
-	var path = require('path');
-	var amazonClient = authenticateAmazonS3();
-	var boards = req.params.ids.split(",");
+	/*var path = require('path'),
+		amazonClient = authenticateAmazonS3();*/
 
-	// multiple boards can be removed at the same time as a comma seperated list of board IDs is sent
-	for (var i=0; i<boards.length; i++) {
-		Board
-		.findById(boards[i])
-		.populate("workspace")
-		.exec(function(err, board) {
-			// There are 2 type of board deletes. One if you are an owner and one if you have just accessed it and want it off you list 
-	        if ((board) && (board.workspace) && (board.workspace.owner.toString() == req.user._id.toString())) {
-	        	// you own the baord you are attempting to delete
+	Board
+	.findById(req.params.id)
+	.populate("workspace")
+	.exec(function(err, board) {
+		// Check that you are the owner of the worjspace
+        if ((board) && (board.workspace) && (board.workspace.owner.toString() == req.user._id.toString())) {
+        	// you own the baord you are attempting to delete
 
-	        	// loop through all the cards associated to this board
-				Card
-				.find({ board: board._id })
-				.exec(function(err, cards) {
-					for (var j=0; j<cards.length; j++) {
+        	// loop through all the cards associated to this board
+			Card
+			.find({ board: board._id })
+			.exec(function(err, cards) {
+				for (var j=0; j<cards.length; j++) {
 
-						// if this card is a image card then deete it from the Amazon bucket
-						if (cards[j].type.trim().toLowerCase() != "text") {
-							amazonClient.deleteFile(board._id.toString() + "/" +  cards[j].content, function(err, res) {
-								if (err) dataError.log({
-									model: __filename,
-									action: "delete",
-									code: 500,
-									msg: "Error deleting image",
-									err: err
-								});
-							});
-						}
-
-						// remove the card from the database
-						cards[i].remove();
-
-						cards[i].save();
-					}
-				});
-
-				// remove the board from the database
-		        board.remove();
-
-		        board.save(function (err, savedBoard) {
-					if (err) {
-						dataError.log({
-							model: __filename,
-							action: "delete",
-							code: 500,
-							msg: "Error saving board",
-							err: err,
-							res: res
-						});
-					}
-					else {
-						res.send({ code: 200 });
-					}
-				});
-		    }
-	       	else if (board) {
-	       		// you are not the owner so we want to remove the board from your list of shared boards
-				User
-				.findById(req.user._id)
-				.exec(function(err, user) {
-					if (err) {
-						dataError.log({
-							model: __filename,
-							action: "delete",
-							code: 500,
-							msg: "Error retrieving user",
-							res: res,
-							err: err
-						});
-					}
-					else {
-						if (user) {
-							// find the baord in your list of shared boards and remove it out
-							var boardDeleted = false;
-							
-							for (var j = 0, userSharedBoardsLength = user.sharedBoards.length; j < userSharedBoardsLength; j+=1) {
-								if (user.sharedBoards[j]._id.toString() == board._id.toString()) {
-									user.sharedBoards.splice(j,1);
-									j--;
-									boardDeleted = true;
-								}
-							};
-
-							if (boardDeleted) user.save();
-	
-							res.send({ code: 200 });
-				        }
-				        else {
-				        	dataError.log({
+					// if this card is a image card then deete it from the Amazon bucket
+					/*if (cards[j].type.trim().toLowerCase() != "text") {
+						amazonClient.deleteFile(board._id.toString() + "/" +  cards[j].content, function(err, res) {
+							if (err) dataError.log({
 								model: __filename,
 								action: "delete",
-								code: 404,
-								msg: "Unable to find user",
-								res: res
+								code: 500,
+								msg: "Error deleting image",
+								err: err
 							});
-				        }
-			        }
-				});  		
-	       	}
-	 	});
-	}
+						});
+					}*/
+
+					// remove the card from the database
+					cards[i].remove();
+
+					cards[i].save();
+				}
+			});
+
+			// remove the board from the database
+	        board.remove();
+
+	        board.save(function (err, savedBoard) {
+				if (err) {
+					dataError.log({
+						model: __filename,
+						action: "delete",
+						code: 500,
+						msg: "Error saving board",
+						err: err,
+						res: res
+					});
+				}
+				else {
+					res.send({ code: 200 });
+				}
+			});
+	    }
+ 	});
 };

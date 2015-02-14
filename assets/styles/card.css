@@ -157,24 +157,6 @@
     z-index: 14;
 }
 
-.card-settings-menu .menu-item {
-    position: relative;
-    font-weight: bold;
-    color: #333333;
-    background-color: #FFFFFF;
-    text-align: left;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    padding-left: 8px;
-    padding-right: 8px;
-}
-
-.card-settings-menu .menu-item:hover {
-    cursor: hand;
-    cursor: pointer;
-    background-color: #F0F0F0;
-}
-
 .card-content-body {
     font-weight: normal;
     color: #000000;

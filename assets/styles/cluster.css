@@ -112,24 +112,6 @@
     z-index: 14;
 }
 
-.cluster-settings-menu .menu-item {
-    position: relative;
-    font-weight: bold;
-    color: #333333;
-    background-color: #FFFFFF;
-    text-align: left;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    padding-left: 8px;
-    padding-right: 8px;
-}
-
-.cluster-settings-menu .menu-item:hover {
-    cursor: hand;
-    cursor: pointer;
-    background-color: #F0F0F0;
-}
-
 .child-cards-container {
     position: relative;
     float:left;

@@ -858,6 +858,34 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			}
 		},
 
+		// ********** Actions for deleting cluster **********
+
+		delete: function() {
+			var that = this;
+
+			var cardToDelete = {
+				id: that.model.id,
+				type: that.model.type,
+				owner: that.model.owner,
+				boardId: that.model.boardId,
+				parentId: that.model.parentId
+			};
+
+			for (var i=0, childViewsLength=this._childViews.length; i<childViewsLength; i+=1) {
+				this._childViews[i].delete();
+			}
+
+			Card_Services.Delete(this._workspace.getId(), this.model.boardId, this.model.id, function(response) {
+				that._workspace.sendSocket(JSON.stringify({ 
+					action:"boardCardDeleted", 
+					workspace: that._workspace.getId(),
+					card: cardToDelete
+				}));
+			});
+
+			this._workspace.removeCardFromBoard(cardToDelete);
+		},
+
 		// ********** Actions for deleting cards **********
 
 		deleteCard: function(cardId) {

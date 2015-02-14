@@ -187,6 +187,41 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					}
 				}
 			});
+/*
+			$.cssNumber.zoom = true;
+			if (!("zoom" in document.body.style)) {
+				$.cssHooks.zoom = {
+					get: function(elem, computed, extra) {
+						var value = $(elem).data('zoom');
+						return value != null ? value : 1;
+					},
+					set: function(elem, value) {
+						var $elem = $(elem);
+						var size = { // without margin
+							width: $elem.outerWidth(),
+							height: $elem.outerWidth()
+						};
+						$elem.data('zoom', value);
+
+						if (value != 1) {
+							$elem.css({
+								transform: 'scale(' + value + ')'
+							});
+
+							console.log(((size.height * (1-value))/2));
+							console.log(((size.width * (1-value))/2));
+
+							$elem.css({ top: ((size.height * (1-value))/2), left: ((size.width * (1-value))/2) });
+
+							console.log(parseInt($elem.css("top")))
+						} else {
+							$elem.css({
+								transform: null
+							});
+						}
+					}
+				};
+			} */
 		},
 
       	unbindBoard: function(boardId) {
@@ -339,6 +374,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 
 		getBoards: function() {
 			return this.model.boards;
+		},
+
+		getBoardCount: function() {
+			return this.model.boards.length;
 		},
 
 		getDropBoardId: function() {
@@ -598,34 +637,85 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 		},
 
 		renderNewBoard: function(board) {
-			this.model.boards.push(board);
-            	
-			this.model.boards.sort(function (a, b) { 
-				return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
+			if (board) {
+				this.model.boards.push(board);
+		        	
+				this.model.boards.sort(function (a, b) { 
+					return a.positionX > b.positionX ? 1 : a.positionX < b.positionX ? -1 : 0; 
+				});
+
+				this.model.boards.sort(function (a, b) { 
+					return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
+				});
+
+		    	this._boardMap.addBoardInPosition(board.positionX, board.positionY, new Board.Index({ model: board, workspace: this, mode: this._mode }));
+			
+		    	if ((this._mode == "individual") && (this._selectedBoard)) {
+					var boardSouthPosition = (board.positionY+1),
+						boardNorthPosition = (board.positionY-1),
+						boardEastPosition = (board.positionX+1),
+						boardWestPosition = (board.positionX-1);
+
+					if (boardSouthPosition === 0) boardSouthPosition = -1;
+					if (boardNorthPosition === 0) boardNorthPosition = 1;
+					if (boardEastPosition === 0) boardEastPosition = 1;
+					if (boardWestPosition === 0) boardWestPosition = -1;
+
+					if ((board.positionX === this._selectedBoard.getPositionX()) && (boardSouthPosition === this._selectedBoard.getPositionY())) this.$("#north-board-navigation").show();
+					if ((board.positionX === this._selectedBoard.getPositionX()) && (boardNorthPosition === this._selectedBoard.getPositionY())) this.$("#south-board-navigation").show();
+					if ((boardWestPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#east-board-navigation").show();
+					if ((boardEastPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#west-board-navigation").show();
+		    	}
+		    }
+		},
+
+		// ********** Deleting boards **********
+
+
+		deleteBoard: function(boardId) {
+			var that = this;
+
+			Board_Services.Delete(boardId, function(response) {
+				if (response.code == 200) {
+					that.sendSocket(JSON.stringify({ 
+						action:"deleteBoard", 
+						workspace: that.model.id,
+						board: { 
+							id: boardId
+						} 
+					}));
+
+					that.boardDeleted(boardId);
+				}
 			});
+		},
 
-			this.model.boards.sort(function (a, b) { 
-				return a.positionY > b.positionY ? 1 : a.positionY < b.positionY ? -1 : 0; 
-			});
+		boardDeleted: function(boardId) {
+			var boardDeleted = false;
 
-        	this._boardMap.addBoardInPosition(board.positionX, board.positionY, new Board.Index({ model: board, workspace: this, mode: this._mode }));
-		
-        	if ((this._mode == "individual") && (this._selectedBoard)) {
-    			var boardSouthPosition = (board.positionY+1),
-    				boardNorthPosition = (board.positionY-1),
-    				boardEastPosition = (board.positionX+1),
-    				boardWestPosition = (board.positionX-1);
+			for (var i=(this._boardEntities.length-1); i>=0; i--) {
+				if (this._boardEntities[i].getBoardId() == boardId) {
+					this._boardEntities[i].destroy();
+					this._boardEntities[i] = null;
 
-    			if (boardSouthPosition === 0) boardSouthPosition = -1;
-    			if (boardNorthPosition === 0) boardNorthPosition = 1;
-    			if (boardEastPosition === 0) boardEastPosition = 1;
-    			if (boardWestPosition === 0) boardWestPosition = -1;
+					this._boardEntities.splice(i,1);
+				}
+			}
 
-				if ((board.positionX === this._selectedBoard.getPositionX()) && (boardSouthPosition === this._selectedBoard.getPositionY())) this.$("#north-board-navigation").show();
-				if ((board.positionX === this._selectedBoard.getPositionX()) && (boardNorthPosition === this._selectedBoard.getPositionY())) this.$("#south-board-navigation").show();
-				if ((boardWestPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#east-board-navigation").show();
-				if ((boardEastPosition === this._selectedBoard.getPositionX()) && (board.positionY === this._selectedBoard.getPositionY())) this.$("#west-board-navigation").show();
-        	}
+			for (var i=(this.model.boards.length-1); i>=0; i--) {
+				if (this.model.boards[i].id == boardId) {
+					this.model.boards[i] = null;
+					this.model.boards.splice(i,1);
+
+					boardDeleted = true;
+					break;
+				}
+			}
+
+			if (boardDeleted) {
+				this.setupWorkspace();
+				this.renderBoards();
+			}
 		},
 
 		// ********** Adding cards **********
@@ -1310,9 +1400,17 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 			    					var board = socketPackage.board,
 			    						boardExists = false;
 
-			    					if (this._boardMap) boardExists = (this._boardMap.getBoard(board.id) !== null);
+			    					if (that._boardMap) boardExists = (that._boardMap.getBoard(board.id) !== null);
 
 			    					if (!boardExists) that.renderNewBoard(board)
+			    					break;
+			    				case "deleteBoard":
+			    					var board = socketPackage.board,
+			    						boardExists = false;
+
+			    					if (that._boardMap) boardExists = (that._boardMap.getBoard(board.id) !== null);
+
+			    					if (boardExists) that.boardDeleted(board.id);
 			    					break;
 								case "boardCardAdded":
 			    					var card = socketPackage.card,

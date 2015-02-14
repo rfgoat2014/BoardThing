@@ -120,3 +120,47 @@
 	margin: 0;
 	padding: 0;
 }
+
+/* Board settings menu */
+
+#board-container .board-action-container {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	margin: 0;
+	padding: 0;
+    cursor: hand;
+    cursor: pointer;
+}
+
+.board-settings-menu {
+    width: 150px;
+    position: absolute;
+    top: 8px;
+    right: 7px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    -webkit-box-shadow: 0 1px 4px #cccccc;
+    -moz-box-shadow: 0 1px 4px #cccccc;
+    box-shadow: 0 1px 4px #cccccc;
+    background-color: #ffffff;
+    z-index: 14;
+}
+
+.menu-item {
+    position: relative;
+    font-weight: bold;
+    color: #333333;
+    background-color: #FFFFFF;
+    text-align: left;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.menu-item:hover {
+    cursor: hand;
+    cursor: pointer;
+    background-color: #F0F0F0;
+}

@@ -604,7 +604,7 @@
 		}
 	});
 
-	app.delete("/boards/:ids", function(req,res) {
+	app.delete("/workspace/boards/:id", function(req,res) {
 		if (!req.isAuthenticated()) {
 			security.checkAuthenticated(req, res, function(user) {
 				if (user) boards.delete(req,res);
