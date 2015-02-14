@@ -57,7 +57,10 @@ function(Card_Services, Cluster_Services) {
 			    maxPaletteSize: 10,
 			    preferredFormat: "hex",
 			    localStorageKey: "spectrum.boardthing.card",
-			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"]
+			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"],
+			    change: function(color) {
+					that.$el.css({ "background-color": color.toHexString() }) // #ff0000
+				}
 			});
 			
 			if (this._isMobile) this.$el.addClass("mobile");
