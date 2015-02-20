@@ -59,9 +59,9 @@
 	
 	var socket = io.attach(http);
 
-	process.on("uncaughtException", function(err) {
+	/*process.on("uncaughtException", function(err) {
 		console.log("************************** UNCAUGHT EXCEPTION: " + err);
-	});
+	});*/
 
 // Connect to the mongo database
 

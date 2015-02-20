@@ -15,7 +15,7 @@ function() {
 			}
 		});
 	};
-
+	
 	Card.UpdateTextCard = function(workspaceId, boardId, cardId, card, callback) {
         $.ajax({
             url: "/workspace/boards/cards/text/" + workspaceId + "/" + boardId + "/" + cardId,

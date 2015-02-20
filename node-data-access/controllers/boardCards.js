@@ -168,7 +168,7 @@ exports.getImage = function (req, res) {
 					data = '';
 
 				// Retrieve the image data from the amazon bucket
-				amazonClient.getFile(req.params.boardId + "/" + card.content, function(err, s3res) {  
+				amazonClient.getFile(req.params.workspaceId + "/" + card.content, function(err, s3res) {  
 					s3res.setEncoding('binary');
 
 					s3res.on('data', function(chunk){
@@ -334,7 +334,7 @@ exports.insertImage = function (req, res) {
 					    		finalData = Buffer.concat(fileData),
 					    		amazonClient = authenticateAmazonS3();
 
-							var fileReq = amazonClient.put(req.params.boardId + "/" + newFilename, {
+							var fileReq = amazonClient.put(req.params.workspaceId + "/" + newFilename, {
 								'Content-Length': finalData.length,
 								'Content-Type': mimetype
 							});
@@ -474,7 +474,7 @@ exports.downloadImage = function (req, res) {
 						    	var data = new Buffer(body),
 						    		newFilename = utils.createGUID() + "." + mimeTypes.getFileExtension(response.headers["content-type"]);
 
-								var fileReq = amazonClient.put(req.params.boardId + "/" + newFilename, {
+								var fileReq = amazonClient.put(req.params.workspaceId + "/" + newFilename, {
 									'Content-Length': response.headers["content-length"],
 									'Content-Type': response.headers["content-type"]
 								});
@@ -766,7 +766,7 @@ exports.delete = function (req, res) {
 						if (card.type.trim().toLowerCase() != "text") {
 							var amazonClient = authenticateAmazonS3();
 
-							amazonClient.deleteFile(req.params.boardId + "/" +  card.content, function(err, res){
+							amazonClient.deleteFile(req.params.workspaceId + "/" +  card.content, function(err, res){
 								if (err) {
 									dataError.log({
 										model: __filename,

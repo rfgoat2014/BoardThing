@@ -5,8 +5,11 @@
 			<div id="card-delete-button" class="menu-item">Delete</div>
 		</div>
 	</div>
-	<% if (type.trim().toLowerCase() == "text") { %><div id="card-body-text" class="card-content-body"><%= content.replace(/\n/g, '<br />') %></div><% } 
-	else { %><div class="card-image-container"><img id="card-body-image" src="/boards/cards/image/<%= boardId %>/<%= id %>" class="card-content-image" border="0" /><% if ((typeof title != 'undefined') && (title != null) && (title.trim().length > 0)) { %><div class="card-image-title"><%= title %></div><% } %></div><% } %>
+	<% if (type.trim().toLowerCase() == "text") { %>
+		<div id="card-body-text" class="card-content-body"><%= content.replace(/\n/g, '<br />') %></div>
+	<% } else { %>
+		<div class="card-image-container"><img id="card-body-image" src="/workspace/boards/cards/image/<%= workspaceId %>/<%= boardId %>/<%= id %>" class="card-content-image" border="0" /><% if ((typeof title != 'undefined') && (title != null) && (title.trim().length > 0)) { %><div class="card-image-title"><%= title %></div><% } %></div>
+	<% } %>
 	<% if (parentIsVoting) { %>
 		<div id="vote-container" class="vote-container right"><% if (votesReceived == 0) { %><img id="add-vote" class="add-vote" src="/img/voteSelect.png" border="0" /><% } else { %><img id="add-vote" class="add-vote" src="/img/voteSelected.png" border="0" /><% } %><span id="vote-count" class="vote-count"><%= votesReceived %></span></div>
 		<div class="clear"></div>

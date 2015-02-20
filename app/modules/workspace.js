@@ -748,6 +748,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				this._blockAddCard = true;
 
 				if (this._addCard) {
+					this.$("#add-text-container").show();
+					this.$("#add-image-container").hide();
 					this.$("#card-create-overlay").show();
 					
 					this._addCard.focusCardText();
@@ -766,7 +768,9 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 					this.$("#card-create-overlay").hide();
 
 					this._addCard.setCardModel(null);
-					this._addCard.clearCardText();
+
+					this._addCard.$el.empty();
+					this._addCard.render();
 				}
 			}
 			catch (err) {

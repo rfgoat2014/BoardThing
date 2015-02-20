@@ -28,6 +28,8 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 			this._isMobile = options.isMobile;
 			this._workspace = options.workspace;
 			this._parent = options.parent;
+
+			this.model.workspaceId = this._workspace.getId();
 		},
 
 		// {{ Object Building }}
@@ -825,16 +827,7 @@ function(Card, Card_Services, Cluster_Services, Utils) {
 		editCluster: function(e) {
 			e.stopPropagation();
 
-			if (this.model.type.toLowerCase() == "text") this.editText(e);
-			else this.editImage(e);
-		},
-
-		editText: function(e) {
 			this._workspace.showEditCard(this.model);
-		},
-
-		editImage: function(e) {
-			// TODO
 		},
 
 		updateClusterTitle: function(clusterId, title, content) {

@@ -27,6 +27,8 @@ function(Card_Services, Cluster_Services) {
 			this._isMobile = options.isMobile;
 			this._workspace = options.workspace;
 			this._parent = options.parent;
+			
+			this.model.workspaceId = this._workspace.getId();
 		},
 
 		// {{ Object Building }}
@@ -106,7 +108,7 @@ function(Card_Services, Cluster_Services) {
 								that.saveCardSize(that.$el.width(), that.$el.height());
 							}
 						}
-					}).attr("src", "/workspace/boards/cards/image/" + that.model.get("boardId") + "/" + that.model.id + "?random=" + new Date().getTime());
+					}).attr("src", "/workspace/boards/cards/image/" + that._workspace.getId() + "/" + that.model.boardId + "/" + that.model.id + "?random=" + new Date().getTime());
 				}
 
 	    		if (that.$el.attr("is-resized") == "true") {
@@ -212,7 +214,6 @@ function(Card_Services, Cluster_Services) {
 
 				this.$el.dblclick(function(e) {
 					if (that.model.isLocked) {
-	        			//that._workspace._dropPosition = { x: that._workspace._currentMousePosition.x,  y: that._workspace._currentMousePosition.y };
 	        			that._workspace._cardsDroppedInPosition = 0;
 
 						that._workspace.showAddCard();
@@ -538,15 +539,7 @@ function(Card_Services, Cluster_Services) {
 
 			this.stopCardResize();
 
-			if (this.model.type.toLowerCase() == "text") this.editText(e);
-			else this.editImage(e);
-		},
-
-		editText: function(e) {
 			this._workspace.showEditCard(this.model);
-		},
-
-		editImage: function(e) {
 		},
 
 		updateCardContent: function(cardId,content,title,color) {
