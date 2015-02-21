@@ -52,6 +52,9 @@ function(Card_Services, Cluster_Services) {
 
 			this.$el.addClass("card-input-container");
 
+			if (this._isMobile) this.$el.addClass("mobile");
+    		else this.$el.addClass("desktop");
+
 	    	this.$("#card-color-select").spectrum("destroy");
 	    	this.$("#upload-card-color-select").spectrum("destroy");
 	    	this.$("#link-card-color-select").spectrum("destroy");
@@ -113,9 +116,6 @@ function(Card_Services, Cluster_Services) {
 				}
 			});
 			
-			if (this._isMobile) this.$el.addClass("mobile");
-    		else this.$el.addClass("desktop");
-
 			this.$('#imageUpload').fileupload({ 	
 		        dataType: 'json',
     			disableImageResize: false,
@@ -182,10 +182,14 @@ function(Card_Services, Cluster_Services) {
 			this.$("#card-text").unbind("click");
 			this.$("#add-image-btn").unbind("click");
 
+			this.$(".add-card-btn").unbind("click");
+			this.$("#show-add-image-btn").unbind("click");
+
 			this.$("#link-to-photo-header").unbind("click");
 			this.$("#upload-photo-header").unbind("click");
-			this.$(".add-card-btn").unbind("click");
-			this.$("#add-image-btn").unbind("click");
+
+			this.$("#add-image-button").unbind("click");
+			this.$("back-image-button").unbind("click");
 		},
 
 		bind: function() {
@@ -217,6 +221,18 @@ function(Card_Services, Cluster_Services) {
 		        }
 			});
 
+			this.$(".add-card-btn").click(function(e) {
+				e.stopPropagation();
+
+				that.showAddText();
+			});
+
+			this.$("#show-add-image-btn").click(function(e) {
+				e.stopPropagation();
+
+				that.showAddImage();
+			});
+
 			this.$("#link-to-photo-header").click(function(event) {
 				event.stopPropagation();
 				
@@ -229,32 +245,35 @@ function(Card_Services, Cluster_Services) {
 				that.showUploadPhoto();
 			});
 
-			this.$(".add-card-btn").click(function(e) {
-				e.stopPropagation();
+			this.$("#add-image-button").click(function(event) {
+				event.stopPropagation();
 
-				that.showAddText();
+				that.addImageFromURL();
 			});
 
-			this.$("#add-image-btn").click(function(e) {
-				e.stopPropagation();
+			this.$("#back-image-button").click(function(event) {
+				event.stopPropagation();
 
-				that.showAddImage();
+				that.showLinkPhoto();
 			});
 		},
 
 		showAddText: function() {
 			this.$("#add-text-container").show();
 			this.$("#add-image-container").hide();
+    		this.$("#add-linked-error-body").hide();
 		},
 		
 		showAddImage: function() {
 			this.$("#add-text-container").hide();
 			this.$("#add-image-container").show();
+    		this.$("#add-linked-error-body").hide();
 		},
 
         showLinkPhoto: function() {
     		this.$("#add-upload-image-body").hide();
     		this.$("#add-linked-image-body").show();
+    		this.$("#add-linked-error-body").hide();
 
 			this.$(".popup-active-item").css({ "background-color": "" });
 			this.$("#link-to-photo-header").css({ "background-color": this.$("#card-color-select").spectrum("get").toString() });
@@ -265,6 +284,7 @@ function(Card_Services, Cluster_Services) {
         showUploadPhoto: function() {
     		this.$("#add-upload-image-body").show();
     		this.$("#add-linked-image-body").hide();
+    		this.$("#add-linked-error-body").hide();
 
 			this.$(".popup-active-item").css({ "background-color": "" });
 			this.$("#upload-photo-header").css({ "background-color": this.$("#card-color-select").spectrum("get").toString() });
@@ -388,15 +408,15 @@ function(Card_Services, Cluster_Services) {
 		},
 
         addImageFromURL: function(){
-			var urlValid = true;
+			var urlValid = true,
+		        that = this,
+		        boardId = this._workspace.getDropBoardId();
 
 			if (this.$("#photo-url-location").val().trim().length == 0) {
 				this.$("#photo-url-location").css("border", "1px solid #ff0000");
 				urlValid = false;
 			}
-			else {
-				this.$("#photo-url-location").css("border", "1px solid #b9b9b9");
-			}
+			else this.$("#photo-url-location").css("border", "1px solid #b9b9b9");
 
 			if (urlValid) {
 				this.$("#loading-container").show();
@@ -414,18 +434,28 @@ function(Card_Services, Cluster_Services) {
 		            imageLocation: imageLocation
 		        };
 
-		        var that = this;
-
 		        $.ajax({
-		            url: "/boards/cards/downloadImage/" + this.model.get("id"),
+		            url: "/workspace/boards/cards/downloadImage/" + this._workspace.getId() + "/" + boardId,
 		            type: 'POST',
 		            dataType: "json",
 		            data: imageValues,
 		            success: function(response) {
-			        	if (response.message.toLowerCase() == "success") {
-							that.options.board.cardAdded(response.card);
-							that.options.board.hideAddCard();
-							that.removeAddImage();
+			        	if (response.code == 200) {
+							var addedCard = response.card;
+							addedCard.boardId = boardId;
+
+							that._workspace.cardAdded(addedCard);
+
+							that._workspace.sendSocket(JSON.stringify({ 
+								action:"boardCardAdded", 
+								workspace: that._workspace.getId(), 
+								card: addedCard
+							}));
+
+							that._workspace.hideAddCard();
+
+							that.$el.empty();
+							that.render();
 			        	}
 			        	else {
 							that.$("#loading-container").hide();
@@ -442,9 +472,6 @@ function(Card_Services, Cluster_Services) {
 		            }
 	        	});
 			}
-
-			that.$el.empty();
-			that.render();
         },
 
 		focusCardText: function() {
