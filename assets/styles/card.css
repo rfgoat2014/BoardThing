@@ -255,6 +255,10 @@
     margin: 15px;
 }
 
+#edit-text-container { 
+    margin: 15px;
+}
+
 .card-input-container.mobile #card-text-container {
     padding-left: 15px;
     padding-right: 15px;
@@ -341,6 +345,20 @@
     margin-bottom: 15px;
 }
 
+.card-input-container.desktop #update-card {
+    position: relative;
+    float: right;
+    margin-top: 10px; 
+}
+
+.card-input-container.mobile #update-card {
+    position: relative;
+    float: right;
+    margin-top: 13px;
+    margin-right: 13px;
+    margin-bottom: 15px;
+}
+
 /* Add image input */
 
 .card-input-container #add-image-btn {
@@ -380,7 +398,7 @@
     border: 1px solid #cccccc;
 }
 
-#add-image-container .add-card-btn {
+.show-add-text-btn, .show-add-image-btn {
     position: absolute;
     bottom: 12px;
     left: 15px;

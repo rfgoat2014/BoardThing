@@ -748,11 +748,9 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				this._blockAddCard = true;
 
 				if (this._addCard) {
-					this.$("#add-text-container").show();
-					this.$("#add-image-container").hide();
 					this.$("#card-create-overlay").show();
 					
-					this._addCard.focusCardText();
+					this._addCard.showAddText();
 				}	
 			}
 			catch (err) {
@@ -765,12 +763,8 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				this._blockAddCard = false;
 				
 				if (this._addCard) {
+					this._addCard.hide();
 					this.$("#card-create-overlay").hide();
-
-					this._addCard.setCardModel(null);
-
-					this._addCard.$el.empty();
-					this._addCard.render();
 				}
 			}
 			catch (err) {
@@ -838,12 +832,10 @@ function(AddBoard, Board, BoardModel, AddCard, Card, CardModel, Cluster, Cluster
 				this._blockAddCard = true;
 
 				if (this._addCard) {
-					this.$("#card-create-overlay").show();
+					this._addCard.showEdit(cardModel);
 
-					this._addCard.focusCardText();
-					this._addCard.setCardModel(cardModel);
-				}	
-		    	
+					this.$("#card-create-overlay").show();
+				}
 			}
 			catch (err) {
 				Utils.sendClientError("editCard", err);

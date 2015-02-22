@@ -1,8 +1,14 @@
 <div id="add-text-container" style="display:none;">
 	<textarea id="card-text"></textarea>
 	<button id="post-card">Post</button>
-	<img id="show-add-image-btn" src="/img/camera.png" border="0">
-	<input type='text' id="card-color-select" />
+	<img class="show-add-image-btn" src="/img/camera.png" border="0">
+	<input type='text' id="add-card-color-select" />
+	<div class="clear"></div>
+</div>
+<div id="edit-text-container" style="display:none;">
+	<textarea id="current-card-text"></textarea>
+	<button id="update-card">Update</button>
+	<input type='text' id="edit-card-color-select" />
 	<div class="clear"></div>
 </div>
 <div id="add-image-container" style="display:none;">
@@ -18,7 +24,7 @@
 	    <div id="progress" class="progress" style="display:none;">
 	        <div class="progress-bar progress-bar-success"></div>
 	    </div>
-		<img class="add-card-btn" src="/img/card.png" border="0">
+		<img class="show-add-text-btn" src="/img/card.png" border="0">
 		<input type='text' id="upload-card-color-select" />
 		<button id="upload-image-button" class="add-image-btn">Upload</button>
 	</div>
@@ -45,7 +51,7 @@
 				<div id="squaresWaveG_16" class="squaresWaveG"></div>
 			</div>
 		</div>
-		<img class="add-card-btn" src="/img/card.png" border="0">
+		<img class="show-add-text-btn" src="/img/card.png" border="0">
 		<input type='text' id="link-card-color-select" />
 		<button id="add-image-button" class="add-image-btn">Upload</button>
 	</div>

@@ -21,6 +21,8 @@ function(Card_Services, Cluster_Services) {
     	el: "<div>",
 
     	_cardModel: null,
+    	_selectedColor: null,
+
     	_isMobile: null,
     	_workspace: null,
 
@@ -59,8 +61,21 @@ function(Card_Services, Cluster_Services) {
 	    	this.$("#upload-card-color-select").spectrum("destroy");
 	    	this.$("#link-card-color-select").spectrum("destroy");
 
-	    	this.$("#card-color-select").spectrum({
-			    color: this._workspace.getSelectedColor(),
+	    	var selectedCardColor = "#ffffff";
+
+	    	if (this._cardModel) {
+	    		selectedCardColor = this._cardModel.color;
+	    		this._selectedColor = null;
+	    	}
+	    	else {
+	    		if (this._selectedColor) selectedCardColor = this._selectedColor;
+	    	}
+
+			that.$el.css({ "background-color": selectedCardColor });
+			that.$(".popup-active-item").css({ "background-color": selectedCardColor });
+
+	    	this.$("#add-card-color-select, #edit-card-color-select, #upload-card-color-select, #link-card-color-select").spectrum({
+			    color: selectedCardColor,
 			    showInput: true,
 			    className: "card-color-spectrum",
 			    showInitial: true,
@@ -71,48 +86,15 @@ function(Card_Services, Cluster_Services) {
 			    localStorageKey: "spectrum.boardthing.card",
 			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"],
 			    change: function(color) {
-					that.$el.css({ "background-color": color.toHexString() });
-					that.$(".popup-active-item").css({ "background-color": color.toHexString() });
-					that.$("#upload-card-color-select").spectrum("set", color.toHexString());
-					that.$("#link-card-color-select").spectrum("set", color.toHexString());
-				}
-			});
+			    	that._selectedColor = color.toHexString();
 
-	    	this.$("#upload-card-color-select").spectrum({
-			    color: this._workspace.getSelectedColor(),
-			    showInput: true,
-			    className: "upload-image-spectrum",
-			    showInitial: true,
-			    showPaletteOnly: true,
-			    showPalette:true,
-			    maxPaletteSize: 10,
-			    preferredFormat: "hex",
-			    localStorageKey: "spectrum.boardthing.card",
-			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"],
-			    change: function(color) {
-					that.$el.css({ "background-color": color.toHexString() });
-					that.$(".popup-active-item").css({ "background-color": color.toHexString() });
-					that.$("#card-color-select").spectrum("set", color.toHexString());
-					that.$("#link-card-color-select").spectrum("set", color.toHexString());
-				}
-			});
-
-	    	this.$("#link-card-color-select").spectrum({
-			    color: this._workspace.getSelectedColor(),
-			    showInput: true,
-			    className: "upload-image-spectrum",
-			    showInitial: true,
-			    showPaletteOnly: true,
-			    showPalette:true,
-			    maxPaletteSize: 10,
-			    preferredFormat: "hex",
-			    localStorageKey: "spectrum.boardthing.card",
-			    palette: ["rgb(255,255,153)", "rgb(255,255,0)", "rgb(255,204,102)", "rgb(255,153,0)", "rgb(255,102,255)", "rgb(255,0,204)", "rgb(204,153,255)", "rgb(153,153,255)", "rgb(102,255,255)", "rgb(51,204,255)", "rgb(153,255,102)", "rgb(102,255,0)", "rgb(255,255,255)", "rgb(204,204,204)", "rgb(255,0,51)"],
-			    change: function(color) {
-					that.$el.css({ "background-color": color.toHexString() });
-					that.$(".popup-active-item").css({ "background-color": color.toHexString() });
-					that.$("#card-color-select").spectrum("set", color.toHexString());
-					that.$("#upload-card-color-select").spectrum("set", color.toHexString());
+					that.$el.css({ "background-color": that._selectedColor });
+					that.$(".popup-active-item").css({ "background-color": that._selectedColor });
+					
+					that.$("#add-card-color-select").spectrum("set", that._selectedColor);
+					that.$("#edit-card-color-select").spectrum("set", that._selectedColor);
+					that.$("#upload-card-color-select").spectrum("set", that._selectedColor);
+					that.$("#link-card-color-select").spectrum("set", that._selectedColor);
 				}
 			});
 			
@@ -172,6 +154,21 @@ function(Card_Services, Cluster_Services) {
 		            );
 		        }
 		    });
+
+			if (this._cardModel) {
+				if (this._cardModel.type == "text") {
+					$("#current-card-text").focus();
+
+					this.$("#current-card-text").val(this._cardModel.content);
+
+					$("#edit-text-container").show();
+				}
+			}
+			else {
+				$("#add-text-container").show();
+
+				$("#card-text").focus();
+			}
 		},
 
 		unbind: function() {
@@ -182,8 +179,8 @@ function(Card_Services, Cluster_Services) {
 			this.$("#card-text").unbind("click");
 			this.$("#add-image-btn").unbind("click");
 
-			this.$(".add-card-btn").unbind("click");
-			this.$("#show-add-image-btn").unbind("click");
+			this.$(".show-add-text-btn").unbind("click");
+			this.$(".show-add-image-btn").unbind("click");
 
 			this.$("#link-to-photo-header").unbind("click");
 			this.$("#upload-photo-header").unbind("click");
@@ -205,13 +202,13 @@ function(Card_Services, Cluster_Services) {
 				that._workspace.hideAddCard();
 			});
 
-			this.$("#post-card").click(function(e) {
+			this.$("#post-card, #update-card").click(function(e) {
 				e.stopPropagation();
 				
 				that.saveTextCard();
 			});
 
-			this.$("#card-text").keypress(function(e) {
+			this.$("#card-text, #current-card-text").keypress(function(e) {
 			  	var charCode = e.charCode || e.keyCode;
 
 		        if ((e) && (!e.shiftKey) && (charCode == 13)) {
@@ -221,13 +218,13 @@ function(Card_Services, Cluster_Services) {
 		        }
 			});
 
-			this.$(".add-card-btn").click(function(e) {
+			this.$(".show-add-text-btn").click(function(e) {
 				e.stopPropagation();
 
 				that.showAddText();
 			});
 
-			this.$("#show-add-image-btn").click(function(e) {
+			this.$(".show-add-image-btn").click(function(e) {
 				e.stopPropagation();
 
 				that.showAddImage();
@@ -292,36 +289,18 @@ function(Card_Services, Cluster_Services) {
     		this.$("#upload-photo-header").removeClass('popup-inactive-item').removeClass('popup-active-item').addClass('popup-active-item');
         },
 
-		setCardModel: function(cardModel) {
-			if (cardModel) {
-				this._cardModel = cardModel;
-
-				if (cardModel.type == "text") this.$("#card-text").val(cardModel.content);
-				else this.$("#card-text").val(cardModel.title);
-
-				this.$("#card-color-select").spectrum("set", cardModel.color);
-
-				this.$("#post-card").html("Update");
-			}
-			else {
-				this._cardModel = null;
-
-				this.$("#post-card").html("Post");
-			}
-		},
-
 		saveTextCard: function(e) {
 			var that = this;
 
-			if (this.$("#card-text").val().trim().length > 0) {
-				if (!this._cardModel) {
+			if (!this._cardModel) {
+				if (this.$("#card-text").val().trim().length > 0) {
 					var boardId = this._workspace.getDropBoardId();
 
 					var newCard = {
 						type: "text",
 						boardId: boardId,
 						content: this.$("#card-text").val(),
-						color: this.$("#card-color-select").spectrum("get").toString()
+						color: this.$("#add-card-color-select").spectrum("get").toString()
 					};
 					
 					Card_Services.InsertTextCard(this._workspace.getId(), boardId, newCard, function(response) {
@@ -337,16 +316,18 @@ function(Card_Services, Cluster_Services) {
 						}));
 					});
 				}
-				else {
-					var updateModel = null;
+			}
+			else {
+				var updateModel = null;
 
-					if ((this._cardModel.cards == null)|| (this._cardModel.cards.length === 0)) {
-						if (this._cardModel.type == "text") {
+				if ((this._cardModel.cards == null)|| (this._cardModel.cards.length === 0)) {
+					if (this._cardModel.type == "text") {
+						if (this.$("#current-card-text").val().trim().length > 0) {
 							var updateModel = {
 								id: this._cardModel.id,
 								parentId: this._cardModel.parentId,
-								content: this.$("#card-text").val(),
-								color: this.$("#card-color-select").spectrum("get").toString()
+								content: this.$("#current-card-text").val(),
+								color: this.$("#edit-card-color-select").spectrum("get").toString()
 							};
 
 							Card_Services.UpdateTextCard(this._workspace.getId(), this._cardModel.boardId, this._cardModel.id, updateModel, function(response) {
@@ -357,7 +338,9 @@ function(Card_Services, Cluster_Services) {
 								}));
 							});
 						}
-						else {
+					}
+					else {
+						if (this.$("#card-text").val().trim().length > 0) {
 							var updateModel = {
 								id: this._cardModel.id,
 								parentId: this._cardModel.parentId,
@@ -374,37 +357,37 @@ function(Card_Services, Cluster_Services) {
 							});
 						}
 					}
-					else {
-						updateModel = {
-							id: this._cardModel.id, 
-							type: "text",
-							boardId: this._cardModel.boardId,
-			  				action: "update",
-							color: this.$("#card-color-select").spectrum("get").toString()
-			  			};
-
-			  			if (this._cardModel.type == "text") updateModel.content = this.$("#card-text").val();
-			  			else updateModel.title = this.$("#card-text").val();
-
-						Cluster_Services.Insert(this._workspace.getId(), this._cardModel.boardId, this._cardModel.id, updateModel, function(response) {
-							that._workspace.sendSocket(JSON.stringify({ 
-								action:"boardClusterUpdated", 
-								workspace: that._workspace.getId(),
-								cluster: updateModel 
-							}));
-						});
-					}
-					
-					that._workspace.cardEdited(updateModel);
 				}
+				else {
+					updateModel = {
+						id: this._cardModel.id, 
+						type: "text",
+						boardId: this._cardModel.boardId,
+		  				action: "update",
+						color: this.$("#card-color-select").spectrum("get").toString()
+		  			};
+
+		  			if (this._cardModel.type == "text") updateModel.content = this.$("#card-text").val();
+		  			else updateModel.title = this.$("#card-text").val();
+
+					Cluster_Services.Insert(this._workspace.getId(), this._cardModel.boardId, this._cardModel.id, updateModel, function(response) {
+						that._workspace.sendSocket(JSON.stringify({ 
+							action:"boardClusterUpdated", 
+							workspace: that._workspace.getId(),
+							cluster: updateModel 
+						}));
+					});
+				}
+				
+				that._workspace.cardEdited(updateModel);
 			}
 
 	    	this.$("#card-color-select").spectrum("hide");
 
 			this._workspace.hideAddCard();
 
-			that.$el.empty();
-			that.render();
+			this.$el.empty();
+			this.render();
 		},
 
         addImageFromURL: function(){
@@ -474,8 +457,22 @@ function(Card_Services, Cluster_Services) {
 			}
         },
 
-		focusCardText: function() {
-			this.$("#card-text").focus();
+        hide: function() {
+			this._cardModel = null;
+        },
+
+		showAddText: function() {
+			this.$el.empty();
+			this.render();
+
+			this._cardModel = null;
+		},
+
+		showEdit: function(cardModel) {
+			this._cardModel = cardModel;
+
+			this.$el.empty();
+			this.render();
 		}
 	});
 
