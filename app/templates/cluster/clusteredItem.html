@@ -5,7 +5,7 @@
 			<div id="edit-title_<%= id %>" class="menu-item">Edit</div>
 		</div>
 	</div>
-	<% if (type.trim().toLowerCase() == "text") { %><div id="cluster-title_<%= id %>" class="title"><%= content.replace(/\n/g, '<br />') %></div><% } else { %><div class="cluster-image-container"><img src="/boards/cards/image/<%= boardId %>/<%= id %>" class="card-content-image"  border="0" /></div><% if ((typeof title != 'undefined') && (title != null) && (title.trim().length > 0)) { %><div id="cluster-title_<%= id %>" class="title"><%= title %></div><% } %><% } %>
+	<% if (type.trim().toLowerCase() == "text") { %><div id="cluster-title_<%= id %>" class="title"><%= content.replace(/\n/g, '<br />') %></div><% } else { %><div class="cluster-image-container"><img src="/workspace/boards/cards/image/<%= workspaceId %>/<%= boardId %>/<%= id %>" class="card-content-image"  border="0" /></div><% if ((typeof title != 'undefined') && (title != null) && (title.trim().length > 0)) { %><div id="cluster-title_<%= id %>" class="title"><%= title %></div><% } %><% } %>
 	<div id="cluster-editable-title_<%= id %>" style="display:none">
 		<div id="editable-title-container"><% if (type.trim().toLowerCase() == "text") { %><textarea id="editable-title_<%= id %>" class="editable-title" style="resize:none;width:175px;" rows="1"><%= content %></textarea><% } else { %><textarea id="editable-title_<%= id %>" class="editable-title" style="resize:none;width:175px;" rows="1"><%= title %></textarea><% } %></div>
 	</div>

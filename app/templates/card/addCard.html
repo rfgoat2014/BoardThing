@@ -7,7 +7,7 @@
 </div>
 <div id="edit-text-container" class="text-card-container" style="display:none;">
 	<textarea id="current-card-text" class="text-card-input"><% if ((card != null) && (card.type == "text")) { %><%= card.content %><% } %></textarea>
-	<button id="update-card" class="button">Update</button>
+	<button id="update-text-card" class="button">Update</button>
 	<input type="text" id="edit-card-color-select" />
 	<div class="clear"></div>
 </div>
@@ -65,7 +65,7 @@
 <div id="edit-image-container" class="edit-image-container" style="display:none;">
 	<div class="image-container"><img id="current-content-image" src="" class="edit-content-image" border="0" /></div>
 	<div id="edit-image-body"><input type="text" id="edit-image-title" class="image-title" placeholder="Optional image title" /></div>
-	<button id="update-card" class="button">Done</button>
+	<button id="update-image-card" class="button">Done</button>
 	<input type="text" id="edit-image-card-color-select" />
 	<div class="clear"></div>
 </div>

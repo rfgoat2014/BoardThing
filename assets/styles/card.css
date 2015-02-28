@@ -350,12 +350,17 @@
     border: 1px solid #cccccc;
 }
 
+/* Edit image input */
+
 #edit-image-body {
     margin-top: 5px;
-    margin-right: 8px;
+    margin-right: 9px;
 }
 
-/* Edit image input */
+.image-container {
+    text-align: center;
+    min-height: 232px;
+}
 
 .edit-content-image {
     max-width: 100%;

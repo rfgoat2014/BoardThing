@@ -175,7 +175,11 @@ function(Card_Services, Cluster_Services) {
 			this.$el.unbind("click");
 
 			this.$("#cancel-card").unbind("click");
-			this.$("#post-card").unbind("click");
+			this.$("#post-card, #update-text-card, #update-image-card").unbind("click");
+
+			this.$("#add-image-button").unbind("click");
+			this.$("back-image-button").unbind("click");
+			
 			this.$("#card-text").unbind("click");
 			this.$("#add-image-btn").unbind("click");
 
@@ -184,9 +188,6 @@ function(Card_Services, Cluster_Services) {
 
 			this.$("#link-to-photo-header").unbind("click");
 			this.$("#upload-photo-header").unbind("click");
-
-			this.$("#add-image-button").unbind("click");
-			this.$("back-image-button").unbind("click");
 		},
 
 		bind: function() {
@@ -202,10 +203,22 @@ function(Card_Services, Cluster_Services) {
 				that._workspace.hideAddCard();
 			});
 
-			this.$("#post-card, #update-card").click(function(e) {
+			this.$("#post-card, #update-text-card, #update-image-card").click(function(e) {
 				e.stopPropagation();
 				
 				that.saveTextCard();
+			});
+
+			this.$("#add-image-button").click(function(event) {
+				event.stopPropagation();
+
+				that.addImageFromURL();
+			});
+
+			this.$("#back-image-button").click(function(event) {
+				event.stopPropagation();
+
+				that.showLinkPhoto();
 			});
 
 			this.$("#card-text, #current-card-text").keypress(function(e) {
@@ -240,18 +253,6 @@ function(Card_Services, Cluster_Services) {
 				event.stopPropagation();
 				
 				that.showUploadPhoto();
-			});
-
-			this.$("#add-image-button").click(function(event) {
-				event.stopPropagation();
-
-				that.addImageFromURL();
-			});
-
-			this.$("#back-image-button").click(function(event) {
-				event.stopPropagation();
-
-				that.showLinkPhoto();
 			});
 		},
 
@@ -340,12 +341,12 @@ function(Card_Services, Cluster_Services) {
 						}
 					}
 					else {
-						if (this.$("#card-text").val().trim().length > 0) {
+						if (this.$("#edit-image-title").val().trim().length > 0) {
 							var updateModel = {
 								id: this._cardModel.id,
 								parentId: this._cardModel.parentId,
-								title: this.$("#card-text").val(),
-								color: this.$("#card-color-select").spectrum("get").toString()
+								title: this.$("#edit-image-title").val(),
+								color: this.$("#edit-image-card-color-select").spectrum("get").toString()
 							};
 
 							Card_Services.UpdateImageCard(this._workspace.getId(), this._cardModel.boardId, this._cardModel.id, updateModel, function(response) {
