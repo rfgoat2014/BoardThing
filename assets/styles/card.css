@@ -135,12 +135,43 @@
     bottom: -4px;
 }
 
+/* Laying out card styles */
+
 .card-content {
     position: relative;
     color: #222222;
     padding:10px;
     cursor: hand;
     cursor: pointer;
+}
+
+.card-content-body {
+    font-weight: normal;
+    color: #000000;
+    cursor: hand;
+    cursor: pointer;
+    word-wrap: break-word;
+}
+
+.card-image-container {
+    width:100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+.card-image-title {
+    padding-top: 10px; 
+    color: #222222;
+    word-wrap: break-word;
+}
+
+.card-action-container {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    margin-top:10px;
+    margin-right:8px;
+    border: 0px;
 }
 
 .card-settings-menu {
@@ -157,19 +188,7 @@
     z-index: 14;
 }
 
-.card-content-body {
-    font-weight: normal;
-    color: #000000;
-    cursor: hand;
-    cursor: pointer;
-    word-wrap: break-word;
-}
-
-.card-image-container {
-    width:100%;
-    padding: 0px;
-    margin: 0px;
-}
+/* Laying out cluster styles */
 
 .cluster-body .cluster-image-container {
     width:180px;
@@ -197,22 +216,7 @@
     cursor: pointer;
 }
 
-.card-image-title {
-    padding-top: 10px; 
-    color: #222222;
-    word-wrap: break-word;
-}
-
-.card-action-container {
-    position: absolute;
-    top: 0px;
-    right: 0px;
-    margin-top:10px;
-    margin-right:8px;
-    border: 0px;
-}
-
-/* Create card styles */
+/* Create card overlay styles */
 
 #card-create-overlay {
     position: fixed;
@@ -233,75 +237,81 @@
     -moz-box-shadow: 0 1px 4px #bbbbbb;
     box-shadow: 0 1px 4px #bbbbbb;
     z-index: 9999;
-}
-
-.card-input-container.desktop {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 525px;
-    height: 330px;
+    min-height: 330px;
     margin-top: -165px;
     margin-left: -263px;
 }
 
-.card-input-container.mobile {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
+/* Card manipulation */
 
-#add-text-container { 
+.text-card-container, .edit-image-container { 
     margin: 15px;
 }
 
-#edit-text-container { 
-    margin: 15px;
-}
-
-.card-input-container.mobile #card-text-container {
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-.card-input-container textarea {
+.text-card-input {
     position: relative;
     -webkit-font-smoothing: antialiased !important;
     font-size:36px;
     font-weight: 700;
     color: #222222;
+    background: rgba(255, 255, 255, 0);
+    border-color: rgba(255, 255, 255, 0);
+    width: 100%;
+    height: 260px;
     padding: 0px;
-    border: 1px solid #FFFFFF;
     overflow: hidden;
     overflow-y: auto;
     resize: none;
     outline: none;
 }
 
-.card-input-container.desktop textarea {
-    background: rgba(255, 255, 255, 0);
-    border-color: rgba(255, 255, 255, 0);
-    width: 100%;
-    height: 260px;
+#add-text-container .card-color-spectrum, #edit-text-container .card-color-spectrum {
+    position: absolute;
+    bottom: 16px;
 }
 
-.card-input-container.mobile textarea {
-    background: rgba(255, 255, 255, 0);
-    border-color: rgba(255, 255, 255, 0);
-    width: 100%;
-    height: 100px;
-    border: 1px solid #ccc;
+#add-text-container .card-color-spectrum {
+    right: 85px;
 }
 
-.card-input-container .card-color-spectrum {
+#edit-text-container .card-color-spectrum {
+    right: 105px;
+}
+
+#add-image-container .card-color-spectrum {
+    position: absolute;
+    bottom: 14px;
+    right: 105px;
+}
+
+#edit-image-container .card-color-spectrum {
     position: relative;
     float: right;
-    margin-top: 8px;
-    padding: 4px;
     margin-right: 10px;
+    top: 10px;
 }
 
-.card-input-container button {
+.show-add-text-btn {
+    position: absolute;
+    bottom: 14px;
+    left: 15px;
+    cursor: hand;
+    cursor: pointer;
+}
+
+.show-add-image-btn {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    cursor: hand;
+    cursor: pointer;
+}
+
+.card-input-container .button {
     background-color: #8A8C8E;
     background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#8A8C8E), to(#8A8C8E));
     background-image: -webkit-linear-gradient(top, #8A8C8E, #8A8C8E);
@@ -323,40 +333,33 @@
     cursor: pointer;
 }
 
-.card-input-container.mobile #cancel-card {
-    position: relative;
-    float: left;
-    margin-top: 13px;
-    margin-left: 15px;
-    margin-bottom: 15px;
-}
-
-.card-input-container.desktop #post-card {
+.card-input-container button {
     position: relative;
     float: right;
-    margin-top: 10px; 
+    margin-top: 8px; 
 }
 
-.card-input-container.mobile #post-card {
-    position: relative;
-    float: right;
-    margin-top: 13px;
-    margin-right: 13px;
-    margin-bottom: 15px;
+#add-image-container input[type=text], #edit-image-container input[type=text] {
+    width: 100%;
+    padding: 4px;
+    font-size:16px;
+    font-weight: normal;
+    color: #222222;
+    resize: none;
+    background: rgba(255, 255, 255, 0);
+    border: 1px solid #cccccc;
 }
 
-.card-input-container.desktop #update-card {
-    position: relative;
-    float: right;
-    margin-top: 10px; 
+#edit-image-body {
+    margin-top: 5px;
+    margin-right: 8px;
 }
 
-.card-input-container.mobile #update-card {
-    position: relative;
-    float: right;
-    margin-top: 13px;
-    margin-right: 13px;
-    margin-bottom: 15px;
+/* Edit image input */
+
+.edit-content-image {
+    max-width: 100%;
+    border: 1px solid #E0E0E0;
 }
 
 /* Add image input */
@@ -369,7 +372,7 @@
     margin-top: 10px;
 }
 
-#add-image-container .add-image-body {
+.add-image-body {
     position: absolute;
     padding: 15px;
     top: 30px;
@@ -385,32 +388,6 @@
 .add-image-body .padded {
     margin-right: 12px;
     margin-bottom: 8px;
-}
-
-.add-image-body input {
-    width: 100%;
-    padding: 4px;
-    font-size:16px;
-    font-weight: normal;
-    color: #222222;
-    resize: none;
-    background: rgba(255, 255, 255, 0);
-    border: 1px solid #cccccc;
-}
-
-.show-add-text-btn, .show-add-image-btn {
-    position: absolute;
-    bottom: 12px;
-    left: 15px;
-    cursor: hand;
-    cursor: pointer;
-}
-
-#add-image-container .upload-image-spectrum {
-    position: absolute;
-    bottom: 10px;
-    right: 105px;
-    padding: 4px;
 }
 
 #add-image-container .add-image-btn {

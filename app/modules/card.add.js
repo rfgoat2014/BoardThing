@@ -28,6 +28,7 @@ function(Card_Services, Cluster_Services) {
 
 		initialize: function(options) {
     		this.el.id = "card-create-container";
+			this.el.className = "card-input-container";
 
     		this._isMobile = options.isMobile;
     		this._workspace = options.workspace;
@@ -40,7 +41,9 @@ function(Card_Services, Cluster_Services) {
 			if (this._isMobile) template = "/app/templates/card/addCard.mobile.html";
 
 			$.get(template, function(contents) {
-				that.$el.html(_.template(contents, that.model));
+				that.$el.html(_.template(contents, {
+					card: that.model
+				}));
 
 				that.afterRender();				
 
@@ -52,14 +55,7 @@ function(Card_Services, Cluster_Services) {
 		afterRender: function() {
 			var that = this;
 
-			this.$el.addClass("card-input-container");
-
-			if (this._isMobile) this.$el.addClass("mobile");
-    		else this.$el.addClass("desktop");
-
-	    	this.$("#card-color-select").spectrum("destroy");
-	    	this.$("#upload-card-color-select").spectrum("destroy");
-	    	this.$("#link-card-color-select").spectrum("destroy");
+	    	this.$("#add-card-color-select, #edit-card-color-select, #upload-card-color-select, #link-card-color-select, #edit-image-card-color-select").spectrum("destroy");
 
 	    	var selectedCardColor = "#ffffff";
 
@@ -74,7 +70,7 @@ function(Card_Services, Cluster_Services) {
 			that.$el.css({ "background-color": selectedCardColor });
 			that.$(".popup-active-item").css({ "background-color": selectedCardColor });
 
-	    	this.$("#add-card-color-select, #edit-card-color-select, #upload-card-color-select, #link-card-color-select").spectrum({
+	    	this.$("#add-card-color-select, #edit-card-color-select, #upload-card-color-select, #link-card-color-select, #edit-image-card-color-select").spectrum({
 			    color: selectedCardColor,
 			    showInput: true,
 			    className: "card-color-spectrum",
@@ -91,69 +87,9 @@ function(Card_Services, Cluster_Services) {
 					that.$el.css({ "background-color": that._selectedColor });
 					that.$(".popup-active-item").css({ "background-color": that._selectedColor });
 					
-					that.$("#add-card-color-select").spectrum("set", that._selectedColor);
-					that.$("#edit-card-color-select").spectrum("set", that._selectedColor);
-					that.$("#upload-card-color-select").spectrum("set", that._selectedColor);
-					that.$("#link-card-color-select").spectrum("set", that._selectedColor);
+					that.$("#add-card-color-select, #edit-card-color-select, #upload-card-color-select, #link-card-color-select, #edit-card-color-select").spectrum("set", that._selectedColor);
 				}
 			});
-			
-			this.$('#imageUpload').fileupload({ 	
-		        dataType: 'json',
-    			disableImageResize: false,
-			    imageMaxWidth: 1000,
-			    imageMaxHeight: 1000,
-			    imageCrop: false,
-			    autoUpload: false,
-		        add: function (e, data) {
-		        	that._cardsAdded = true;
-
-		            data.context = that.$("#upload-image-button").click(function () {
-						that.$('#imageUpload').fileupload({ url: "/workspace/boards/cards/image/" + that._workspace.getId() + "/" + that._workspace.getDropBoardId() });
-
-						that.$('#progress').show();
-
-                    	data.submit();
-	                });
-
-	            	that.$("#selected-files-container").show();
-
-		            for (var i=0; i < data.files.length; i++) {
-		            	that.$("#selected-files-container").append("<div class=\"file-to-upload\">" + data.files[i].name + "</div>");
-		            }
-		        },
-		        done: function (e, data) {
-		        	var addedImage = data.result.card;
-					addedImage.boardId = that._workspace.getDropBoardId();
-		        	addedImage.title = that.$("#photo-upload-title").val();
-		        	addedImage.color = that.$("#upload-card-color-select").spectrum("get").toString();
-
-		        	imageValues = {
-			        	title: that.$("#photo-upload-title").val(),
-						color: that.$("#upload-card-color-select").spectrum("get").toString()
-			        };
-
-			        $.ajax({
-			            url: "/workspace/boards/cards/image/" + that._workspace.getId() + "/" + addedImage.boardId + "/" + addedImage.id,
-			            type: 'PUT',
-			            dataType: "json",
-			            data: imageValues
-		        	});
-
-					that._workspace.cardAdded(addedImage);
-
-			    	that.$("#card-color-select").spectrum("hide");
-
-					that._workspace.hideAddCard();
-		        },
-		        progressall: function (e, data) {
-		            var progress = parseInt(data.loaded / data.total * 100, 10);
-		            $('#progress .progress-bar').css(
-		                'width',
-		                progress + '%'
-		            );
-		        }
-		    });
 
 			if (this._cardModel) {
 				if (this._cardModel.type == "text") {
@@ -163,8 +99,72 @@ function(Card_Services, Cluster_Services) {
 
 					$("#edit-text-container").show();
 				}
+				else {
+					this.$("#current-content-image").attr("src", "/workspace/boards/cards/image/" + that._workspace.getId() + "/" + that._cardModel.boardId + "/" + that._cardModel.id + "?random=" + new Date().getTime());
+
+					this.$("#edit-image-title").val(this._cardModel.title);
+
+					$("#edit-image-container").show();
+				}
 			}
-			else {
+			else {			
+				this.$('#imageUpload').fileupload({ 	
+			        dataType: 'json',
+	    			disableImageResize: false,
+				    imageMaxWidth: 1000,
+				    imageMaxHeight: 1000,
+				    imageCrop: false,
+				    autoUpload: false,
+			        add: function (e, data) {
+			        	that._cardsAdded = true;
+
+			            data.context = that.$("#upload-image-button").click(function () {
+							that.$('#imageUpload').fileupload({ url: "/workspace/boards/cards/image/" + that._workspace.getId() + "/" + that._workspace.getDropBoardId() });
+
+							that.$('#progress').show();
+
+	                    	data.submit();
+		                });
+
+		            	that.$("#selected-files-container").show();
+
+			            for (var i=0; i < data.files.length; i++) {
+			            	that.$("#selected-files-container").append("<div class=\"file-to-upload\">" + data.files[i].name + "</div>");
+			            }
+			        },
+			        done: function (e, data) {
+			        	var addedImage = data.result.card;
+						addedImage.boardId = that._workspace.getDropBoardId();
+			        	addedImage.title = that.$("#photo-upload-title").val();
+			        	addedImage.color = that.$("#upload-card-color-select").spectrum("get").toString();
+
+			        	imageValues = {
+				        	title: that.$("#photo-upload-title").val(),
+							color: that.$("#upload-card-color-select").spectrum("get").toString()
+				        };
+
+				        $.ajax({
+				            url: "/workspace/boards/cards/image/" + that._workspace.getId() + "/" + addedImage.boardId + "/" + addedImage.id,
+				            type: 'PUT',
+				            dataType: "json",
+				            data: imageValues
+			        	});
+
+						that._workspace.cardAdded(addedImage);
+
+				    	that.$("#card-color-select").spectrum("hide");
+
+						that._workspace.hideAddCard();
+			        },
+			        progressall: function (e, data) {
+			            var progress = parseInt(data.loaded / data.total * 100, 10);
+			            $('#progress .progress-bar').css(
+			                'width',
+			                progress + '%'
+			            );
+			        }
+			    });
+
 				$("#add-text-container").show();
 
 				$("#card-text").focus();
@@ -462,10 +462,10 @@ function(Card_Services, Cluster_Services) {
         },
 
 		showAddText: function() {
+			this._cardModel = null;
+
 			this.$el.empty();
 			this.render();
-
-			this._cardModel = null;
 		},
 
 		showEdit: function(cardModel) {

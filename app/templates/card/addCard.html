@@ -1,14 +1,14 @@
-<div id="add-text-container" style="display:none;">
-	<textarea id="card-text"></textarea>
-	<button id="post-card">Post</button>
+<div id="add-text-container" class="text-card-container" style="display:none;">
+	<textarea id="card-text" class="text-card-input"></textarea>
+	<button id="post-card" class="button">Post</button>
 	<img class="show-add-image-btn" src="/img/camera.png" border="0">
-	<input type='text' id="add-card-color-select" />
+	<input type="text" id="add-card-color-select" />
 	<div class="clear"></div>
 </div>
-<div id="edit-text-container" style="display:none;">
-	<textarea id="current-card-text"></textarea>
-	<button id="update-card">Update</button>
-	<input type='text' id="edit-card-color-select" />
+<div id="edit-text-container" class="text-card-container" style="display:none;">
+	<textarea id="current-card-text" class="text-card-input"><% if ((card != null) && (card.type == "text")) { %><%= card.content %><% } %></textarea>
+	<button id="update-card" class="button">Update</button>
+	<input type="text" id="edit-card-color-select" />
 	<div class="clear"></div>
 </div>
 <div id="add-image-container" style="display:none;">
@@ -18,15 +18,17 @@
 		<div class="clear"></div>
 	</div>
 	<div id="add-upload-image-body" class="add-image-body" style="display:block">
-		<div id="image-upload-container"><button id="upload-image-select" class="upload-image-btn"  onclick="$('#imageUpload').click()">Select Images...</button><input id="imageUpload" type="file" name="imageUpload" accept="image/*" multiple style="display: none;" /></div>
+		<div id="image-upload-container">
+			<input type="button" id="upload-image-select" class="button upload-image-btn"  onclick="$('#imageUpload').click()" value="Select Images..." /><input id="imageUpload" type="file" name="imageUpload" accept="image/*" multiple style="display: none;" />
+		</div>
 		<div id="selected-files-container" style="display:none"></div>
 		<div class="padded"><input type="text" id="photo-upload-title" placeholder="Optional image title" /></div>
 	    <div id="progress" class="progress" style="display:none;">
 	        <div class="progress-bar progress-bar-success"></div>
 	    </div>
 		<img class="show-add-text-btn" src="/img/card.png" border="0">
-		<input type='text' id="upload-card-color-select" />
-		<button id="upload-image-button" class="add-image-btn">Upload</button>
+		<input type="text" id="upload-card-color-select" />
+		<button id="upload-image-button" class="button add-image-btn">Upload</button>
 	</div>
 	<div id="add-linked-image-body" class="add-image-body" style="display:none">
 		<div class="padded"><input type="text" id="photo-url-location" placeholder="URL of the image" /></div>
@@ -52,11 +54,18 @@
 			</div>
 		</div>
 		<img class="show-add-text-btn" src="/img/card.png" border="0">
-		<input type='text' id="link-card-color-select" />
-		<button id="add-image-button" class="add-image-btn">Upload</button>
+		<input type="text" id="link-card-color-select" />
+		<button id="add-image-button" class="button add-image-btn">Upload</button>
 	</div>
 	<div id="add-linked-error-body" class="add-image-body" style="display:none">
 		<div id="back-image-error" style="margin-bottom:5px"></div>
-		<button id="back-image-button" class="add-image-btn">Back</button>
+		<button id="back-image-button" class="button add-image-btn">Back</button>
 	</div>
+</div>
+<div id="edit-image-container" class="edit-image-container" style="display:none;">
+	<div class="image-container"><img id="current-content-image" src="" class="edit-content-image" border="0" /></div>
+	<div id="edit-image-body"><input type="text" id="edit-image-title" class="image-title" placeholder="Optional image title" /></div>
+	<button id="update-card" class="button">Done</button>
+	<input type="text" id="edit-image-card-color-select" />
+	<div class="clear"></div>
 </div>
